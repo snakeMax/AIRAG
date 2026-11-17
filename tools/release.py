@@ -4,8 +4,8 @@
 
 1. writes the version into airag/__init__.py
 2. makes sure CHANGELOG.md has a section for it (adds an empty one to fill in)
-3. commits, tags v0.2.1 and pushes - GitHub Actions then builds the installer and
-   publishes the release, and installed copies of AIRAG offer the update on next start.
+3. commits and pushes - GitHub Actions sees the new version, builds the installer and
+   publishes release v0.2.1. Installed copies of AIRAG offer the update on next start.
 """
 import re
 import subprocess
@@ -39,10 +39,7 @@ def main() -> None:
         sys.exit("Fix the secrets problem first.")
     git("add", "airag/__init__.py", "CHANGELOG.md")
     git("commit", "-m", f"Release v{v}")
-    git("tag", "-a", f"v{v}", "-m", f"AIRAG {v}")
-    branch = git("rev-parse", "--abbrev-ref", "HEAD")
-    git("push", "origin", branch)
-    git("push", "origin", f"v{v}")
+    git("push", "origin", "HEAD:main")
     print(f"Pushed v{v}. Follow the build at https://github.com/snakeMax/AIRAG/actions")
 
 

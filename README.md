@@ -65,10 +65,10 @@ Or just run `run.bat` / `run.sh`. Source and installed versions share the same d
 
 ```bash
 build.bat                          # local build: dist/AIRAG-Setup-x.y.z.exe + portable zip (needs Inno Setup 6)
-python tools/release.py 0.3.0      # bump version, tag, push -> GitHub Actions builds and publishes
+python tools/release.py 0.3.0      # bump version and push -> GitHub Actions builds and publishes v0.3.0
 ```
 
-The release workflow (`.github/workflows/release.yml`) runs the tests, builds the app with PyInstaller, packages it with Inno Setup, and attaches the installer, portable zip and checksums to a GitHub release. Installed copies notice the new version on their next start and offer a one-click update.
+When the version in `airag/__init__.py` changes on `main`, the release workflow (`.github/workflows/release.yml`) runs the tests, builds the app with PyInstaller, packages it with Inno Setup, and attaches the installer, portable zip and checksums to a GitHub release. Installed copies notice the new version on their next start and offer a one-click update.
 
 ## Project layout
 
