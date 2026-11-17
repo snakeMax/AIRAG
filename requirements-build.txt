@@ -1,0 +1,4 @@
+# Extra packages for building the Windows installer and running tests
+pyinstaller>=6.6
+playwright>=1.44
+pytest>=8.0

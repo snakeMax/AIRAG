@@ -1,0 +1,72 @@
+name: Release
+
+# Push a tag like v0.3.0 (python tools/release.py 0.3.0) to build and publish.
+# "Run workflow" by hand builds a test installer without publishing it.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Check that the tag matches the app version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          V=$(python -c "import airag; print(airag.__version__)")
+          if [ "v$V" != "$GITHUB_REF_NAME" ]; then echo "Tag $GITHUB_REF_NAME does not match version $V"; exit 1; fi
+
+      - name: Check for committed secrets
+        run: python tools/check_secrets.py
+
+      - name: Install
+        run: python -m pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build
+        run: python tools/build.py
+
+      - name: Smoke test the built app
+        shell: bash
+        run: dist/AIRAG/AIRAG.exe --version
+
+      - name: Release notes
+        shell: bash
+        run: python tools/release_notes.py "$(python -c 'import airag; print(airag.__version__)')" > notes.md
+
+      - name: Upload build (manual runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: airag-windows
+          path: |
+            dist/AIRAG-Setup-*.exe
+            dist/AIRAG-*-portable-win64.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AIRAG ${{ github.ref_name }}
+          body_path: notes.md
+          files: |
+            dist/AIRAG-Setup-*.exe
+            dist/AIRAG-Setup-*.exe.sha256
+            dist/AIRAG-*-portable-win64.zip
+            dist/AIRAG-*-portable-win64.zip.sha256

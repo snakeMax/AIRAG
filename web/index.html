@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIRAG</title>
+  <link rel="icon" href="/static/icon.png">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script>
+    // apply the saved theme before first paint to avoid a flash
+    try {
+      var a = JSON.parse(localStorage.getItem("airag.appearance") || "{}");
+      var dark = a.theme === "dark" || (a.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+      document.documentElement.dataset.palette = a.palette || "zinc";
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="banner update" id="updateBanner" hidden></div>
+  <div class="banner" id="disclaimer" hidden></div>
+
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="AIRAG"><img class="brand-img" src="/static/icon.png" alt=""><span>airag</span></a>
+    <form class="searchbox sm" id="topSearch" autocomplete="off" hidden>
+      <span class="sb-icon" data-icon="search"></span>
+      <input name="q" type="search" data-i18n-ph="home.placeholder" aria-label="Search">
+    </form>
+    <label class="check-chip lib-chip top-lib" id="topLib" hidden data-i18n-title="lib.include.tip"><input type="checkbox" id="topLibChk"><span data-i18n="lib.include"></span></label>
+    <div class="top-actions">
+      <button class="icon-btn" id="historyBtn" data-i18n-title="top.history" data-icon="clock"></button>
+      <button class="icon-btn" id="themeBtn" data-i18n-title="top.theme" data-icon="moon"></button>
+      <button class="icon-btn" id="settingsBtn" data-i18n-title="top.settings" data-icon="gear"></button>
+    </div>
+  </header>
+
+  <main>
+    <section id="view-home" class="view">
+      <div class="home">
+        <div class="home-logo"><img class="brand-img lg" src="/static/icon.png" alt="">airag</div>
+        <p class="home-tag" data-i18n="app.tagline">AI Research Article Generation</p>
+        <form class="searchbox lg" id="homeSearch" autocomplete="off">
+          <span class="sb-icon" data-icon="search"></span>
+          <input name="q" type="search" data-i18n-ph="home.placeholder" aria-label="Search" autofocus>
+          <button class="sb-go" type="submit" aria-label="Search" data-icon="arrow"></button>
+        </form>
+        <div class="home-opts">
+          <div class="modes" id="modes" role="radiogroup">
+            <button type="button" data-mode="auto" data-i18n="mode.auto" data-i18n-title="mode.auto.tip"></button>
+            <button type="button" data-mode="article" data-i18n="mode.article" data-i18n-title="mode.article.tip"></button>
+            <button type="button" data-mode="results" data-i18n="mode.results" data-i18n-title="mode.results.tip"></button>
+          </div>
+          <label class="check-chip lib-chip" id="libChip" hidden data-i18n-title="lib.include.tip"><input type="checkbox" id="libChk"><span data-i18n="lib.include"></span></label>
+        </div>
+        <button class="engine" id="engineLine" type="button"></button>
+        <div class="recent" id="recent"></div>
+      </div>
+    </section>
+
+    <section id="view-run" class="view" hidden>
+      <div class="run">
+        <div class="run-main" id="runMain"></div>
+        <aside class="run-side" id="runSide"></aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="drawer" hidden>
+    <div class="drawer-head"><h2 data-i18n="history.title"></h2><button class="icon-btn" id="drawerClose" data-icon="x"></button></div>
+    <div class="drawer-body" id="historyList"></div>
+  </aside>
+  <aside class="drawer wide" id="sheet" hidden></aside>
+
+  <dialog id="settingsDlg" class="dlg"></dialog>
+  <dialog id="setupDlg" class="dlg narrow"></dialog>
+  <dialog id="interDlg" class="dlg wide"></dialog>
+  <div id="tip" class="tip" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv-build/
+venv/
+.pytest_cache/
+
+# Build output
+build/
+dist/
+*.spec.bak
+
+# Local data - never commit settings (they contain API keys) or history
+/data/
+settings.json
+*.env
+.env*
+secrets*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
