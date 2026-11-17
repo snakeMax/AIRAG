@@ -34,7 +34,8 @@ Emit = Callable[[dict], Awaitable[None]]
 
 PUBLIC_KEYS = ("id", "n", "url", "domain", "title", "snippet", "query", "round", "status", "relevance", "coverage",
                "trust", "trust_reason", "source_type", "summary", "findings", "prior", "prior_label", "published",
-               "author", "site_name", "og_image", "error", "via", "date", "local", "path", "file_id", "suspicious")
+               "author", "site_name", "og_image", "error", "via", "date", "local", "path", "file_id", "suspicious",
+               "out_of_range")
 
 
 def domain_of(url: str) -> str:
@@ -49,17 +50,63 @@ def _clamp(v, lo=0, hi=10) -> Optional[int]:
         return None
 
 
+_MONTHS = {m: i for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov",
+                                       "dec"), 1)}
+_MONTHS.update({"mai": 5, "okt": 10, "des": 12, "dez": 12, "mär": 3, "mrz": 3, "maj": 5})   # nb/sv/da/de
+
+
+def page_date_span(text: str) -> Optional[tuple]:
+    """Earliest and latest ISO day a date string can mean: '2026-11-03' -> (that day, that day),
+    'November 2026' -> the whole month, '2025' -> the whole year. None if no date is found."""
+    import calendar
+    t = str(text or "").lower()
+    m = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", t)
+    if m:
+        y, mo, d = map(int, m.groups())
+        if 1 <= mo <= 12 and 1 <= d <= 31:
+            day = f"{y:04d}-{mo:02d}-{d:02d}"
+            return day, day
+    m = re.search(r"(\d{1,2})\.?\s+([a-z]{3})[a-z]*\.?,?\s+(\d{4})", t) or \
+        re.search(r"([a-z]{3})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})", t)
+    if m:
+        a, b, y = m.groups()
+        mon, day = (b, a) if a.isdigit() else (a, b)
+        if mon[:3] in _MONTHS:
+            iso = f"{int(y):04d}-{_MONTHS[mon[:3]]:02d}-{int(day):02d}"
+            return iso, iso
+    m = re.search(r"([a-z]{3})[a-z]*\s+(\d{4})", t) or re.search(r"(\d{4})-(\d{1,2})(?!\d)", t)
+    if m:
+        a, b = m.groups()
+        if a.isdigit():
+            y, mo = int(a), int(b)
+        elif a[:3] in _MONTHS:
+            y, mo = int(b), _MONTHS[a[:3]]
+        else:
+            y = mo = 0
+        if y and 1 <= mo <= 12:
+            last = calendar.monthrange(y, mo)[1]
+            return f"{y:04d}-{mo:02d}-01", f"{y:04d}-{mo:02d}-{last:02d}"
+    m = re.search(r"\b(19\d{2}|20\d{2})\b", t)
+    if m:
+        y = int(m.group(1))
+        return f"{y}-01-01", f"{y}-12-31"
+    return None
+
+
 def _slug(text: str) -> str:
     return re.sub(r"[^\w]+", "-", text.lower(), flags=re.UNICODE).strip("-_")[:40] or "search"
 
 
 class Research:
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
-                 include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None):
+                 include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None,
+                 date_from: str = "", date_to: str = ""):
         self.prev = history.get(from_id) if from_id else None   # reuse the sources of an earlier search
         if self.prev and self.prev.get("query"):
             query = self.prev["query"]
         self.query = " ".join(query.split())
+        from .search.base import date_range
+        self.dates = date_range(f"{date_from or ''}..{date_to or ''}") if (date_from or date_to) else None
         if not self.query:
             raise ValueError("Empty search")
         self.mode = mode if mode in ("auto", "article", "results") else "auto"
@@ -106,7 +153,17 @@ class Research:
         await self.emit({"type": "source", "source": self.pub(s)})
 
     def assessed(self) -> List[dict]:
-        return [self.sources[u] for u in self.order if self.sources[u].get("relevance") is not None]
+        return [self.sources[u] for u in self.order
+                if self.sources[u].get("relevance") is not None and not self.sources[u].get("out_of_range")]
+
+    def check_dates(self, s: dict) -> None:
+        """With a date range picked, leave out pages whose date is clearly outside it
+        (search engines don't all support date filters, and the ones that do aren't exact)."""
+        if not self.dates:
+            return
+        span = page_date_span(s.get("published") or "") or page_date_span(s.get("date") or "")
+        if span and (span[1] < self.dates[0] or span[0] > self.dates[1]):
+            s["out_of_range"] = True
 
     @staticmethod
     def score(s: dict) -> float:
@@ -133,7 +190,8 @@ class Research:
         t0 = time.time()
         await self.emit({"type": "start", "id": self.id, "query": self.query, "mode": self.mode,
                          "model": self.llm.describe(), "search": self.search.label if self.use_web else "Library only",
-                         "created": self.created, "library": self.use_library})
+                         "created": self.created, "library": self.use_library,
+                         "dates": list(self.dates) if self.dates else None})
         if self.prev and self.prev.get("plan") and self.prev.get("sources"):
             return await self.run_from_previous(t0)
         await self.make_plan()
@@ -184,7 +242,7 @@ class Research:
         return {"id": self.id, "query": self.query, "mode": self.mode, "created": self.created,
                 "model": self.llm.describe(), "search": self.search.label, "plan": self.plan,
                 "tried": self.tried, "images": images, "library": self.use_library, "web": self.use_web,
-                "language": self.lang}
+                "language": self.lang, "dates": list(self.dates) if self.dates else None}
 
     async def finish(self, record: dict, t0: float) -> dict:
         record["steps"] = list(self.steps.values())
@@ -204,6 +262,8 @@ class Research:
         their text back; if that isn't enough material, the best unread results are read too."""
         p = self.prev
         self.mode = "article"
+        if not self.dates and p.get("dates"):
+            self.dates = tuple(p["dates"])
         self.plan = p["plan"]
         self.terms = list(dict.fromkeys(tokenize(self.query) + tokenize(" ".join(self.plan.get("key_terms") or []))))
         self.tried = list(p.get("tried") or [])
@@ -366,12 +426,15 @@ class Research:
 
         # news and "latest" questions: ask the search engine for recent pages first
         fresh = self.plan.get("freshness", "any")
-        recent = {"latest": "week", "recent": "year"}.get(fresh, "") if rnd == 1 or fresh == "latest" else ""
+        if self.dates:   # the reader picked a date range: every search is limited to it
+            recent = "..".join(self.dates)
+        else:
+            recent = {"latest": "week", "recent": "year"}.get(fresh, "") if rnd == 1 or fresh == "latest" else ""
 
         async def one(q):
             try:
                 res = await self.search.text(q, n, recent=recent) if recent else []
-                if len(res) < 3:   # too narrow (or no time filter): search all dates too
+                if len(res) < 3 and not self.dates:   # too narrow (or no time filter): search all dates too
                     seen = {r.url for r in res}
                     res += [r for r in await self.search.text(q, n) if r.url not in seen]
                 return q, res
@@ -464,7 +527,7 @@ class Research:
                 a = await complete_json(self.llm, *prompts.assess(
                     self.query, self.plan["intent"], s["title"], s["url"], s["prior"], s["prior_label"], excerpt,
                     local=bool(s.get("local")), freshness=self.plan.get("freshness", "any"),
-                    published=s.get("published") or ""), max_tokens=1600)
+                    published=s.get("published") or "", dates=self.dates), max_tokens=1600)
             except Exception as e:
                 s["status"] = "error"
                 s["error"] = f"AI assessment failed: {e}"[:200]
@@ -489,6 +552,7 @@ class Research:
             "date": str(a.get("date") or "").strip()[:40],
             "status": "assessed",
         })
+        self.check_dates(s)
         await self.emit_source(s)
 
     # images
@@ -546,7 +610,7 @@ class Research:
         ranked = sorted([s for s in self.assessed() if s["relevance"] >= 3], key=self.score, reverse=True)
         rest = [self.sources[u] for u in self.order
                 if self.sources[u].get("relevance") is None or self.sources[u]["relevance"] < 3]
-        rest = [s for s in rest if s.get("status") != "error"][:12]
+        rest = [s for s in rest if s.get("status") != "error" and not s.get("out_of_range")][:12]
         best = [s["id"] for s in self.strong_matches()]
         items = [self.pub(s) for s in ranked + rest]
         await self.emit({"type": "outcome", "outcome": "results"})
@@ -565,7 +629,8 @@ class Research:
         await self.emit({"type": "outcome", "outcome": "article"})
         await self.emit({"type": "article_start", "sources": art_sources, "images": images, "related": related})
         md = ""
-        async for piece in self.llm.stream(*prompts.article(self.query, self.plan["intent"], self.plan.get("answer_type", ""),
+        intent = self.plan["intent"] + (f" (only information from {self.dates[0]} to {self.dates[1]})" if self.dates else "")
+        async for piece in self.llm.stream(*prompts.article(self.query, intent, self.plan.get("answer_type", ""),
                                                             chosen, self.lang), max_tokens=int(self.r.get("article_max_tokens", 4096))):
             md += piece
             await self.emit({"type": "token", "text": piece})

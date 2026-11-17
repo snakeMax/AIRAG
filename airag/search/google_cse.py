@@ -5,7 +5,7 @@ from typing import List
 import httpx
 
 from . import register
-from .base import ImageResult, SearchBackend, SearchError, SearchResult, to_int
+from .base import ImageResult, SearchBackend, SearchError, SearchResult, date_range, to_int
 
 
 @register
@@ -46,6 +46,9 @@ class GoogleCSE(SearchBackend):
         params = {"q": query, "n": n}
         if recent in ("day", "week", "month", "year"):
             params["dateRestrict"] = {"day": "d1", "week": "w1", "month": "m1", "year": "y1"}[recent]
+        elif date_range(recent):
+            a, b = date_range(recent)
+            params["sort"] = f"date:r:{a.replace('-', '')}:{b.replace('-', '')}"
         items = await self._get(params)
         return [SearchResult(i.get("title", ""), i["link"], i.get("snippet", ""), self.name) for i in items if i.get("link")]
 

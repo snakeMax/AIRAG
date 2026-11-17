@@ -123,7 +123,7 @@ Give 3-5 related_queries."""
 
 # assessing a source
 def assess(query: str, intent: str, title: str, url: str, prior: int, prior_label: str, passages: str,
-           local: bool = False, freshness: str = "any", published: str = "") -> Tuple[str, str]:
+           local: bool = False, freshness: str = "any", published: str = "", dates=None) -> Tuple[str, str]:
     system = (
         "You are a meticulous research analyst evaluating ONE source for a search query. Judge only from the provided "
         "text. Be strict: relevance measures whether the source actually CONTAINS information that answers the query, "
@@ -131,7 +131,10 @@ def assess(query: str, intent: str, title: str, url: str, prior: int, prior_labe
         "mentioned only in passing (a number buried in an anecdote, a side remark, a table cell). Keep numbers, units, "
         "dates and conditions exactly as stated.\n" + UNTRUSTED + "\n" + DATE_NOTE
     )
-    if FRESH_NOTE.get(freshness):
+    if dates:
+        system += (f"\nThe reader only wants information from {dates[0]} to {dates[1]}. Information clearly from "
+                   "outside that period is much less relevant; say so in the summary.")
+    elif FRESH_NOTE.get(freshness):
         system += "\n" + FRESH_NOTE[freshness]
     kind = ("This is a file from the user's OWN local library (personal notes or documents). It may be very relevant "
             "context, but treat it as unverified unless it cites sources.") if local else f"URL: {url}"

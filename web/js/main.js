@@ -8,10 +8,12 @@ import { openSetup, needsSetup, setSetupHooks } from "./setup.js";
 import { showDisclaimer, checkUpdates } from "./banners.js";
 import { openDrawer, closeDrawer, refreshRecent } from "./history.js";
 import { closeSummary } from "./summary.js";
+import { chipHtml, openDatePicker, emptyRange, hasRange } from "./dates.js";
 
 const state = {
   mode: localStorage.getItem("airag.mode") || "auto",
   library: false,
+  dates: emptyRange(),   // optional date range for the next search
   settings: null,
   status: null,
 };
@@ -26,10 +28,12 @@ function showView(name) {
   document.body.classList.toggle("running", name === "run");
 }
 
-function go(q, mode = state.mode, library = state.library, fromId = null) {
+function go(q, mode = state.mode, library = state.library, fromId = null, dates = state.dates) {
   q = (q || "").trim();
   if (!q) return;
-  const hash = `#/search?q=${encodeURIComponent(q)}&mode=${mode}${library ? "&lib=1" : ""}${fromId ? "&from=" + encodeURIComponent(fromId) : ""}`;
+  const hash = `#/search?q=${encodeURIComponent(q)}&mode=${mode}${library ? "&lib=1" : ""}` +
+    (fromId ? "&from=" + encodeURIComponent(fromId) : "") +
+    (dates?.from ? "&df=" + dates.from : "") + (dates?.to ? "&dt=" + dates.to : "");
   if (location.hash === hash) route();
   else location.hash = hash;
 }
@@ -39,7 +43,11 @@ function route() {
   if (hash.startsWith("#/search")) {
     const p = new URLSearchParams(hash.split("?")[1] || "");
     const q = p.get("q");
-    if (q) { startResearch(q, p.get("mode") || state.mode, p.get("lib") === "1", p.get("from")); return; }
+    if (q) {
+      startResearch(q, p.get("mode") || state.mode, p.get("lib") === "1", p.get("from"),
+                    { from: p.get("df") || "", to: p.get("dt") || "" });
+      return;
+    }
   }
   if (hash.startsWith("#/view/")) { openRecord(decodeURIComponent(hash.slice(7))); return; }
   if (hash.startsWith("#/settings")) { showHome(); openSettings(hash.split("/")[2] || "general"); history.replaceState(null, "", "#/"); return; }
@@ -58,6 +66,11 @@ function showHome() {
 }
 
 // home widgets
+function renderHomeDates() {
+  $("#homeDates").innerHTML = chipHtml("dateChip", state.dates);
+  $("#dateChip").onclick = e => openDatePicker(e.currentTarget, state.dates, d => { state.dates = d; renderHomeDates(); });
+}
+
 function renderModes() {
   $$("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === state.mode));
   for (const id of ["#libChk", "#topLibChk"]) $(id).checked = state.library;
@@ -137,6 +150,7 @@ async function boot() {
   setSettingsHooks({ onSaved: (s, langChanged) => { state.settings = s; if (langChanged) location.reload(); else refreshStatus(); } });
   setSetupHooks({ onDone: langChanged => (langChanged ? location.reload() : refreshStatus()) });
   renderModes();
+  renderHomeDates();
   route();
   if (!state.settings) return;
   showDisclaimer(state.settings);

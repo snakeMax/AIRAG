@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import httpx
 
-from .base import SearchError, SearchResult
+from .base import SearchError, SearchResult, date_range
 
 log = logging.getLogger("airag.search")
 
@@ -139,6 +139,8 @@ async def _ddg(c, query: str, n: int, region: str, safesearch: str, recent: str 
     data = {"q": query, "kl": region or "wt-wt", "kp": kp}
     if recent in _DF:
         data["df"] = _DF[recent]
+    elif date_range(recent):
+        data["df"] = "..".join(date_range(recent))
     attempts = [
         ("GET", "https://lite.duckduckgo.com/lite/", parse_lite, {"params": data}),
         ("POST", "https://html.duckduckgo.com/html/", parse, {"data": data,
@@ -167,6 +169,8 @@ async def _via_webview(query: str, n: int, region: str, safesearch: str, recent:
     params = {"q": query, "kl": region or "wt-wt", "kp": kp}
     if recent in _DF:
         params["df"] = _DF[recent]
+    elif date_range(recent):
+        params["df"] = "..".join(date_range(recent))
     url = "https://lite.duckduckgo.com/lite/?" + urlencode(params)
     async with _lock:
         html = await asyncio.to_thread(android_bridge.render_page, url, 20)

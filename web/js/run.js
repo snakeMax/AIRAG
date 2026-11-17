@@ -1,6 +1,7 @@
 // A research run: live progress, then results / article / suggestions. Also re-opens saved runs.
 import { $, $$, h, safeUrl, favicon, shortUrl, stripThink, rafThrottle, icon, toast, api, apiStream, fmtDate } from "./util.js";
 import { render, allowLinks } from "./markdown.js";
+import { chipHtml, openDatePicker, emptyRange } from "./dates.js";
 import { t, has, uiLang } from "./i18n.js";
 import { openSummary } from "./summary.js";
 import { openInteractive } from "./interactive.js";
@@ -9,20 +10,20 @@ export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
 export function setRunHooks(x) { hooks = { ...hooks, ...x }; }
 
-function newRun(query, mode, library) {
+function newRun(query, mode, library, dates = emptyRange()) {
   return {
-    query, mode, library, id: null, model: "", search: "", created: new Date().toISOString(), steps: [], sources: {},
+    query, mode, library, dates, id: null, model: "", search: "", created: new Date().toISOString(), steps: [], sources: {},
     plan: null, outcome: null, images: [], md: "", articleSources: [], related: [], results: null, suggestions: null,
     interactive: null, finished: false, error: null, t0: Date.now(), elapsed: null,
   };
 }
 
 // live run
-export async function startResearch(query, mode, library, fromId = null) {
+export async function startResearch(query, mode, library, fromId = null, dates = emptyRange()) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
-  const R = newRun(query, mode, library);
+  const R = newRun(query, mode, library, dates);
   RUN.current = R;
   hooks.showView("run");
   scrollTo(0, 0);
@@ -30,7 +31,8 @@ export async function startResearch(query, mode, library, fromId = null) {
   document.title = `${query} - AIRAG`;
   renderShell(R);
   try {
-    await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId }, ev => {
+    await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId,
+      date_from: dates?.from || "", date_to: dates?.to || "" }, ev => {
       if (RUN.current !== R) return false;
       onEvent(R, ev);
     }, ctrl.signal);
@@ -98,10 +100,13 @@ function renderShell(R, done = false) {
       </button>
       <div class="progress-body"><ol class="steps" id="steps"></ol></div>
     </div>
+    <div class="run-filters">${chipHtml("runDates", R.dates)}</div>
     <div id="output">${done ? "" : `<div class="skel" style="padding:8px 4px"><div style="width:70%"></div><div style="width:92%"></div><div style="width:84%"></div><div style="width:60%"></div></div>`}</div>`;
   $("#runSide").innerHTML = `<div class="sticky"><div class="side-card"><div class="side-title">${h(t("src.title"))} <span class="count" id="srcCount">0</span></div>
     <div class="src-list" id="srcList"><div class="muted" style="font-size:13px">${h(t("src.waiting"))}</div></div></div></div>`;
   $("#progressToggle").onclick = () => $("#progress").classList.toggle("collapsed");
+  $("#runDates").onclick = e => openDatePicker(e.currentTarget, R.dates,
+    d => hooks.go(R.query, R.mode || "auto", R.library, null, d), t("date.searchAgain"));
 }
 
 function setSub(text) { const el = $("#phSub"); if (el) el.textContent = text; }
@@ -139,8 +144,9 @@ const renderSourceSide = rafThrottle(R => {
   $("#srcCount").textContent = all.length;
   all.sort((a, b) => ((b.relevance ?? -1) - (a.relevance ?? -1)) || a.id - b.id);
   list.innerHTML = all.map(s => {
-    const dim = ["unreadable", "error"].includes(s.status) || (s.relevance != null && s.relevance < 3);
-    const right = s.relevance != null
+    const dim = ["unreadable", "error"].includes(s.status) || (s.relevance != null && s.relevance < 3) || s.out_of_range;
+    const right = s.out_of_range ? `<span class="st-chip" title="${h(s.published || s.date || "")}">${h(t("src.outOfRange"))}</span>`
+      : s.relevance != null
       ? `<span class="rel" title="${h(t("rel.label"))} ${s.relevance}/10"><i style="width:${s.relevance * 10}%"></i></span>`
       : `<span class="st-chip">${h(t("src." + (s.status || "found")))}</span>`;
     return `<a class="src-row ${dim ? "dim" : ""}" href="${h(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer" title="${h(s.title)}${s.error ? " - " + h(s.error) : ""}">
@@ -418,7 +424,7 @@ export async function openRecord(id) {
     $("#runSide").innerHTML = "";
     return;
   }
-  const R = newRun(rec.query, rec.mode, rec.library);
+  const R = newRun(rec.query, rec.mode, rec.library, rec.dates ? { from: rec.dates[0], to: rec.dates[1] } : emptyRange());
   Object.assign(R, {
     id: rec.id, model: rec.model, search: rec.search, created: rec.created, plan: rec.plan, outcome: rec.outcome,
     images: rec.images || [], md: rec.article || "", articleSources: rec.article_sources || [], related: rec.related || [],

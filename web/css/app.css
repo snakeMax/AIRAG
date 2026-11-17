@@ -474,3 +474,15 @@ html, body { overflow-x: hidden; }
 .ph-title, .run pre, .prose, .article h1, .r-title, .r-url { overflow-wrap: anywhere; }
 .prose pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .prose table { display: block; max-width: 100%; overflow-x: auto; }
+
+/* date range filter */
+.date-chip { border: 0; cursor: pointer; font: inherit; font-size: 13px; }
+.date-chip svg { width: 14px; height: 14px; }
+.run-filters { display: flex; gap: 8px; margin: -6px 0 16px; flex-wrap: wrap; }
+.date-pop { position: absolute; z-index: 70; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px;
+  box-shadow: var(--shadow-lg); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.dp-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.dp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dp-row label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.dp-row .input { height: 36px; padding: 0 6px; min-width: 0; width: 100%; box-sizing: border-box; font-size: 14px; }
+.dp-foot { display: flex; justify-content: space-between; gap: 8px; }

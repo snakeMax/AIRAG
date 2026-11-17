@@ -5,7 +5,7 @@ from typing import List
 import httpx
 
 from . import register
-from .base import ImageResult, SearchBackend, SearchError, SearchResult
+from .base import ImageResult, SearchBackend, SearchError, SearchResult, range_to_period
 
 
 @register
@@ -21,8 +21,9 @@ class SearXNG(SearchBackend):
     async def _get(self, query: str, category: str, recent: str = "") -> list:
         params = {"q": query, "format": "json", "categories": category,
                   "safesearch": {"off": 0, "moderate": 1, "strict": 2}.get(self.common.get("safesearch"), 1)}
-        if recent in ("day", "week", "month", "year"):
-            params["time_range"] = recent
+        period = range_to_period(recent)
+        if period:
+            params["time_range"] = period
         try:
             async with httpx.AsyncClient(timeout=20) as c:
                 r = await c.get(str(self.cfg.get("url", "")).rstrip("/") + "/search", params=params)

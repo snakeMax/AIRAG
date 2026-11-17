@@ -4,7 +4,7 @@ import asyncio
 from typing import List
 
 from . import register
-from .base import ImageResult, SearchBackend, SearchError, SearchResult, to_int
+from .base import ImageResult, SearchBackend, SearchError, SearchResult, date_range, to_int
 
 
 def _have_ddgs() -> bool:
@@ -38,7 +38,8 @@ class DuckDuckGo(SearchBackend):
                 "safesearch": self.common.get("safesearch") or "moderate"}
 
     async def text(self, query: str, n: int = 10, recent: str = "") -> List[SearchResult]:
-        tl = {"day": "d", "week": "w", "month": "m", "year": "y"}.get(recent)
+        rng = date_range(recent)
+        tl = f"{rng[0]}..{rng[1]}" if rng else {"day": "d", "week": "w", "month": "m", "year": "y"}.get(recent)
 
         def run():
             return list(_ddgs().text(query, max_results=n, timelimit=tl, **self._kw()) or [])

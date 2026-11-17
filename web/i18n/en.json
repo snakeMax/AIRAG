@@ -394,5 +394,18 @@
  "step.reuse.done": "Using {n} sources from the previous search",
  "step.reuse.run": "Using {n} sources from the previous search",
  "step.reopen.run": "Re-opening {n} pages",
- "step.reopen.done": "Re-opened {n} pages"
+ "step.reopen.done": "Re-opened {n} pages",
+ "date.any": "Any time",
+ "date.since": "Since {d}",
+ "date.until": "Until {d}",
+ "date.tip": "Only show results from a period of time",
+ "date.from": "From",
+ "date.to": "To",
+ "date.clear": "Any time",
+ "date.apply": "Use these dates",
+ "date.searchAgain": "Search again",
+ "date.last.week": "Past week",
+ "date.last.month": "Past month",
+ "date.last.year": "Past year",
+ "src.outOfRange": "Outside dates"
 }

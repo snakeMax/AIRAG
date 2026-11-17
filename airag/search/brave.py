@@ -5,7 +5,7 @@ from typing import List
 import httpx
 
 from . import register
-from .base import ImageResult, SearchBackend, SearchError, SearchResult
+from .base import ImageResult, SearchBackend, SearchError, SearchResult, date_range
 
 
 @register
@@ -35,6 +35,8 @@ class Brave(SearchBackend):
         params = {"q": query, "count": min(n, 20)}
         if recent in ("day", "week", "month", "year"):
             params["freshness"] = {"day": "pd", "week": "pw", "month": "pm", "year": "py"}[recent]
+        elif date_range(recent):
+            params["freshness"] = "to".join(date_range(recent))
         d = await self._get("/web/search", params)
         return [SearchResult(r.get("title", ""), r["url"], r.get("description", ""), self.name)
                 for r in d.get("web", {}).get("results", []) if r.get("url")]
