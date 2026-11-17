@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.webkit.MimeTypeMap
 import android.webkit.WebResourceRequest
@@ -14,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
@@ -54,6 +56,57 @@ object Bridge {
         pickLatch = null
         return pickResult
     }
+
+    private var filesLatch: CountDownLatch? = null
+    private var pickedFiles: List<Uri> = emptyList()
+
+    /**
+     * Lets the user pick files and copies them into destDir. With move=true the originals are deleted
+     * afterwards when the source app allows it. Returns a JSON list of {"path", "moved"}.
+     */
+    @JvmStatic
+    fun importFiles(destDir: String, move: Boolean): String {
+        val a = activity() ?: return "[]"
+        val latch = CountDownLatch(1)
+        filesLatch = latch
+        pickedFiles = emptyList()
+        a.runOnUiThread { a.filesPicker.launch(arrayOf("*/*")) }
+        latch.await(10, TimeUnit.MINUTES)
+        filesLatch = null
+        val dir = File(destDir).apply { mkdirs() }
+        val out = JSONArray()
+        for (uri in pickedFiles) {
+            try {
+                val name = displayName(a, uri) ?: "file"
+                var dest = File(dir, name)
+                var n = 2
+                while (dest.exists()) {
+                    dest = File(dir, name.substringBeforeLast('.') + " ($n)" +
+                        (if (name.contains('.')) "." + name.substringAfterLast('.') else ""))
+                    n++
+                }
+                a.contentResolver.openInputStream(uri)?.use { input ->
+                    dest.outputStream().use { input.copyTo(it) }
+                } ?: continue
+                var moved = false
+                if (move) {
+                    moved = try { DocumentsContract.deleteDocument(a.contentResolver, uri) } catch (_: Exception) { false }
+                }
+                out.put(JSONObject().put("path", dest.absolutePath).put("moved", moved))
+            } catch (_: Exception) { }
+        }
+        return out.toString()
+    }
+
+    fun onFilesPicked(uris: List<Uri>) {
+        pickedFiles = uris
+        filesLatch?.countDown()
+    }
+
+    private fun displayName(a: MainActivity, uri: Uri): String? =
+        a.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        }
 
     fun onFolderPicked(a: MainActivity, uri: Uri?) {
         pickResult = if (uri == null) "" else treeUriToPath(uri) ?: "!unsupported"

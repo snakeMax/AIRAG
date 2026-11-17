@@ -78,3 +78,34 @@ def test_repair_moves_broken_data_aside():
     assert "settings" in done and "history" in done
     assert repair.check()["ok"]
     assert list((paths.CONFIG_DIR / "broken").glob("settings-*.json"))
+
+
+def test_my_library_save_and_reopen(tmp_path):
+    from airag import mylibrary
+    s = config.load()
+    s["library"]["personal_folder"] = str(tmp_path / "lib")
+    rec = {"id": "x1", "outcome": "article", "query": "q", "title": "A: test/title?", "created": "2026-11-17T22:00:00+01:00",
+           "article": "# A test\n\nBody [1].", "article_sources": [{"n": 1, "title": "Src", "url": "https://e.org/a", "trust": 7}],
+           "images": [{"src": "https://e.org/i.png"}], "interactive_html": "<html></html>"}
+    md = mylibrary.save_article(rec, s)
+    text = md.read_text(encoding="utf-8")
+    assert "## Sources" in text and "https://e.org/a" in text and md.parent.name == "Articles"
+    items = mylibrary.list_saved(s)
+    assert len(items) == 1 and not items[0]["rich"]
+    back = mylibrary.load_saved(s, items[0]["file"])
+    assert back["article"] == rec["article"] and back["images"] == [] and not back.get("interactive_html")
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        mylibrary.load_saved(s, "../../settings.json")
+    from airag.library import allowed_file
+    assert allowed_file(md, s) and not allowed_file(md.with_name(md.stem + ".airag.json"), s)
+
+
+def test_translation_files_have_no_duplicate_keys():
+    import collections
+    import re
+    from pathlib import Path
+    for f in Path(__file__).resolve().parent.parent.joinpath("web", "i18n").glob("*.json"):
+        keys = re.findall(r'"([A-Za-z0-9_.]+)"\s*:', f.read_text(encoding="utf-8"))
+        dupes = [k for k, c in collections.Counter(keys).items() if c > 1]
+        assert not dupes, (f.name, dupes)

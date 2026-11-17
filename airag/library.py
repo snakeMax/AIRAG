@@ -342,6 +342,8 @@ def _protected_roots() -> List[Path]:
 
 def is_secret_file(p: Path) -> bool:
     name = p.name.lower()
+    if name.endswith(".airag.json"):   # AIRAG's own copy of a saved article (the .md next to it is indexed)
+        return True
     if name in SECRET_NAMES or p.suffix.lower() in SECRET_EXTS or name.startswith(".env"):
         return True
     words = re.split(r"[^a-z0-9]+", p.stem.lower())
@@ -376,6 +378,14 @@ def allowed_file(path, settings: dict) -> bool:
 
 def settings_args(settings: dict) -> dict:
     lib = settings.get("library", {})
-    return {"folders": list(lib.get("folders") or []),
+    folders = list(lib.get("folders") or [])
+    try:   # My library (saved articles, imported files) is always searched when it exists
+        from .mylibrary import folder
+        mine = folder(settings)
+        if mine.is_dir() and str(mine) not in folders:
+            folders.append(str(mine))
+    except Exception:
+        pass
+    return {"folders": folders,
             "extensions": [e for e in str(lib.get("extensions", "")).split(",")],
             "max_mb": float(lib.get("max_file_mb") or 25)}

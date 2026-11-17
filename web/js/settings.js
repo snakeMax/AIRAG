@@ -414,6 +414,12 @@ function wireSearch(dlg) {
 // library
 function libraryPane(sc, st) {
   return `<h3>${h(t("lib.title"))}</h3><p>${h(t("lib.intro"))}</p>
+    <h4>${h(t("my.title"))}</h4><p class="muted" style="font-size:13px">${h(t("my.intro"))}</p>
+    <div class="status-card" id="myLibCard"><div class="grow">${h(t("common.loading"))}</div></div>
+    <div class="row" style="margin:8px 0 18px"><span class="muted" style="font-size:13px">${h(t("my.addFiles"))}</span>
+      <button type="button" class="btn sm" data-import="copy">${icon("copy")}${h(t("my.copy"))}</button>
+      <button type="button" class="btn sm" data-import="move">${icon("upload")}${h(t("my.move"))}</button></div>
+    <h4>${h(t("my.other"))}</h4>
     <div class="list-box" id="libFolders"><div class="list-empty">${h(t("common.loading"))}</div></div>
     <div class="row" style="margin-bottom:14px"><button type="button" class="btn sm primary" id="libPick">${icon("folder")}${h(t("lib.add"))}</button>
       <input class="input" id="libPath" placeholder="${h(t("lib.addPath"))}" style="flex:1;min-width:200px;height:34px" spellcheck="false">
@@ -422,7 +428,27 @@ function libraryPane(sc, st) {
     ${fields(sc.library, "library", "library", st.library)}`;
 }
 
+async function refreshMyLibrary() {
+  const card = $("#myLibCard");
+  if (!card) return;
+  const m = await api("/api/mylibrary").catch(() => null);
+  if (!m) return;
+  card.innerHTML = `${icon("book")}<div class="grow"><div class="lr-t mono" style="word-break:break-all">${h(m.path)}</div>
+      <div class="muted" style="font-size:12.5px">${m.exists ? h(t("my.files", { n: m.files })) : h(t("my.notYet"))}</div></div>
+    <button type="button" class="btn sm" id="myChange">${icon("folder")}${h(t("my.change"))}</button>
+    ${m.custom ? `<button type="button" class="btn sm ghost" id="myDefault" title="${h(m.default)}">${h(t("my.default"))}</button>` : ""}
+    ${m.exists && !android() ? `<button type="button" class="btn sm ghost" id="myOpen">${icon("ext")}${h(t("gen.openFolder"))}</button>` : ""}`;
+  const set = async path => {
+    const r = await api("/api/mylibrary/folder", { method: "POST", body: { path } }).catch(e => { toast(e.message, 5000); return null; });
+    if (r) refreshMyLibrary();
+  };
+  $("#myChange").onclick = () => set(null);
+  $("#myDefault")?.addEventListener("click", () => set(""));
+  $("#myOpen")?.addEventListener("click", () => api("/api/mylibrary/open", { method: "POST" }).catch(e => toast(e.message)));
+}
+
 async function refreshLibrary() {
+  refreshMyLibrary();
   const box = $("#libFolders");
   if (!box) return;
   const s = await api("/api/library/status").catch(() => null);
@@ -476,6 +502,18 @@ function wireLibrary(dlg) {
     if (r.path) add(r.path);
   };
   $("#libAddPath", dlg).onclick = () => { add($("#libPath").value.trim()); $("#libPath").value = ""; };
+  $$("[data-import]", dlg).forEach(b => (b.onclick = async () => {
+    const move = b.dataset.import === "move";
+    if (move && !confirm(t("my.moveConfirm"))) return;
+    b.disabled = true;
+    const r = await api("/api/mylibrary/import", { method: "POST", body: { move } }).catch(e => { toast(e.message, 5000); return null; });
+    b.disabled = false;
+    if (r?.added?.length) {
+      toast(t(move && r.moved < r.added.length ? "my.addedCopied" : "my.added", { n: r.added.length }), 5000);
+      refreshMyLibrary();
+      runSync();
+    }
+  }));
 }
 
 // prompts

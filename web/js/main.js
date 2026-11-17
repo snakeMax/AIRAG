@@ -2,7 +2,7 @@
 import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
 import { initI18n, t, applyI18n } from "./i18n.js";
 import { loadLocal, setAppearance, onAppearanceChange, effectiveTheme } from "./theme.js";
-import { RUN, startResearch, openRecord, setRunHooks } from "./run.js";
+import { RUN, startResearch, openRecord, openSaved, setRunHooks } from "./run.js";
 import { openSettings, setSettingsHooks } from "./settings.js";
 import { openSetup, needsSetup, setSetupHooks } from "./setup.js";
 import { showDisclaimer, checkUpdates } from "./banners.js";
@@ -28,11 +28,11 @@ function showView(name) {
   document.body.classList.toggle("running", name === "run");
 }
 
-function go(q, mode = state.mode, library = state.library, fromId = null, dates = state.dates) {
+function go(q, mode = state.mode, library = state.library, fromId = null, dates = state.dates, mergeId = null) {
   q = (q || "").trim();
   if (!q) return;
   const hash = `#/search?q=${encodeURIComponent(q)}&mode=${mode}${library ? "&lib=1" : ""}` +
-    (fromId ? "&from=" + encodeURIComponent(fromId) : "") +
+    (fromId ? "&from=" + encodeURIComponent(fromId) : "") + (mergeId ? "&merge=" + encodeURIComponent(mergeId) : "") +
     (dates?.from ? "&df=" + dates.from : "") + (dates?.to ? "&dt=" + dates.to : "");
   if (location.hash === hash) route();
   else location.hash = hash;
@@ -45,11 +45,12 @@ function route() {
     const q = p.get("q");
     if (q) {
       startResearch(q, p.get("mode") || state.mode, p.get("lib") === "1", p.get("from"),
-                    { from: p.get("df") || "", to: p.get("dt") || "" });
+                    { from: p.get("df") || "", to: p.get("dt") || "" }, p.get("merge"));
       return;
     }
   }
   if (hash.startsWith("#/view/")) { openRecord(decodeURIComponent(hash.slice(7))); return; }
+  if (hash.startsWith("#/saved/")) { openSaved(decodeURIComponent(hash.slice(8))); return; }
   if (hash.startsWith("#/settings")) { showHome(); openSettings(hash.split("/")[2] || "general"); history.replaceState(null, "", "#/"); return; }
   showHome();
 }
@@ -101,7 +102,7 @@ function wire() {
     $(id).onchange = e => {
       if (e.target.checked && !(state.status?.library_folders > 0)) {
         e.target.checked = false;
-        toast(t("lib.noFolders"), 5000);
+        toast(t("lib.needFolder"), 5000);
         openSettings("library");
         return;
       }
@@ -112,7 +113,7 @@ function wire() {
   }
   $("#engineLine").onclick = () => openSettings("model");
   $("#settingsBtn").onclick = () => openSettings();
-  $("#historyBtn").onclick = openDrawer;
+  $("#historyBtn").onclick = () => openDrawer();
   $("#drawerClose").onclick = closeDrawer;
   $("#scrim").onclick = () => { closeDrawer(); closeSummary(); };
   $("#themeBtn").onclick = () => setAppearance({ theme: effectiveTheme() === "dark" ? "light" : "dark" });

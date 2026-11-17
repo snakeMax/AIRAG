@@ -22,6 +22,7 @@ def main() -> None:
     p.add_argument("--no-open", "--no-browser", dest="no_open", action="store_true")
     p.add_argument("--wait-pid", type=int, help=argparse.SUPPRESS)
     p.add_argument("--pick-folder", metavar="OUTFILE", help=argparse.SUPPRESS)
+    p.add_argument("--pick-files", metavar="OUTFILE", help=argparse.SUPPRESS)
     p.add_argument("--install-browser", action="store_true")
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--version", action="store_true")
@@ -34,6 +35,10 @@ def main() -> None:
     if args.pick_folder:
         from .appctl import run_folder_dialog
         run_folder_dialog(args.pick_folder)
+        return
+    if args.pick_files:
+        from .appctl import run_files_dialog
+        run_files_dialog(args.pick_files)
         return
     if args.install_browser:
         from .desktop import setup_logging

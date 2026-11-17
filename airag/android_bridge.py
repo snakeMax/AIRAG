@@ -28,6 +28,13 @@ def pick_folder() -> Optional[str]:
     return path or None
 
 
+def import_files(dest_dir: str, move: bool) -> list:
+    """Let the user pick files and copy (or move) them into dest_dir. Returns [{path, moved}]."""
+    import json
+    raw = _bridge().importFiles(str(dest_dir), bool(move))   # blocks until the user picks (or cancels)
+    return json.loads(str(raw)) if raw else []
+
+
 def open_path(path: str, reveal: bool = False) -> None:
     _bridge().openFile(str(path))
 

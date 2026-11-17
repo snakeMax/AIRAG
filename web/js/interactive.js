@@ -16,14 +16,19 @@ export async function openInteractive(run, force = false) {
     </form>`;
   dlg.showModal();
   $("#interRedo").onclick = () => openInteractive(run, true);
+  if (run.savedFile) $("#interRedo").hidden = true;   // opened from My library: use the saved copy
   try {
-    const res = await api("/api/interactive", { method: "POST", body: { id: run.id, force, ui_lang: uiLang() } });
+    const res = run.savedFile && run.interactiveHtml && !force
+      ? { html: run.interactiveHtml }
+      : await api("/api/interactive", { method: "POST", body: { id: run.id, force, ui_lang: uiLang() } });
     run.interactiveHtml = res.html;
     const frame = document.createElement("iframe");
     frame.setAttribute("sandbox", "allow-scripts");
     frame.setAttribute("referrerpolicy", "no-referrer");
     frame.className = "inter-frame";
     frame.srcdoc = res.html;
+    // some browsers leave a freshly loaded sandboxed frame blank until it repaints
+    frame.addEventListener("load", () => { frame.style.display = "none"; void frame.offsetHeight; frame.style.display = ""; }, { once: true });
     $("#interBody").replaceChildren(frame);
   } catch (e) {
     $("#interBody").innerHTML = `<div class="inter-wait"><div class="status-line err">${h(e.message)}</div></div>`;

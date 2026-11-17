@@ -111,11 +111,11 @@ async def fake_fetch(url, cfg):
 
 
 def install(settings_patch: bool = True):
+    import airag.fetch as F
     import airag.pipeline as P
     import airag.summarize as Sm
     from airag import config
-    P.fetch_page = fake_fetch
-    Sm.fetch_page = fake_fetch
+    F.fetch_page = P.fetch_page = Sm.fetch_page = fake_fetch
     if settings_patch:
         orig = config.load
 

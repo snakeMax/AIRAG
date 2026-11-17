@@ -19,7 +19,7 @@ function newRun(query, mode, library, dates = emptyRange()) {
 }
 
 // live run
-export async function startResearch(query, mode, library, fromId = null, dates = emptyRange()) {
+export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
@@ -32,7 +32,7 @@ export async function startResearch(query, mode, library, fromId = null, dates =
   renderShell(R);
   try {
     await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId,
-      date_from: dates?.from || "", date_to: dates?.to || "" }, ev => {
+      date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId }, ev => {
       if (RUN.current !== R) return false;
       onEvent(R, ev);
     }, ctrl.signal);
@@ -73,9 +73,59 @@ function onEvent(R, ev) {
   }
 }
 
+// save the article to My library (Markdown with the sources at the bottom)
+function updateSaveButton(R) {
+  const b = $("#saveBtn");
+  if (!b) return;
+  const ready = R.finished && !R.error && R.id && R.outcome === "article" && !R.savedFile;
+  b.disabled = !ready;
+  b.innerHTML = R.savedPath ? `${icon("check")}${h(t("save.saved"))}` : `${icon("download")}${h(t("save.button"))}`;
+  if (R.savedPath) b.title = R.savedPath;
+}
+
+function openSavePop(anchor, R) {
+  if ($(".save-pop")) { $(".save-pop").remove(); return; }
+  const rich = localStorage.getItem("airag.saveRich") === "1";
+  const pop = document.createElement("div");
+  pop.className = "date-pop save-pop";
+  pop.innerHTML = `<label class="switch"><input type="checkbox" id="saveRich" ${rich ? "checked" : ""}> ${h(t("save.rich"))}</label>
+    <div class="muted" style="font-size:12px">${h(t(R.interactiveHtml || R.interactive?.html ? "save.richHelp" : "save.richHelpNoInter"))}</div>
+    <div class="dp-foot"><span></span><button type="button" class="btn sm primary" id="saveGo">${icon("download")}${h(t("save.button"))}</button></div>`;
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect(), w = Math.min(300, innerWidth - 16);
+  pop.style.width = w + "px";
+  pop.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
+  pop.style.top = (r.bottom + scrollY + 8) + "px";
+  $("#saveGo", pop).onclick = () => {
+    const on = $("#saveRich", pop).checked;
+    localStorage.setItem("airag.saveRich", on ? "1" : "0");
+    pop.remove();
+    saveArticle(R, on);
+  };
+  setTimeout(() => document.addEventListener("pointerdown", function away(e) {
+    if (!pop.isConnected) { document.removeEventListener("pointerdown", away); return; }
+    if (pop.contains(e.target) || anchor.contains(e.target)) return;
+    pop.remove();
+    document.removeEventListener("pointerdown", away);
+  }), 0);
+}
+
+async function saveArticle(R, rich = false) {
+  const b = $("#saveBtn");
+  if (b) b.disabled = true;
+  try {
+    const r = await api("/api/mylibrary/save", { method: "POST", body: { id: R.id, rich } });
+    R.savedPath = r.path;
+    toast(t("save.done", { path: r.path }), 5000);
+  } catch (e) { toast(e.message, 5000); }
+  updateSaveButton(R);
+}
+
 function finish(R) {
   if (R.finished) return;
   R.finished = true;
+  $(".again-chip")?.removeAttribute("hidden");
+  updateSaveButton(R);
   const ph = $("#phIcon");
   if (ph) { ph.className = "ph-icon " + (R.error ? "err" : "ok"); ph.innerHTML = icon(R.error ? "warn" : "check"); }
   const pt = $(".ph-title");
@@ -100,7 +150,8 @@ function renderShell(R, done = false) {
       </button>
       <div class="progress-body"><ol class="steps" id="steps"></ol></div>
     </div>
-    <div class="run-filters">${chipHtml("runDates", R.dates)}</div>
+    <div class="run-filters">${chipHtml("runDates", R.dates)}
+      <button type="button" class="check-chip again-chip" data-act="again" ${done ? "" : "hidden"} title="${h(t("run.againTip"))}">${icon("refresh")}<span>${h(t("run.again"))}</span></button></div>
     <div id="output">${done ? "" : `<div class="skel" style="padding:8px 4px"><div style="width:70%"></div><div style="width:92%"></div><div style="width:84%"></div><div style="width:60%"></div></div>`}</div>`;
   $("#runSide").innerHTML = `<div class="sticky"><div class="side-card"><div class="side-title">${h(t("src.title"))} <span class="count" id="srcCount">0</span></div>
     <div class="src-list" id="srcList"><div class="muted" style="font-size:13px">${h(t("src.waiting"))}</div></div></div></div>`;
@@ -175,7 +226,8 @@ function imgStrip(images) {
 function sourceActions(s) {
   const lib = s.local ? `<button class="link-btn" data-act="lib-open" data-fid="${s.file_id}">${icon("ext")}${h(t("lib.open"))}</button>
     <button class="link-btn" data-act="lib-reveal" data-fid="${s.file_id}">${icon("folder")}${h(t("lib.reveal"))}</button>` : "";
-  return `<button class="link-btn" data-act="sum-source" data-sid="${s.id}">${icon("sparkle")}${h(t("sum.button"))}</button>${lib}`;
+  const save = s.local ? "" : `<button class="link-btn" data-act="save-source" data-sid="${s.id}" title="${h(t("save.sourceTip"))}">${icon("download")}${h(t("save.source"))}</button>`;
+  return `<button class="link-btn" data-act="sum-source" data-sid="${s.id}">${icon("sparkle")}${h(t("sum.button"))}</button>${save}${lib}`;
 }
 
 // clicks inside the output area
@@ -186,10 +238,11 @@ $("#runMain").addEventListener("click", e => {
   const act = b.dataset.act;
   if (act === "article") hooks.go(R.query, "article", R.library, R.id);   // reuse this search's sources
   else if (act === "results") hooks.go(R.query, "results", R.library);
-  else if (act === "retry") hooks.go(R.query, R.mode || "auto", R.library);
+  else if (act === "retry" || act === "again") hooks.go(R.query, R.mode || "auto", R.library, null, R.dates, R.id);
   else if (act === "search") hooks.go(b.dataset.q, "auto", R.library);
   else if (act === "settings") hooks.openSettings(b.dataset.tab);
   else if (act === "copy") navigator.clipboard.writeText(articleMarkdown(R)).then(() => toast(t("art.copied")));
+  else if (act === "save") openSavePop(b, R);
   else if (act === "sum-article") openSummary({ kind: "article", query: R.query, payload: { markdown: stripThink(R.md) }, label: $("#aTitle")?.textContent || R.query, key: `a:${R.id}` });
   else if (act === "sum-results") {
     const items = (R.results?.items || []).filter(s => s.relevance != null).slice(0, 12);
@@ -197,6 +250,13 @@ $("#runMain").addEventListener("click", e => {
   } else if (act === "sum-source") {
     const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
     if (s) openSummary({ kind: "source", query: R.query, payload: { url: s.url }, label: s.title || s.url, key: `s:${s.url}` });
+  } else if (act === "save-source") {
+    const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
+    if (!s) return;
+    b.disabled = true;
+    api("/api/mylibrary/save-source", { method: "POST", body: { url: s.url, query: R.query } })
+      .then(r => { toast(t("save.done", { path: r.path }), 5000); b.innerHTML = `${icon("check")}${h(t("save.saved"))}`; })
+      .catch(err => { toast(err.message, 5000); b.disabled = false; });
   } else if (act === "lib-open" || act === "lib-reveal") {
     api("/api/library/open", { method: "POST", body: { file_id: +b.dataset.fid, reveal: act === "lib-reveal" } }).catch(err => toast(err.message));
   } else if (act === "interactive") {
@@ -253,6 +313,7 @@ function renderArticle(R) {
           <button class="btn sm" data-act="sum-article">${icon("sparkle")}${h(t("sum.button"))}</button>
           <button class="btn sm has-tip" data-act="interactive" id="interBtn" aria-disabled="true"><span class="lbl row" style="gap:7px">${icon("play")}${h(t("inter.button"))}</span><span class="tip-text" id="interTip">${h(t("inter.checking"))}</span></button>
           <button class="btn sm ghost" data-act="results">${icon("list")}${h(t("art.results"))}</button>
+          <button class="btn sm" data-act="save" id="saveBtn" disabled title="${h(t("save.tip"))}">${icon("download")}${h(t("save.button"))}</button>
           <button class="btn sm ghost" data-act="copy">${icon("copy")}${h(t("art.copy"))}</button>
         </div></div>
       ${hero ? `<figure class="a-hero" data-img><img src="${h(hero.src)}" alt="${h(hero.title)}" referrerpolicy="no-referrer" ${imgOnErr}>
@@ -414,21 +475,41 @@ function renderError(R) {
 // saved runs
 export async function openRecord(id) {
   RUN.ctrl?.abort();
-  if (RUN.current && RUN.current.id === id && RUN.current.finished) { hooks.showView("run"); return; }
+  if (RUN.current && RUN.current.id === id && RUN.current.finished && !RUN.current.savedFile) { hooks.showView("run"); return; }
   let rec;
   try {
     rec = await api(`/api/history/${encodeURIComponent(id)}`);
   } catch (e) {
-    hooks.showView("run");
-    $("#runMain").innerHTML = `<div class="empty"><h2>${h(t("err.notFound"))}</h2><p>${h(e.message)}</p></div>`;
-    $("#runSide").innerHTML = "";
-    return;
+    return showNotFound(e);
   }
+  showRecord(rec);
+}
+
+/** An article saved in My library: shown from the saved copy, no AI or network needed. */
+export async function openSaved(file) {
+  RUN.ctrl?.abort();
+  let rec;
+  try {
+    rec = await api(`/api/mylibrary/saved/${encodeURIComponent(file)}`);
+  } catch (e) {
+    return showNotFound(e);
+  }
+  showRecord(rec);
+}
+
+function showNotFound(e) {
+  hooks.showView("run");
+  $("#runMain").innerHTML = `<div class="empty"><h2>${h(t("err.notFound"))}</h2><p>${h(e.message)}</p></div>`;
+  $("#runSide").innerHTML = "";
+}
+
+function showRecord(rec) {
   const R = newRun(rec.query, rec.mode, rec.library, rec.dates ? { from: rec.dates[0], to: rec.dates[1] } : emptyRange());
   Object.assign(R, {
     id: rec.id, model: rec.model, search: rec.search, created: rec.created, plan: rec.plan, outcome: rec.outcome,
     images: rec.images || [], md: rec.article || "", articleSources: rec.article_sources || [], related: rec.related || [],
     results: rec.results || null, suggestions: rec.suggestions || null, elapsed: rec.elapsed, interactive: rec.interactive || null,
+    savedPath: rec.saved_path || null, savedFile: rec.saved_file || null, interactiveHtml: rec.interactive_html || "",
   });
   (rec.sources || []).forEach(s => (R.sources[s.id] = s));
   RUN.current = R;
@@ -442,6 +523,7 @@ export async function openRecord(id) {
   if (rec.outcome === "results" && R.results) renderResults(R);
   else if (rec.outcome === "article") renderArticle(R);
   else if (rec.outcome === "suggestions" && R.suggestions) renderSuggestions(R);
+  else if (rec.outcome === "error") { R.error = rec.error || "?"; renderError(R); }
   finish(R);
   setSub(`${fmtDate(rec.created, uiLang())} · ${rec.model} · ${t("run.found", { n: Object.keys(R.sources).length })} · ${rec.elapsed ?? "?"}s`);
 }

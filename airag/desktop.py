@@ -239,16 +239,20 @@ def run_desktop(url: str, minimized: bool = False) -> bool:
         res = win.create_file_dialog(webview.FOLDER_DIALOG)
         return res[0] if res else None
 
+    def pick_files():
+        return list(win.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=True) or [])
+
     appctl.show_hook = show
     appctl.quit_hook = win.destroy
     appctl.pick_folder_hook = pick_folder
+    appctl.pick_files_hook = pick_files
     try:
         paths.WEBVIEW_DIR.mkdir(parents=True, exist_ok=True)
         webview.start(private_mode=False, storage_path=str(paths.WEBVIEW_DIR))
         return True
     except Exception as e:
         log.exception("desktop window failed: %s", e)
-        appctl.pick_folder_hook = None
+        appctl.pick_folder_hook = appctl.pick_files_hook = None
         return False
 
 

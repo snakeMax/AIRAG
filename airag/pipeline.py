@@ -100,8 +100,9 @@ def _slug(text: str) -> str:
 class Research:
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
                  include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None,
-                 date_from: str = "", date_to: str = ""):
+                 date_from: str = "", date_to: str = "", merge_id: Optional[str] = None):
         self.prev = history.get(from_id) if from_id else None   # reuse the sources of an earlier search
+        self.merge = history.get(merge_id) if merge_id and not from_id else None   # search again, keep old sources
         if self.prev and self.prev.get("query"):
             query = self.prev["query"]
         self.query = " ".join(query.split())
@@ -120,7 +121,7 @@ class Research:
         settings["fetch"]["accept_language"] = f"{lang_code or self.ui_lang},en;q=0.8"
         self.s = settings
         self.r = settings["research"]
-        self.use_library = bool(include_library) and bool(settings["library"].get("folders"))
+        self.use_library = bool(include_library) and bool(library_args(settings)["folders"])
         self.use_web = (not self.use_library) or bool(settings["library"].get("web_too", True))
         self.emit = emit
         self.llm = get_llm(settings)
@@ -194,7 +195,46 @@ class Research:
                          "dates": list(self.dates) if self.dates else None})
         if self.prev and self.prev.get("plan") and self.prev.get("sources"):
             return await self.run_from_previous(t0)
+        try:
+            return await self.run_search(t0)
+        except Exception as e:
+            self.save_failed(e, t0)   # keep what was found, so "Search again" can build on it
+            raise
+
+    def save_failed(self, err: Exception, t0: float) -> None:
+        if not self.order or not self.plan:
+            return
+        record = self.base_record([])
+        record.update({"outcome": "error", "error": str(err)[:500], "steps": list(self.steps.values()),
+                       "sources": [self.pub(self.sources[u]) for u in self.order],
+                       "elapsed": round(time.time() - t0, 1), "warnings": self.warnings})
+        try:
+            history.save(record, int(self.s["app"].get("history_limit", 300)))
+        except OSError:
+            pass
+
+    def seed_from_merge(self) -> int:
+        """Sources from the earlier search that were read and judged; new searches add to them."""
+        n = 0
+        for src in (self.merge or {}).get("sources") or []:
+            if src.get("relevance") is None or not src.get("url") or src["url"] in self.sources:
+                continue
+            s = {k: v for k, v in src.items() if k not in ("excerpt", "n")}
+            s.update({"id": len(self.order) + 1, "round": 0, "query": "previous search"})
+            self.sources[s["url"]] = s
+            self.order.append(s["url"])
+            self.check_dates(s)
+            n += 1
+        return n
+
+    async def run_search(self, t0: float) -> dict:
         await self.make_plan()
+        if self.merge:
+            n = self.seed_from_merge()
+            if n:
+                await self.emit({"type": "sources", "items": [self.pub(self.sources[u]) for u in self.order]})
+                await self.step("reuse", f"Using {n} sources from the previous search", "done",
+                                "New sources found now are compared with these")
         if self.use_library:
             await self.library_round()
 
@@ -621,6 +661,9 @@ class Research:
 
     async def write_article(self, images: List[dict]) -> dict:
         chosen = sorted(self.useful_sources(), key=self.score, reverse=True)[: int(self.r["max_article_sources"])]
+        missing = [s for s in chosen if not s.get("excerpt")]   # sources carried over from an earlier search
+        if missing:
+            await asyncio.gather(*(self.reopen(s) for s in missing))
         for n, s in enumerate(chosen, 1):
             s["n"] = n
         art_sources = [self.pub(s) for s in chosen]

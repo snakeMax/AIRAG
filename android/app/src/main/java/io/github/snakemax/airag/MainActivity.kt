@@ -40,6 +40,9 @@ class MainActivity : AppCompatActivity() {
     val folderPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         Bridge.onFolderPicked(this, uri)
     }
+    val filesPicker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        Bridge.onFilesPicked(uris)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

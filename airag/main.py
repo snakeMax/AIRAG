@@ -225,7 +225,7 @@ async def status():
         search = str(e)
     out = {"llm": llm, "provider": s["llm"]["provider"], "search": search, "version": __version__,
            "needs_key": _needs_key(s), "setup_done": bool(s["app"].get("setup_done")), "ollama": None,
-           "library_folders": len(s["library"].get("folders") or []), "browser_ready": browser_install.installed()}
+           "library_folders": len(library_args(s)["folders"]), "browser_ready": browser_install.installed()}
     if s["llm"]["provider"] == "ollama":
         url = s["llm"]["providers"]["ollama"].get("base_url") or ollama_manager.DEFAULT_URL
         st = await ollama_manager.status(url)
@@ -460,6 +460,125 @@ async def repair_reinstall():
     return jobs.start("update", lambda j: updater.download_and_install(j, appctl.quit_app, reinstall=True)).public()
 
 
+# My library: personal folder for saved articles and imported files
+@app.get("/api/mylibrary")
+def mylibrary_status():
+    from . import mylibrary
+    return mylibrary.status(config.load())
+
+
+class MyFolderReq(BaseModel):
+    path: Optional[str] = None     # None = open the folder picker; "" = back to the default location
+
+
+@app.post("/api/mylibrary/folder")
+async def mylibrary_folder(req: MyFolderReq):
+    from . import mylibrary
+    path = req.path
+    if path is None:
+        try:
+            path = await asyncio.to_thread(appctl.pick_folder)
+        except RuntimeError as e:
+            raise _err(e)
+        if not path:
+            return mylibrary.status(config.load())
+    if path:
+        p = Path(path.strip().strip('"')).expanduser()
+        try:
+            p.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise HTTPException(400, f"Can't use that folder: {e}")
+        path = str(p)
+    s = config.save({"library": {"personal_folder": path}})
+    return mylibrary.status(s)
+
+
+class SaveReq(BaseModel):
+    id: str
+    rich: bool = False      # also keep pictures and the interactive explainer
+
+
+@app.post("/api/mylibrary/save")
+async def mylibrary_save(req: SaveReq):
+    from . import mylibrary
+    rec = history.get(req.id)
+    if not rec:
+        raise HTTPException(404, "Search not found")
+    s = config.load()
+    try:
+        path = await asyncio.to_thread(mylibrary.save_article, rec, s, req.rich)
+    except (ValueError, OSError) as e:
+        raise _err(e)
+    rec["saved_path"] = str(path)
+    history.save(rec, int(s["app"].get("history_limit", 300)))
+    return {"path": str(path)}
+
+
+@app.get("/api/mylibrary/saved")
+def mylibrary_saved():
+    from . import mylibrary
+    return {"items": mylibrary.list_saved(config.load())}
+
+
+@app.get("/api/mylibrary/saved/{name}")
+def mylibrary_saved_one(name: str):
+    from . import mylibrary
+    try:
+        return mylibrary.load_saved(config.load(), name)
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(404, str(e))
+
+
+class SaveSourceReq(BaseModel):
+    url: str
+    query: str = ""
+
+
+@app.post("/api/mylibrary/save-source")
+async def mylibrary_save_source(req: SaveSourceReq):
+    from . import mylibrary
+    from .fetch import fetch_page
+    if not req.url.startswith(("http://", "https://")):
+        raise HTTPException(400, "Only web pages can be saved this way.")
+    s = config.load()
+    page = await fetch_page(req.url, s["fetch"])
+    if not page.ok or not page.text.strip():
+        raise HTTPException(400, f"Couldn't read the page: {page.error or 'no text'}")
+    try:
+        path = await asyncio.to_thread(mylibrary.save_source, page, s, req.query)
+    except OSError as e:
+        raise _err(e)
+    return {"path": str(path)}
+
+
+class ImportReq(BaseModel):
+    move: bool = False
+
+
+@app.post("/api/mylibrary/import")
+async def mylibrary_import(req: ImportReq):
+    from . import mylibrary
+    s = config.load()
+    dest = mylibrary.ensure(s)
+    if paths.ANDROID:
+        from . import android_bridge
+        added = await asyncio.to_thread(android_bridge.import_files, str(dest), req.move)
+        return {"added": [a["path"] for a in added], "moved": sum(1 for a in added if a.get("moved"))}
+    files = await asyncio.to_thread(appctl.pick_files)
+    try:
+        added = await asyncio.to_thread(mylibrary.import_files, files, s, req.move)
+    except OSError as e:
+        raise _err(e)
+    return {"added": added, "moved": len(added) if req.move else 0}
+
+
+@app.post("/api/mylibrary/open")
+def mylibrary_open():
+    from . import mylibrary
+    _open_path(mylibrary.ensure(config.load()), reveal=False)
+    return {"ok": True}
+
+
 # library (Retrieve & Get)
 @app.get("/api/library/status")
 def library_status():
@@ -600,6 +719,7 @@ class ResearchReq(BaseModel):
     from_id: Optional[str] = None     # reuse the sources of this earlier search
     date_from: str = ""               # only results from this period (YYYY-MM-DD, either may be empty)
     date_to: str = ""
+    merge_id: Optional[str] = None    # search again, also using the sources of this earlier search
 
 
 @app.post("/api/research")
@@ -607,7 +727,7 @@ async def research(req: ResearchReq):
     settings = config.load()
     prompts_mod.use(settings)
     return _ndjson(lambda emit: Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang,
-                                                    req.from_id, req.date_from, req.date_to).run())
+                                                    req.from_id, req.date_from, req.date_to, req.merge_id).run())
 
 
 class SummaryReq(BaseModel):

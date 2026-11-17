@@ -47,6 +47,7 @@ GENERAL_SCHEMA: dict = {
     ],
     "library": [
         {"key": "folders", "label": "Folders", "type": "hidden", "default": []},
+        {"key": "personal_folder", "label": "", "type": "hidden", "default": ""},
         {"key": "web_too", "label": "Also search the web when 'My library' is ticked", "type": "bool", "default": True,
          "help": "Turn off to answer only from your own files."},
         {"key": "extensions", "label": "File types", "type": "text",
