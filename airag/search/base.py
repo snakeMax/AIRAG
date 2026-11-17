@@ -37,7 +37,8 @@ class SearchBackend:
         self.cfg = cfg
         self.common = common
 
-    async def text(self, query: str, n: int = 10) -> List[SearchResult]:
+    async def text(self, query: str, n: int = 10, recent: str = "") -> List[SearchResult]:
+        """recent: "" (any time), "day", "week", "month" or "year" - only results from that period."""
         raise NotImplementedError
 
     async def images(self, query: str, n: int = 10) -> List[ImageResult]:

@@ -42,8 +42,11 @@ class GoogleCSE(SearchBackend):
             raise SearchError(f"Google: {e}")
         return items
 
-    async def text(self, query: str, n: int = 10) -> List[SearchResult]:
-        items = await self._get({"q": query, "n": n})
+    async def text(self, query: str, n: int = 10, recent: str = "") -> List[SearchResult]:
+        params = {"q": query, "n": n}
+        if recent in ("day", "week", "month", "year"):
+            params["dateRestrict"] = {"day": "d1", "week": "w1", "month": "m1", "year": "y1"}[recent]
+        items = await self._get(params)
         return [SearchResult(i.get("title", ""), i["link"], i.get("snippet", ""), self.name) for i in items if i.get("link")]
 
     async def images(self, query: str, n: int = 10) -> List[ImageResult]:

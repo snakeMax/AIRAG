@@ -364,9 +364,17 @@ class Research:
         await self.step(sid, label, "running", " · ".join(queries))
         n = int(self.r["results_per_query"])
 
+        # news and "latest" questions: ask the search engine for recent pages first
+        fresh = self.plan.get("freshness", "any")
+        recent = {"latest": "week", "recent": "year"}.get(fresh, "") if rnd == 1 or fresh == "latest" else ""
+
         async def one(q):
             try:
-                return q, await self.search.text(q, n)
+                res = await self.search.text(q, n, recent=recent) if recent else []
+                if len(res) < 3:   # too narrow (or no time filter): search all dates too
+                    seen = {r.url for r in res}
+                    res += [r for r in await self.search.text(q, n) if r.url not in seen]
+                return q, res
             except Exception as e:
                 return q, e
 
@@ -455,7 +463,8 @@ class Research:
             try:
                 a = await complete_json(self.llm, *prompts.assess(
                     self.query, self.plan["intent"], s["title"], s["url"], s["prior"], s["prior_label"], excerpt,
-                    local=bool(s.get("local"))), max_tokens=1600)
+                    local=bool(s.get("local")), freshness=self.plan.get("freshness", "any"),
+                    published=s.get("published") or ""), max_tokens=1600)
             except Exception as e:
                 s["status"] = "error"
                 s["error"] = f"AI assessment failed: {e}"[:200]

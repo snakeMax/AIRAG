@@ -18,9 +18,11 @@ class SearXNG(SearchBackend):
          "help": "Your instance must have the JSON format enabled (search.formats: [html, json])."},
     ]
 
-    async def _get(self, query: str, category: str) -> list:
+    async def _get(self, query: str, category: str, recent: str = "") -> list:
         params = {"q": query, "format": "json", "categories": category,
                   "safesearch": {"off": 0, "moderate": 1, "strict": 2}.get(self.common.get("safesearch"), 1)}
+        if recent in ("day", "week", "month", "year"):
+            params["time_range"] = recent
         try:
             async with httpx.AsyncClient(timeout=20) as c:
                 r = await c.get(str(self.cfg.get("url", "")).rstrip("/") + "/search", params=params)
@@ -29,8 +31,8 @@ class SearXNG(SearchBackend):
         except Exception as e:
             raise SearchError(f"SearXNG: {e}")
 
-    async def text(self, query: str, n: int = 10) -> List[SearchResult]:
-        res = await self._get(query, "general")
+    async def text(self, query: str, n: int = 10, recent: str = "") -> List[SearchResult]:
+        res = await self._get(query, "general", recent)
         return [SearchResult(r.get("title", ""), r["url"], r.get("content", ""), self.name)
                 for r in res[:n] if r.get("url")]
 

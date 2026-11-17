@@ -37,9 +37,11 @@ class DuckDuckGo(SearchBackend):
         return {"region": self.common.get("region") or "us-en",
                 "safesearch": self.common.get("safesearch") or "moderate"}
 
-    async def text(self, query: str, n: int = 10) -> List[SearchResult]:
+    async def text(self, query: str, n: int = 10, recent: str = "") -> List[SearchResult]:
+        tl = {"day": "d", "week": "w", "month": "m", "year": "y"}.get(recent)
+
         def run():
-            return list(_ddgs().text(query, max_results=n, **self._kw()) or [])
+            return list(_ddgs().text(query, max_results=n, timelimit=tl, **self._kw()) or [])
         raw = None
         if _have_ddgs():
             for attempt in range(2):
@@ -51,7 +53,7 @@ class DuckDuckGo(SearchBackend):
         if raw is None:
             from . import ddg_html  # plain-HTML fallback
             kw = self._kw()
-            return await ddg_html.search(query, n, kw["region"], kw["safesearch"])
+            return await ddg_html.search(query, n, kw["region"], kw["safesearch"], recent)
         out = []
         for r in raw:
             url = r.get("href") or r.get("url")

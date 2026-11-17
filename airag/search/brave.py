@@ -31,8 +31,11 @@ class Brave(SearchBackend):
         except Exception as e:
             raise SearchError(f"Brave: {e}")
 
-    async def text(self, query: str, n: int = 10) -> List[SearchResult]:
-        d = await self._get("/web/search", {"q": query, "count": min(n, 20)})
+    async def text(self, query: str, n: int = 10, recent: str = "") -> List[SearchResult]:
+        params = {"q": query, "count": min(n, 20)}
+        if recent in ("day", "week", "month", "year"):
+            params["freshness"] = {"day": "pd", "week": "pw", "month": "pm", "year": "py"}[recent]
+        d = await self._get("/web/search", params)
         return [SearchResult(r.get("title", ""), r["url"], r.get("description", ""), self.name)
                 for r in d.get("web", {}).get("results", []) if r.get("url")]
 

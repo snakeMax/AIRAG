@@ -131,9 +131,14 @@ async def _request(c: httpx.AsyncClient, method: str, url: str, **kw) -> httpx.R
             _last = time.monotonic()
 
 
-async def _ddg(c, query: str, n: int, region: str, safesearch: str) -> List[SearchResult]:
+_DF = {"day": "d", "week": "w", "month": "m", "year": "y"}
+
+
+async def _ddg(c, query: str, n: int, region: str, safesearch: str, recent: str = "") -> List[SearchResult]:
     kp = {"off": "-2", "strict": "1"}.get(safesearch, "-1")
     data = {"q": query, "kl": region or "wt-wt", "kp": kp}
+    if recent in _DF:
+        data["df"] = _DF[recent]
     attempts = [
         ("GET", "https://lite.duckduckgo.com/lite/", parse_lite, {"params": data}),
         ("POST", "https://html.duckduckgo.com/html/", parse, {"data": data,
@@ -151,7 +156,7 @@ async def _ddg(c, query: str, n: int, region: str, safesearch: str) -> List[Sear
     raise Blocked("DuckDuckGo is limiting requests right now")
 
 
-async def _via_webview(query: str, n: int, region: str, safesearch: str) -> Optional[List[SearchResult]]:
+async def _via_webview(query: str, n: int, region: str, safesearch: str, recent: str = "") -> Optional[List[SearchResult]]:
     """On Android: load the lite page in a hidden WebView, which looks like a normal phone browser."""
     from ..paths import ANDROID
     if not ANDROID:
@@ -159,7 +164,10 @@ async def _via_webview(query: str, n: int, region: str, safesearch: str) -> Opti
     from urllib.parse import urlencode
     from .. import android_bridge
     kp = {"off": "-2", "strict": "1"}.get(safesearch, "-1")
-    url = "https://lite.duckduckgo.com/lite/?" + urlencode({"q": query, "kl": region or "wt-wt", "kp": kp})
+    params = {"q": query, "kl": region or "wt-wt", "kp": kp}
+    if recent in _DF:
+        params["df"] = _DF[recent]
+    url = "https://lite.duckduckgo.com/lite/?" + urlencode(params)
     async with _lock:
         html = await asyncio.to_thread(android_bridge.render_page, url, 20)
     if not html:
@@ -177,19 +185,20 @@ async def _mojeek(c, query: str, n: int, safesearch: str) -> List[SearchResult]:
     return parse_mojeek(r.text, n)
 
 
-async def search(query: str, n: int, region: str = "us-en", safesearch: str = "moderate") -> List[SearchResult]:
+async def search(query: str, n: int, region: str = "us-en", safesearch: str = "moderate",
+                 recent: str = "") -> List[SearchResult]:
     global _ddg_blocked_until
     errors: List[str] = []
     async with httpx.AsyncClient(timeout=15, headers=HEADERS, follow_redirects=True) as c:
         if time.monotonic() >= _ddg_blocked_until:
             try:
-                return await _ddg(c, query, n, region, safesearch)
+                return await _ddg(c, query, n, region, safesearch, recent)
             except Blocked as e:
                 _ddg_blocked_until = time.monotonic() + COOLDOWN
                 errors.append(str(e))
             except httpx.HTTPError as e:
                 errors.append(f"DuckDuckGo: {type(e).__name__}")
-        results = await _via_webview(query, n, region, safesearch)
+        results = await _via_webview(query, n, region, safesearch, recent)
         if results is not None:
             return results
         for attempt in range(2):

@@ -63,7 +63,24 @@ SAFETY = ("Do not provide content that gives meaningful help in causing serious 
 
 
 def _today() -> str:
-    return dt.date.today().isoformat()
+    """Local date and time with weekday and UTC offset, e.g. 'Tuesday 2026-11-17 22:52 (UTC+01:00)'."""
+    now = dt.datetime.now().astimezone()
+    off = now.strftime("%z")
+    return f"{now.strftime('%A %Y-%m-%d %H:%M')} (UTC{off[:3]}:{off[3:]})"
+
+
+DATE_NOTE = ("Your own knowledge may be older than today's date: sources can describe events, releases and data from "
+             "after your training, so never treat a recent date or an unfamiliar recent event as wrong, unlikely or "
+             "'in the future' for that reason alone. Use today's date to work out what 'latest', 'today', 'tomorrow', "
+             "'this week' and similar words mean.")
+
+FRESH_NOTE = {
+    "latest": ("The reader wants the LATEST information (news, current state, upcoming or very recent events). "
+               "A dated page from the last few days or weeks that covers the topic is a direct answer and deserves high "
+               "relevance; undated or clearly older material is much less relevant."),
+    "recent": ("The reader wants reasonably recent information: prefer pages from the last year or so and rate "
+               "clearly outdated material lower."),
+}
 
 
 # planning
@@ -81,6 +98,7 @@ def plan(query: str, use_web: bool = True, use_library: bool = False) -> Tuple[s
         "user's query is not in English, include at least one query in their language.\n"
         "- If the question depends on recent information, put the current year in one query.\n"
         "- Search queries are short (2-8 words), like a person would type into a search engine."
+        + "\n" + DATE_NOTE
     ) + _extra("planner_instructions")
     scope = "web search" + (" and the user's own local files (notes, documents)" if use_library else "")
     if not use_web:
@@ -93,7 +111,7 @@ Return JSON:
 {{
   "intent": "one sentence: what the user actually wants to know",
   "answer_type": "fact | number | definition | explanation | how-to | comparison | recommendation | list | news | person-or-organization | technical | opinion-or-debate | other",
-  "freshness": "any | recent | latest",
+  "freshness": "any | recent | latest   (latest = news or the current/upcoming state: 'latest', 'news', 'today', 'tomorrow', 'this week', weather, prices, scores, releases; recent = the last year or so matters; any = timeless)",
   "key_terms": ["6-14 important words, synonyms, technical terms, alternate spellings - in all relevant languages"],
   "direct_queries": ["2-3 queries aimed squarely at the question"],
   "related_queries": [{{"query": "...", "angle": "why this kind of source may contain the info"}}],
@@ -105,22 +123,26 @@ Give 3-5 related_queries."""
 
 # assessing a source
 def assess(query: str, intent: str, title: str, url: str, prior: int, prior_label: str, passages: str,
-           local: bool = False) -> Tuple[str, str]:
+           local: bool = False, freshness: str = "any", published: str = "") -> Tuple[str, str]:
     system = (
         "You are a meticulous research analyst evaluating ONE source for a search query. Judge only from the provided "
         "text. Be strict: relevance measures whether the source actually CONTAINS information that answers the query, "
         "not whether it merely mentions the topic. Extract every relevant fact, figure or claim - including ones "
         "mentioned only in passing (a number buried in an anecdote, a side remark, a table cell). Keep numbers, units, "
-        "dates and conditions exactly as stated.\n" + UNTRUSTED
+        "dates and conditions exactly as stated.\n" + UNTRUSTED + "\n" + DATE_NOTE
     )
+    if FRESH_NOTE.get(freshness):
+        system += "\n" + FRESH_NOTE[freshness]
     kind = ("This is a file from the user's OWN local library (personal notes or documents). It may be very relevant "
             "context, but treat it as unverified unless it cites sources.") if local else f"URL: {url}"
     fence = Fence()
     system += "\n" + fence.rule()
     user = f"""Query: {query}
 What the user wants: {intent}
+Today: {_today()}
 
 Source title: {title}
+Published (from the page, if known): {published or 'unknown'}
 {kind}
 Reputation prior: {prior}/10 ({prior_label})
 
@@ -199,7 +221,7 @@ Evidence rules:
 - Do NOT add a references list - it is added automatically."""
 
 # Always appended, even when the user replaces ARTICLE_RULES in Settings.
-ARTICLE_LOCKED = "\n\n" + SAFETY + "\n" + UNTRUSTED + """
+ARTICLE_LOCKED = "\n\n" + SAFETY + "\n" + UNTRUSTED + "\n" + DATE_NOTE + """
 Write the whole article in {lang}. Keep technical terms, names and quotes in their original form where translating would lose meaning.
 Citations must be bracketed source numbers like [2] that exist in the source list."""
 
@@ -240,10 +262,13 @@ Write the article now, in {lang}."""
 def suggest(query: str, intent: str, tried: List[str], partial: List[str], lang: str) -> Tuple[str, str]:
     system = ("You help users of a research search engine when nothing reliable was found. Suggest alternative searches "
               "that are much more likely to return results: broader phrasing, standard terminology, a related "
-              "sub-question, a different angle, another language, or a more specific version.")
+              "sub-question, a different angle, another language, or a more specific version. Don't blame the "
+              "reader's wording for missing recent information; suggest concrete searches (with dates, names or "
+              "sites) instead.\n" + DATE_NOTE)
     found = "\n".join(f"- {p}" for p in partial[:10]) or "(nothing relevant)"
     user = f"""Original search: {query}
 Intent: {intent}
+Today: {_today()}
 Searches tried: {json.dumps(tried, ensure_ascii=False)}
 Partially relevant things found:
 {found}
@@ -267,9 +292,11 @@ Keep [n] citation numbers if they appear in the input. Do not add information th
 def summary(query: str, what: str, text: str, lang: str) -> Tuple[str, str]:
     fence = Fence()
     user = f"""The reader searched for: {query}
+Today: {_today()}
 Summarize this {what}:
 {fence.wrap(text)}"""
-    return (SUMMARY_SYSTEM + _extra("custom_instructions")).replace("{lang}", lang) + "\n" + fence.rule(), user
+    return (SUMMARY_SYSTEM + _extra("custom_instructions")).replace("{lang}", lang) + "\n" + DATE_NOTE + "\n" + \
+        fence.rule(), user
 
 
 # interactive explainers

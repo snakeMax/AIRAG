@@ -96,7 +96,7 @@ class MockSearch(SearchBackend):
     label = "Mock search"
     supports_images = True
 
-    async def text(self, q, n=10):
+    async def text(self, q, n=10, recent=""):
         doms = ["nature.com", "allaboutbirds.org", "reddit.com", "pubmed.ncbi.nlm.nih.gov", "audubon.org"]
         return [SearchResult(f"Hummingbird flight study {i}", f"https://{doms[(i + len(q)) % 5]}/{q.replace(' ', '-')}/page{i}",
                              "Measured wingbeat frequency…") for i in range(3)]
