@@ -4,6 +4,11 @@
 <p align="center"><b>AI Research Article Generation</b><br>A search engine that reads the pages for you, and writes the article when nobody else has.</p>
 <p align="center"><sub>Built with the assistance of Claude Code.</sub></p>
 
+> **Quick install (Windows 10/11)**
+> 1. Download **`AIRAG-Setup-x.y.z.exe`** from the [latest release](https://github.com/snakeMax/AIRAG/releases/latest).
+> 2. Run it and follow the steps. No admin rights needed; you can pick any install folder.
+> 3. If Windows warns you, see [Windows Defender / SmartScreen warnings](#windows-defender--smartscreen-warnings) below.
+
 ---
 
 You type a search like you would on Google. AIRAG searches the web (and optionally your own notes), reads the pages, rates every source for relevance and reliability, and then picks the most useful way to answer:
@@ -35,7 +40,13 @@ Other features:
    - **Local**: install [Ollama](https://ollama.com/download), then start it from AIRAG's setup screen and download a recommended model for your PC.
    - **Cloud**: paste an API key from [Anthropic](https://console.anthropic.com/settings/keys), [OpenAI](https://platform.openai.com/api-keys) or [DeepSeek](https://platform.deepseek.com/api_keys).
 
-> **"Windows protected your PC"?** The installer isn't code-signed yet, so SmartScreen may warn you the first time. Click *More info → Run anyway*. You can verify the download against the `.sha256` file attached to each release.
+### Windows Defender / SmartScreen warnings
+
+AIRAG is a new, open-source app without a paid code-signing certificate, so Windows may be cautious about it:
+
+- **"Windows protected your PC" (SmartScreen):** click **More info → Run anyway**. This appears because the installer is new and unsigned, not because anything was found in it.
+- **Defender quarantines or blocks the file:** apps packaged with PyInstaller are sometimes falsely flagged. Open *Windows Security → Virus & threat protection → Protection history*, select the AIRAG item and choose **Allow** / **Restore**. Please also [report the false positive to Microsoft](https://www.microsoft.com/wdsi/filesubmission) so it gets fixed for everyone.
+- **Want to be sure the file is genuine?** Every release has a `.sha256` file. In PowerShell run `Get-FileHash .\AIRAG-Setup-x.y.z.exe` and compare the hash. All releases are built from this repository's source code by GitHub Actions, and you can see the build log for each one under the *Actions* tab.
 
 A **portable zip** is attached to each release as well: unzip anywhere and run `AIRAG.exe`; settings are kept in a `data` folder next to it.
 
