@@ -62,6 +62,7 @@ const TABS = [
 
 export async function openSettings(tab = "general") {
   const dlg = $("#settingsDlg");
+  if ($("#setupDlg")?.open) $("#setupDlg").close();   // never two modal dialogs on top of each other
   S.dlg = dlg;
   try {
     [S.schema, S.settings, S.info] = await Promise.all([api("/api/schema"), api("/api/settings"), api("/api/app/info")]);
@@ -157,7 +158,9 @@ function generalPane(sc, st) {
         : `<span class="muted" style="font-size:12.5px">${h(t("gen.restartManual"))}</span>`}</div>`}
     <h4>${h(t("gen.updates"))}</h4>
     ${field(sc.app.find(f => f.key === "check_updates"), "app", "app.check_updates", st.app.check_updates)}
-    <div class="row" style="margin-bottom:14px"><button type="button" class="btn sm" id="checkUpd">${icon("refresh")}${h(t("gen.checkNow"))}</button><span class="status-line" id="updStatus"></span></div>
+    <div class="row" style="margin-bottom:8px"><button type="button" class="btn sm" id="checkUpd">${icon("refresh")}${h(t("gen.checkNow"))}</button>
+      <button type="button" class="btn sm" id="checkRepair">${icon("check")}${h(t("repair.check"))}</button><span class="status-line" id="updStatus"></span></div>
+    <div id="repairBox" style="margin-bottom:14px"></div>
     <h4>${h(t("gen.storage"))}</h4>
     <div class="list-box" id="storageBox"><div class="list-empty">${h(t("common.loading"))}</div></div>
     <div class="field-grid">${field(sc.app.find(f => f.key === "history_limit"), "app", "app.history_limit", st.app.history_limit)}
@@ -171,6 +174,7 @@ function wireGeneral(dlg) {
     await api("/api/app/restart", { method: "POST", body: { mode: m } });
     toast(t("gen.restarting"), 6000);
   });
+  $("#checkRepair", dlg).onclick = runRepairCheck;
   $("#checkUpd", dlg).onclick = async () => {
     const el = $("#updStatus");
     el.className = "status-line";
@@ -183,6 +187,42 @@ function wireGeneral(dlg) {
     } else if (u.error) { el.className = "status-line err"; el.textContent = u.error; }
     else { el.className = "status-line ok"; el.textContent = t("gen.upToDate", { v: u.current }); }
   };
+}
+
+// check & repair
+async function runRepairCheck() {
+  const box = $("#repairBox");
+  box.innerHTML = `<div class="status-line">${h(t("common.checking"))}</div>`;
+  const r = await api("/api/repair/check").catch(e => ({ error: e.message }));
+  if (r.error) { box.innerHTML = `<div class="status-line err">${h(r.error)}</div>`; return; }
+  const row = (ok, title, detail) => `<div class="list-row"><span class="dot ${ok ? "ok" : "err"}"></span><div class="grow"><div class="lr-t">${h(title)}</div>${detail ? `<div class="lr-s">${h(detail)}</div>` : ""}</div></div>`;
+  const app = r.app.checked
+    ? row(r.app.ok, t("repair.app"), r.app.ok ? t("repair.appOk", { n: r.app.total }) : t("repair.appBad", { n: r.app.missing.length + r.app.changed.length }))
+    : row(true, t("repair.app"), t(r.app.reason === "source" ? "repair.appSource" : "repair.appSkipped"));
+  box.innerHTML = `<div class="list-box">${app}
+      ${row(r.settings.ok, t("repair.settings"), r.settings.ok ? "" : t("repair.settingsBad"))}
+      ${row(r.library.ok, t("repair.library"), r.library.ok ? "" : t("repair.libraryBad"))}
+      ${row(r.history.ok, t("repair.history"), r.history.ok ? "" : t("repair.historyBad", { n: r.history.bad_count }))}</div>
+    <div class="row" style="margin-top:8px">
+      ${r.ok ? `<span class="status-line ok">${h(t("repair.allOk"))}</span>` : `<button type="button" class="btn sm primary" id="doRepair">${icon("refresh")}${h(t("repair.fix"))}</button>`}
+      ${r.can_reinstall ? `<button type="button" class="btn sm ghost" id="doReinstall" title="${h(t("repair.reinstallHelp"))}">${icon("download")}${h(t("repair.reinstall", { v: r.version }))}</button>` : ""}
+      <span class="status-line" id="repairStatus"></span></div>`;
+  const follow = async job => {
+    const st = $("#repairStatus");
+    const fin = await pollJob(job, j => { st.className = "status-line"; st.textContent = `${j.message || ""} ${j.progress ? Math.round(j.progress * 100) + "%" : ""}`; });
+    if (fin.status === "error") { st.className = "status-line err"; st.textContent = fin.error; return; }
+    toast(t("repair.done"), 4000);
+    runRepairCheck();
+  };
+  $("#doRepair")?.addEventListener("click", async e => {
+    e.currentTarget.disabled = true;
+    follow(await api("/api/repair", { method: "POST" }).catch(err => ({ status: "error", error: err.message })));
+  });
+  $("#doReinstall")?.addEventListener("click", async e => {
+    if (!confirm(t("repair.reinstallConfirm"))) return;
+    e.currentTarget.disabled = true;
+    follow(await api("/api/repair/reinstall", { method: "POST" }).catch(err => ({ status: "error", error: err.message })));
+  });
 }
 
 async function refreshStorage() {

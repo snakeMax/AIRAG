@@ -51,26 +51,19 @@ def _read_cache() -> Optional[dict]:
     return None
 
 
-async def check(force: bool = False) -> dict:
-    if not force:
-        cached = _read_cache()
-        if cached:
-            return cached
-    info = {"current": __version__, "latest": None, "newer": False, "checked": time.time(),
-            "can_self_update": can_self_update(), "repo": __repo__}
-    try:
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as c:
-            r = await c.get(f"https://api.github.com/repos/{__repo__}/releases/latest",
-                            headers={"Accept": "application/vnd.github+json", "User-Agent": f"AIRAG/{__version__}"})
-        if r.status_code == 404:
-            info["error"] = "No releases published yet"
-            return info
-        r.raise_for_status()
-        rel = r.json()
-    except Exception as e:
-        info["error"] = f"Update check failed: {e}"[:200]
-        return info
-    latest = str(rel.get("tag_name") or "").lstrip("vV")
+async def _release(tag: Optional[str] = None) -> dict:
+    """A release from GitHub: the latest one, or a specific tag (e.g. v0.3.0)."""
+    path = f"tags/{tag}" if tag else "latest"
+    async with httpx.AsyncClient(timeout=10, follow_redirects=True) as c:
+        r = await c.get(f"https://api.github.com/repos/{__repo__}/releases/{path}",
+                        headers={"Accept": "application/vnd.github+json", "User-Agent": f"AIRAG/{__version__}"})
+    if r.status_code == 404:
+        raise LookupError("No release found" + (f" for {tag}" if tag else ""))
+    r.raise_for_status()
+    return r.json()
+
+
+def _assets(rel: dict) -> Tuple[Optional[dict], Optional[str]]:
     setup = sha = None
     for a in rel.get("assets") or []:
         n = a.get("name", "")
@@ -80,6 +73,26 @@ async def check(force: bool = False) -> dict:
         for a in rel.get("assets") or []:
             if a.get("name") == setup["name"] + ".sha256":
                 sha = a.get("browser_download_url")
+    return setup, sha
+
+
+async def check(force: bool = False) -> dict:
+    if not force:
+        cached = _read_cache()
+        if cached:
+            return cached
+    info = {"current": __version__, "latest": None, "newer": False, "checked": time.time(),
+            "can_self_update": can_self_update(), "repo": __repo__}
+    try:
+        rel = await _release()
+    except LookupError:
+        info["error"] = "No releases published yet"
+        return info
+    except Exception as e:
+        info["error"] = f"Update check failed: {e}"[:200]
+        return info
+    latest = str(rel.get("tag_name") or "").lstrip("vV")
+    setup, sha = _assets(rel)
     info.update({"latest": latest, "newer": parse_version(latest) > parse_version(__version__),
                  "notes": (rel.get("body") or "")[:5000], "url": rel.get("html_url"),
                  "published": rel.get("published_at"), "asset": setup, "sha256_url": sha})
@@ -91,17 +104,26 @@ async def check(force: bool = False) -> dict:
     return info
 
 
-async def download_and_install(job, quit_app) -> dict:
+async def download_and_install(job, quit_app, reinstall: bool = False) -> dict:
     """Download the new installer, verify it, start it silently and quit AIRAG.
-    The installer closes/replaces the app and starts the new version afterwards."""
-    info = await check(force=True)
+    The installer closes/replaces the app and starts the new version afterwards.
+    reinstall=True installs the version you already have again (repair)."""
+    if reinstall:
+        try:
+            rel = await _release(f"v{__version__}")
+        except LookupError:
+            raise RuntimeError(f"AIRAG {__version__} isn't on GitHub, so it can't be reinstalled automatically.")
+        setup, sha = _assets(rel)
+        info = {"latest": __version__, "asset": setup, "sha256_url": sha, "newer": True}
+    else:
+        info = await check(force=True)
     if not info.get("newer"):
         raise RuntimeError("You already have the latest version.")
     if not can_self_update():
         raise RuntimeError("Automatic updates only work for the installed app. Download the new version from GitHub.")
     asset = info.get("asset")
     if not asset:
-        raise RuntimeError("The latest release has no installer attached.")
+        raise RuntimeError("That release has no installer for this device attached.")
     UPDATES_DIR.mkdir(parents=True, exist_ok=True)
     for old in list(UPDATES_DIR.glob("AIRAG-Setup-*.exe")) + list(UPDATES_DIR.glob("AIRAG-*.apk")):
         try:

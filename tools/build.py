@@ -62,6 +62,19 @@ def sha256(path: Path) -> None:
     path.with_name(path.name + ".sha256").write_text(f"{h}  {path.name}\n", encoding="utf-8")
 
 
+def write_manifest(app_dir: Path) -> None:
+    """SHA-256 of every installed file, so Settings -> Check & repair can spot missing or damaged files."""
+    import hashlib
+    import json
+    files = {}
+    for f in sorted(app_dir.rglob("*")):
+        if f.is_file() and f.name != "install-manifest.json":
+            files[f.relative_to(app_dir).as_posix()] = hashlib.sha256(f.read_bytes()).hexdigest()
+    (app_dir / "install-manifest.json").write_text(json.dumps({"version": version(), "files": files}),
+                                                   encoding="utf-8")
+    print(f"manifest: {len(files)} files")
+
+
 def find_iscc() -> str | None:
     found = shutil.which("iscc") or shutil.which("ISCC")
     if found:
@@ -85,6 +98,8 @@ def main() -> None:
     shutil.rmtree(DIST / "AIRAG", ignore_errors=True)
     run([sys.executable, "-m", "PyInstaller", "packaging/airag.spec", "--noconfirm", "--clean",
          "--distpath", DIST, "--workpath", BUILD / "pyinstaller"])
+
+    write_manifest(DIST / "AIRAG")
 
     # portable zip: same app plus a marker file that keeps data in <app>/data
     zpath = DIST / f"AIRAG-{v}-portable-win64.zip"

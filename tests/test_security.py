@@ -65,3 +65,16 @@ def test_file_allow_list(tmp_path):
     s["library"]["folders"] = [str(paths.CONFIG_DIR.parent)]
     assert not allowed_file(paths.CONFIG_DIR / "notes.md", s)      # AIRAG's own folders are off-limits
     assert not allowed_file(paths.SETTINGS_PATH, s)
+
+
+def test_repair_moves_broken_data_aside():
+    from airag import repair
+    paths.ensure_dirs()
+    paths.SETTINGS_PATH.write_text("{not json", encoding="utf-8")
+    (paths.HISTORY_DIR / "x.json").write_text("{", encoding="utf-8")
+    r = repair.check()
+    assert not r["settings"]["ok"] and r["history"]["bad_count"] == 1 and not r["ok"]
+    done = repair.repair_data()
+    assert "settings" in done and "history" in done
+    assert repair.check()["ok"]
+    assert list((paths.CONFIG_DIR / "broken").glob("settings-*.json"))

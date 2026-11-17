@@ -440,6 +440,26 @@ async def update_install():
     return jobs.start("update", lambda j: updater.download_and_install(j, appctl.quit_app)).public()
 
 
+# check & repair
+@app.get("/api/repair/check")
+async def repair_check():
+    from . import repair
+    r = await asyncio.to_thread(repair.check)
+    r["can_reinstall"] = updater.can_self_update()
+    return r
+
+
+@app.post("/api/repair")
+async def repair_run():
+    from . import repair
+    return jobs.start("repair", lambda j: repair.repair(j, appctl.quit_app)).public()
+
+
+@app.post("/api/repair/reinstall")
+async def repair_reinstall():
+    return jobs.start("update", lambda j: updater.download_and_install(j, appctl.quit_app, reinstall=True)).public()
+
+
 # library (Retrieve & Get)
 @app.get("/api/library/status")
 def library_status():
