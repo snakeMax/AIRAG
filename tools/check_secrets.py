@@ -16,7 +16,7 @@ PATTERNS = {
     "Brave key": r"\bBSA[A-Za-z0-9_\-]{25,}",
     "Private key": r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
 }
-BAD_FILES = re.compile(r"(^|/)(settings\.json|\.env(\..*)?|.*\.pem)$")
+BAD_FILES = re.compile(r"(^|/)(settings\.json|\.env(\..*)?|.*\.pem|.*\.jks|.*\.keystore|ANDROID_KEY.*\.txt|signing/.*)$")
 
 
 def tracked() -> list[str]:

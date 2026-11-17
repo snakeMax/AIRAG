@@ -23,3 +23,8 @@ secrets*
 Thumbs.db
 .idea/
 .vscode/
+
+# Android signing key - never commit
+/signing/
+*.jks
+*.keystore
