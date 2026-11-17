@@ -19,18 +19,27 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 | Only scattered bits (a figure mentioned in passing in a forum post, a case report, a study on a related topic) | **A new article** that pulls the pieces together, explains how they relate and cites every claim |
 | Nothing usable | **Better searches** to try instead |
 
-Other features:
+## Features
 
+- **Answers, not just links**: shows the best pages when one answers your question, writes a cited article when the answer is scattered across many pages, or suggests better searches when nothing useful turns up.
+- **Source ratings**: every source gets a relevance, coverage and reliability rating, with the key findings quoted.
 - **Summarize** any article, result list or single source, focused on what you searched for.
 - **Interactive explainers**: for articles where it helps (physics, statistics, how things work...), AIRAG can generate a small simulation you can play with. It runs sandboxed, with no network access.
-- **Library ("Retrieve & Get")**: add your own folders (Obsidian vaults, PDFs, Word documents, notes) and tick *My library* to include them in searches. Indexed locally with SQLite full-text search.
-- **Local or cloud AI**: Ollama (detected, started with one click, with a model picker and downloader), Anthropic Claude, OpenAI, DeepSeek, or any OpenAI-compatible server (LM Studio, vLLM, OpenRouter...).
-- **Search engines**: DuckDuckGo (no key), Brave, Google Programmable Search, or your own SearXNG.
+- **Library ("Retrieve & Get")**: add your own folders (Obsidian vaults, PDFs, Word documents, notes) and tick *My library* to include them in searches. Indexed locally.
+- **Local or cloud AI**: Ollama (with a model picker and downloader), Anthropic Claude, OpenAI, DeepSeek, or any OpenAI-compatible server (LM Studio, vLLM, OpenRouter...).
+- **Search engines**: DuckDuckGo (no key needed), Brave, Google Programmable Search, or your own SearXNG.
 - **Desktop window or browser tab + tray icon**, chosen during install and switchable in Settings.
 - **9 interface languages** (English, Norsk, Svenska, Dansk, Deutsch, Français, Español, 日本語, 简体中文); answers in 20+ languages.
 - **Themes**: light/dark, four gray palettes and any accent colour.
 - **Custom prompts**: writing style, length, your own instructions, or a fully replaced article prompt (safety rules always stay on).
 - **Automatic updates** from GitHub Releases.
+
+## Updates
+
+Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
+
+### 0.2.0 (17 Nov 2026)
+First public release: Windows installer, research agent with results/articles/suggestions, summaries, interactive explainers, local library, Ollama and cloud AI support, 9 languages, themes and automatic updates.
 
 ## Install (Windows 10/11)
 
