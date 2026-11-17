@@ -64,7 +64,7 @@ def article_markdown(rec: dict) -> str:
         where = s.get("path") if s.get("local") else s.get("url")
         trust = f" - reliability {s['trust']}/10" if s.get("trust") is not None else ""
         lines.append(f"{s.get('n', '-')}. [{name}]({where}){trust}" if where else f"{s.get('n', '-')}. {name}{trust}")
-    lines += ["", f"*Written by AI with AIRAG from the sources above. Check them before relying on it.*", ""]
+    lines += ["", "*Written by AI with AIRAG from the sources above. Check them before relying on it.*", ""]
     return "\n".join(head) + md + "\n".join(lines)
 
 

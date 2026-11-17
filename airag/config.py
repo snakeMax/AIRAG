@@ -10,11 +10,10 @@ import json
 import os
 import threading
 from copy import deepcopy
-from pathlib import Path
 from typing import Any, Iterator, List, Tuple
 
 from . import paths
-from .paths import CONFIG_DIR as DATA_DIR, HISTORY_DIR, SETTINGS_PATH  # noqa: F401  (re-exported)
+from .paths import SETTINGS_PATH
 
 MASK = "••••"
 

@@ -1,7 +1,5 @@
 import asyncio
 
-import pytest
-
 from airag import config
 from tests import mock
 
@@ -120,3 +118,20 @@ def test_pages_outside_the_date_range_are_left_out():
     for s in (old, new, undated):
         r.check_dates(s)
     assert old.get("out_of_range") and not new.get("out_of_range") and not undated.get("out_of_range")
+
+
+def test_pages_that_cant_help_skip_the_ai():
+    from airag.pipeline import Research
+
+    async def emit(e):
+        pass
+    r = Research("x", "auto", settings(), emit)
+    r.plan = {"key_terms": ["hummingbird", "wingbeat", "kolibri", "vingeslag"]}
+    r.terms = ["hummingbird", "wingbeat", "kolibri", "vingeslag"]
+    text = "A page about hummingbird flight. " * 40
+    a = {"url": "https://a.example/1", "prior": 5, "prior_label": "x"}
+    b = {"url": "https://mirror.example/1", "prior": 5, "prior_label": "x"}
+    c = {"url": "https://c.example/2", "prior": 5, "prior_label": "x"}
+    assert asyncio.run(r.skip_without_ai(a, text)) is False
+    assert asyncio.run(r.skip_without_ai(b, text)) is True and b["relevance"] == 0       # same text again
+    assert asyncio.run(r.skip_without_ai(c, "Cooking pasta at home. " * 40)) is True    # off topic

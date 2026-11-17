@@ -5,7 +5,7 @@ import json
 import re
 from typing import List, Optional
 
-from .config import HISTORY_DIR
+from .paths import HISTORY_DIR
 
 _ID = re.compile(r"^[\w\-]+$", re.UNICODE)
 

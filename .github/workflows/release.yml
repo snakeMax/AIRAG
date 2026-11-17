@@ -1,9 +1,10 @@
 name: Release
 
 # Publishing a new version = changing __version__ in airag/__init__.py on main
-# (python tools/release.py 1.2.3 does that). This workflow then builds the
-# installer and creates the GitHub release + tag v1.2.3 if it doesn't exist yet.
-# "Run workflow" by hand builds a test installer without publishing.
+# (python tools/release.py 1.2.3 does that). This workflow builds the Windows
+# installer and the Android APK, and publishes them together as GitHub release
+# v1.2.3 (only if both builds succeed and that release doesn't exist yet).
+# "Run workflow" by hand builds everything without publishing.
 on:
   push:
     branches: [main]
@@ -14,7 +15,33 @@ permissions:
   contents: write
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      build: ${{ steps.v.outputs.build }}
+      publish: ${{ steps.v.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(python3 -c "import re;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',open('airag/__init__.py').read())[1])")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "v$V" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "Release v$V already exists - nothing to publish."
+            EXISTS=true
+          else
+            EXISTS=false
+          fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || [ "$EXISTS" = "false" ]; then echo "build=true" >> "$GITHUB_OUTPUT"; else echo "build=false" >> "$GITHUB_OUTPUT"; fi
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$EXISTS" = "false" ]; then echo "publish=true" >> "$GITHUB_OUTPUT"; else echo "publish=false" >> "$GITHUB_OUTPUT"; fi
+
   windows:
+    needs: version
+    if: needs.version.outputs.build == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,70 +49,92 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-
-      - name: Read version
-        id: v
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          V=$(python -c "import airag; print(airag.__version__)")
-          echo "version=$V" >> "$GITHUB_OUTPUT"
-          if gh release view "v$V" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Release v$V already exists - nothing to publish."
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Check for committed secrets
         run: python tools/check_secrets.py
-
       - name: Install
-        if: steps.v.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
         run: python -m pip install -r requirements.txt -r requirements-build.txt
-
       - name: Test
-        if: steps.v.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
         run: python -m pytest -q
-
       - name: Install Inno Setup
-        if: steps.v.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
         run: choco install innosetup -y --no-progress
-
       - name: Build
-        if: steps.v.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
         run: python tools/build.py
-
       - name: Smoke test the built app
-        if: steps.v.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: dist/AIRAG/AIRAG.exe --version
-
-      - name: Upload build (manual runs)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: airag-windows
           path: |
             dist/AIRAG-Setup-*.exe
-            dist/AIRAG-*-portable-win64.zip
-
-      - name: Release notes
-        if: steps.v.outputs.exists == 'false' && github.event_name == 'push'
-        shell: bash
-        run: python tools/release_notes.py "${{ steps.v.outputs.version }}" > notes.md
-
-      - name: Publish release
-        if: steps.v.outputs.exists == 'false' && github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.v.outputs.version }}
-          target_commitish: ${{ github.sha }}
-          name: AIRAG ${{ steps.v.outputs.version }}
-          body_path: notes.md
-          files: |
-            dist/AIRAG-Setup-*.exe
             dist/AIRAG-Setup-*.exe.sha256
             dist/AIRAG-*-portable-win64.zip
             dist/AIRAG-*-portable-win64.zip.sha256
+
+  android:
+    needs: version
+    if: needs.version.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: py
+        with:
+          python-version: "3.12"
+      - name: Test the shared code with the Android package set
+        run: |
+          python -m pip install -r requirements-android.txt pytest
+          AIRAG_PLATFORM=android python -m pytest -q
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "The ANDROID_KEYSTORE_BASE64 secret is missing"; exit 1; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/airag.jks"
+          echo "AIRAG_KEYSTORE_FILE=$RUNNER_TEMP/airag.jks" >> "$GITHUB_ENV"
+      - name: Build APK
+        env:
+          AIRAG_BUILD_PYTHON: ${{ steps.py.outputs.python-path }}
+          AIRAG_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          AIRAG_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          AIRAG_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: gradle -p android assembleRelease
+      - name: Name the APK
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/AIRAG-$v.apk"
+          (cd dist && sha256sum "AIRAG-$v.apk" > "AIRAG-$v.apk.sha256")
+          rm -f "$RUNNER_TEMP/airag.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: airag-android
+          path: dist/*
+
+  publish:
+    needs: [version, windows, android]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release notes
+        run: python3 tools/release_notes.py "${{ needs.version.outputs.version }}" > notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: AIRAG ${{ needs.version.outputs.version }}
+          body_path: notes.md
+          make_latest: true
+          files: dist/*

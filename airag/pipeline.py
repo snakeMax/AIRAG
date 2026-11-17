@@ -141,6 +141,7 @@ class Research:
         self.skip = [d.strip().lower() for d in str(self.r.get("skip_domains", "")).split(",") if d.strip()]
         self._sem_llm = asyncio.Semaphore(max(1, int(self.r["llm_concurrency"])))
         self._sem_fetch = asyncio.Semaphore(max(1, int(settings["fetch"]["max_concurrency"])))
+        self._texts: Dict[str, str] = {}   # fingerprint of page text -> url, to skip copies of the same article
 
     # helpers
     async def step(self, sid: str, label: str, status: str = "running", detail: str = "") -> None:
@@ -555,6 +556,8 @@ class Research:
             if page.scholarly:
                 s["prior"], s["prior_label"] = domain_prior(s["domain"], scholarly=True)
             s["_images"] = page.images
+            if await self.skip_without_ai(s, page.text):
+                return
             excerpt = select_passages(page.text, self.terms, int(self.r["passage_chars"]))
         excerpt, suspicious = guard.clean(excerpt, self.s)
         if suspicious:
@@ -594,6 +597,26 @@ class Research:
         })
         self.check_dates(s)
         await self.emit_source(s)
+
+    async def skip_without_ai(self, s: dict, text: str) -> bool:
+        """Save an AI call on pages that can't help: copies of a page already read (syndicated news,
+        mirrors) and pages that never mention any of the question's key words."""
+        fp = re.sub(r"\W+", " ", text[:3000].lower()).strip()[:1500]
+        if len(fp) > 400:
+            first = self._texts.setdefault(fp, s["url"])
+            if first != s["url"]:
+                s.update({"status": "assessed", "relevance": 0, "coverage": 0, "trust": s["prior"], "findings": [],
+                          "summary": "Same text as another source.", "trust_reason": s["prior_label"]})
+                await self.emit_source(s)
+                return True
+        if len(self.plan.get("key_terms") or []) >= 4:   # only when the plan gave words in several languages
+            words = set(tokenize(text[:200000]))
+            if not any(t in words for t in self.terms):
+                s.update({"status": "assessed", "relevance": 0, "coverage": 0, "trust": s["prior"], "findings": [],
+                          "summary": "Doesn't mention the topic.", "trust_reason": s["prior_label"]})
+                await self.emit_source(s)
+                return True
+        return False
 
     # images
     async def search_images(self) -> List[dict]:

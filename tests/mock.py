@@ -12,7 +12,7 @@ from airag import fetch
 from airag.llm import register
 from airag.llm.base import LLMProvider
 from airag.search import register as register_search
-from airag.search.base import ImageResult, SearchBackend, SearchResult
+from airag.search.base import SearchBackend, SearchResult
 
 ARTICLE = """# How fast do hummingbird wings beat? Between 10 and 80 times per second
 *No single study covers every species, but lab work and field recordings agree that body size is the main factor.*

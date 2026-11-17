@@ -237,6 +237,8 @@ def article_system() -> str:
 def article(query: str, intent: str, answer_type: str, sources: List[dict], lang: str) -> Tuple[str, str]:
     fence = Fence()
     blocks = []
+    # the findings already carry the key facts, so the excerpts share a fixed budget (best sources first)
+    per_source = max(600, min(1800, 16000 // max(1, len(sources))))
     for s in sources:
         findings = "\n".join(
             f"- {f.get('claim', '')} ({f.get('directness', '')})" + (f" - \"{f['evidence']}\"" if f.get("evidence") else "")
@@ -248,7 +250,7 @@ def article(query: str, intent: str, answer_type: str, sources: List[dict], lang
             f"Date: {s.get('date') or s.get('published') or 'unknown'}\n"
             f"Summary: {s.get('summary', '')}\n"
             f"Findings:\n{findings or '- (none extracted)'}\n"
-            f"Excerpts:\n{fence.wrap((s.get('excerpt') or '')[:1800])}\n")
+            f"Excerpts:\n{fence.wrap((s.get('excerpt') or '')[:per_source])}\n")
     style = STYLE.get(answer_type, "Organize the article in whatever way best answers the question.")
     user = f"""Reader's search: {query}
 What they want to know: {intent}
@@ -303,6 +305,12 @@ Summarize this {what}:
 
 
 # interactive explainers
+def _outline(md: str, opening: int = 3000) -> str:
+    """Headings plus the start of an article: enough to judge what it's about, at a fraction of the size."""
+    heads = [line.strip() for line in md.splitlines() if line.lstrip().startswith("#")]
+    return md[:opening] + ("\n\n[…]\nAll headings:\n" + "\n".join(heads[:40]) if len(md) > opening else "")
+
+
 def interactive_check(query: str, article_md: str) -> Tuple[str, str]:
     system = ("You decide whether a small interactive simulation, visualization or learning game would genuinely help "
               "a reader understand an article. Good fits: physical or biological processes, mechanisms, math and "
@@ -315,8 +323,8 @@ def interactive_check(query: str, article_md: str) -> Tuple[str, str]:
     system += "\n" + fence.rule()
     user = f"""Reader's search: {query}
 
-Article:
-{fence.wrap(article_md[:9000])}
+Article (outline and opening):
+{fence.wrap(_outline(article_md))}
 
 Return JSON: {{"suitable": true/false, "idea": "one sentence describing the interactive explainer you would build (empty if not suitable)", "reason": "short reason, max 12 words"}}"""
     return system, user
