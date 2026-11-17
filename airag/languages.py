@@ -65,11 +65,15 @@ def public_list() -> List[dict]:
     return [{"code": c, "name": n, "native": nat, "ui": ui} for c, n, nat, ui, _ in LANGUAGES]
 
 
-def answer_language(settings: dict, ui_lang: Optional[str]) -> str:
+def answer_language(settings: dict, ui_lang: Optional[str], query: Optional[str] = None) -> str:
     """Instruction text describing which language the AI should write in."""
     choice = str(settings.get("app", {}).get("answer_language") or "auto")
     if choice == "auto":
-        return "the same language as the reader's search query"
+        if query:
+            q = query.replace('"', "'")[:200]
+            return (f'the language the reader used for their search ("{q}"), even when the sources '
+                    f"are in another language")
+        return "the same language as the reader's search query, even when the sources are in another language"
     if choice == "ui":
         return name(ui_lang or "en")
     return name(choice)

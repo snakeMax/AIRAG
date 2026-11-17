@@ -62,6 +62,9 @@ def restart(new_mode: Optional[str] = None) -> None:
 def pick_folder() -> Optional[str]:
     """Native folder picker. Uses the desktop window's dialog when available,
     otherwise a tiny helper process with a Tk dialog (works from browser mode)."""
+    from .paths import ANDROID
+    if ANDROID:
+        return pick_folder_hook() if pick_folder_hook else None
     if pick_folder_hook:
         try:
             return pick_folder_hook()

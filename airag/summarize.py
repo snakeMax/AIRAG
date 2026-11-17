@@ -13,7 +13,7 @@ from .passages import select_passages, tokenize
 
 async def summarize(settings: dict, kind: str, query: str, payload: dict, ui_lang: Optional[str]) -> AsyncIterator[str]:
     llm = get_llm(settings)
-    lang = languages.answer_language(settings, ui_lang)
+    lang = languages.answer_language(settings, ui_lang, query)
     terms = tokenize(query)
     if kind == "article":
         what, text = "article", str(payload.get("markdown", ""))[:24000]

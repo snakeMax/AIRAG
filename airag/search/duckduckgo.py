@@ -32,12 +32,17 @@ class DuckDuckGo(SearchBackend):
     async def text(self, query: str, n: int = 10) -> List[SearchResult]:
         def run():
             return list(_ddgs().text(query, max_results=n, **self._kw()) or [])
-        try:
-            raw = await asyncio.to_thread(run)
-        except SearchError:
-            raise
-        except Exception as e:  # rate limits, network errors
-            raise SearchError(f"DuckDuckGo: {e}")
+        raw = None
+        for attempt in range(2):
+            try:
+                raw = await asyncio.to_thread(run)
+                break
+            except Exception:  # package missing (Android), rate limit or network error
+                await asyncio.sleep(1.0 + attempt)
+        if raw is None:
+            from . import ddg_html  # plain-HTML fallback
+            kw = self._kw()
+            return await ddg_html.search(query, n, kw["region"], kw["safesearch"])
         out = []
         for r in raw:
             url = r.get("href") or r.get("url")

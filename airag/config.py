@@ -40,6 +40,10 @@ GENERAL_SCHEMA: dict = {
         {"key": "appearance", "label": "", "type": "hidden",
          "default": {"theme": "system", "palette": "zinc", "accent": "graphite"}},
         {"key": "theme_hint", "label": "", "type": "hidden", "default": "light"},
+        {"key": "pclink_enabled", "label": "", "type": "hidden", "default": False},
+        {"key": "pclink_port", "label": "", "type": "hidden", "default": 0},
+        {"key": "pclink_code", "label": "", "type": "hidden", "default": ""},
+        {"key": "pclink_allow_internet", "label": "", "type": "hidden", "default": False},
     ],
     "library": [
         {"key": "folders", "label": "Folders", "type": "hidden", "default": []},
@@ -118,6 +122,19 @@ def field_defaults(fields: List[dict]) -> dict:
 
 
 def defaults() -> dict:
+    d = _base_defaults()
+    if paths.ANDROID:  # lighter defaults for phones: less battery, data and storage
+        d["llm"]["provider"] = "anthropic"
+        d["search"]["image_backend"] = "none"
+        d["fetch"]["max_concurrency"] = 3
+        d["fetch"]["fetcher"] = "http"
+        d["research"].update({"sources_per_round": 4, "max_sources_total": 10, "llm_concurrency": 2,
+                              "max_rounds": 2, "max_images": 4})
+        d["app"]["history_limit"] = 100
+    return d
+
+
+def _base_defaults() -> dict:
     from .llm import PROVIDERS
     from .search import BACKENDS
     return {

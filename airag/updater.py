@@ -18,7 +18,7 @@ from typing import Optional, Tuple
 import httpx
 
 from . import __repo__, __version__
-from .paths import FROZEN, LOCAL_DIR, UPDATES_DIR, is_portable
+from .paths import ANDROID, FROZEN, LOCAL_DIR, UPDATES_DIR, is_portable
 
 log = logging.getLogger("airag.update")
 CACHE = LOCAL_DIR / "update_check.json"
@@ -31,7 +31,14 @@ def parse_version(v: str) -> Tuple[int, ...]:
 
 
 def can_self_update() -> bool:
-    return FROZEN and sys.platform == "win32" and not is_portable()
+    return ANDROID or (FROZEN and sys.platform == "win32" and not is_portable())
+
+
+def _wanted(name: str) -> bool:
+    n = name.lower()
+    if ANDROID:
+        return n.startswith("airag") and n.endswith(".apk")
+    return n.startswith("airag-setup") and n.endswith(".exe")
 
 
 def _read_cache() -> Optional[dict]:
@@ -67,10 +74,12 @@ async def check(force: bool = False) -> dict:
     setup = sha = None
     for a in rel.get("assets") or []:
         n = a.get("name", "")
-        if n.lower().startswith("airag-setup") and n.lower().endswith(".exe"):
+        if _wanted(n):
             setup = {"name": n, "url": a.get("browser_download_url"), "size": a.get("size", 0)}
-        elif n.lower().endswith(".exe.sha256"):
-            sha = a.get("browser_download_url")
+    if setup:
+        for a in rel.get("assets") or []:
+            if a.get("name") == setup["name"] + ".sha256":
+                sha = a.get("browser_download_url")
     info.update({"latest": latest, "newer": parse_version(latest) > parse_version(__version__),
                  "notes": (rel.get("body") or "")[:5000], "url": rel.get("html_url"),
                  "published": rel.get("published_at"), "asset": setup, "sha256_url": sha})
@@ -89,12 +98,12 @@ async def download_and_install(job, quit_app) -> dict:
     if not info.get("newer"):
         raise RuntimeError("You already have the latest version.")
     if not can_self_update():
-        raise RuntimeError("Automatic updates only work for the installed Windows app. Download the new version from GitHub.")
+        raise RuntimeError("Automatic updates only work for the installed app. Download the new version from GitHub.")
     asset = info.get("asset")
     if not asset:
         raise RuntimeError("The latest release has no installer attached.")
     UPDATES_DIR.mkdir(parents=True, exist_ok=True)
-    for old in UPDATES_DIR.glob("AIRAG-Setup-*.exe"):
+    for old in list(UPDATES_DIR.glob("AIRAG-Setup-*.exe")) + list(UPDATES_DIR.glob("AIRAG-*.apk")):
         try:
             old.unlink()
         except OSError:
@@ -123,6 +132,11 @@ async def download_and_install(job, quit_app) -> dict:
             if expected and expected != h.hexdigest():
                 dest.unlink(missing_ok=True)
                 raise RuntimeError("Downloaded file is corrupted (checksum mismatch). Please try again.")
+    if ANDROID:
+        job.message = "Opening the installer"
+        from .android_bridge import install_apk
+        install_apk(str(dest))
+        return {"version": info["latest"]}
     job.message = "Installing - AIRAG will restart"
     flags = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
     subprocess.Popen([str(dest), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/AIRAGUPDATE"],

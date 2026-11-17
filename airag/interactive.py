@@ -51,7 +51,7 @@ async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool
     if not info.get("suitable") and not force:
         raise ValueError("An interactive explainer isn't available for this article.")
     llm = get_llm(settings)
-    lang = languages.answer_language(settings, ui_lang)
+    lang = languages.answer_language(settings, ui_lang, rec["query"])
     raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang),
                              max_tokens=8000)
     html = clean_html(raw)

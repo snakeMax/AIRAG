@@ -18,9 +18,13 @@ from pathlib import Path
 
 APP_NAME = "AIRAG"
 FROZEN = bool(getattr(sys, "frozen", False))                # running as the packaged .exe
+ANDROID = os.environ.get("AIRAG_PLATFORM") == "android" or hasattr(sys, "getandroidapilevel")
+PLATFORM = "android" if ANDROID else sys.platform
 SOURCE_ROOT = Path(__file__).resolve().parent.parent         # repo root when running from source
 BUNDLE_ROOT = Path(getattr(sys, "_MEIPASS", SOURCE_ROOT))    # where web/ and assets/ live
 WEB_DIR = BUNDLE_ROOT / "web"
+if not WEB_DIR.exists() and (Path(__file__).resolve().parent / "web").exists():
+    WEB_DIR = Path(__file__).resolve().parent / "web"   # Android build keeps web/ inside the package
 ASSETS_DIR = BUNDLE_ROOT / "assets"
 PACKAGE_DATA = Path(__file__).resolve().parent / "data"
 APP_DIR = Path(sys.executable).resolve().parent if FROZEN else SOURCE_ROOT

@@ -62,7 +62,7 @@ class Research:
         self.mode = mode if mode in ("auto", "article", "results") else "auto"
         settings = deepcopy(settings)
         self.ui_lang = languages.normalize(ui_lang) or "en"
-        self.lang = languages.answer_language(settings, self.ui_lang)
+        self.lang = languages.answer_language(settings, self.ui_lang, self.query)
         ans = settings["app"].get("answer_language", "auto")
         lang_code = languages.normalize(ans) or (self.ui_lang if ans == "ui" else None)
         if str(settings["search"].get("region", "auto")).lower() == "auto":

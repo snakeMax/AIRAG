@@ -56,11 +56,17 @@ async def _startup() -> None:
         asyncio.create_task(ollama_manager.ensure_running(s["llm"]["providers"]["ollama"].get("base_url") or ollama_manager.DEFAULT_URL))
     if s["app"].get("check_updates", True):
         asyncio.create_task(updater.check())
+    if not paths.ANDROID and s["app"].get("pclink_enabled"):
+        from . import pclink
+        await asyncio.to_thread(pclink.autostart)
 
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await fetch_shutdown()
+    if not paths.ANDROID:
+        from . import pclink
+        pclink.stop()
 
 
 @app.get("/")
@@ -81,7 +87,7 @@ def ping():
 @app.get("/api/app/info")
 def app_info():
     return {"version": __version__, "repo": __repo__, "mode": appctl.mode, "frozen": paths.FROZEN,
-            "portable": paths.is_portable(), "platform": sys.platform, "can_self_update": updater.can_self_update(),
+            "portable": paths.is_portable(), "platform": paths.PLATFORM, "port": appctl.port, "can_self_update": updater.can_self_update(),
             "config_dir": str(paths.CONFIG_DIR), "local_dir": str(paths.LOCAL_DIR),
             "languages": languages.public_list(), "can_restart": appctl.mode in ("desktop", "browser")}
 
@@ -135,7 +141,10 @@ def open_folder(req: OpenReq):
 
 
 def _open_path(p: Path, reveal: bool = False) -> None:
-    if sys.platform == "win32":
+    if paths.ANDROID:
+        from .android_bridge import open_path
+        open_path(str(p), reveal)
+    elif sys.platform == "win32":
         if reveal:
             subprocess.Popen(["explorer", "/select,", str(p)])
         else:
@@ -260,6 +269,53 @@ def job_cancel(job_id: str):
     return {"cancelled": jobs.cancel(job_id)}
 
 
+# log viewer (Settings → About). Secrets are blanked out before the text leaves the server.
+@app.get("/api/app/log")
+def app_log(lines: int = 300, level: str = ""):
+    import re
+    f = paths.LOG_DIR / "airag.log"
+    if not f.exists():
+        return {"lines": [], "path": str(f)}
+    with open(f, "rb") as fh:
+        fh.seek(0, 2)
+        size = fh.tell()
+        fh.seek(max(0, size - 400_000))
+        text = fh.read().decode("utf-8", errors="replace")
+    rows = text.splitlines()[-max(10, min(lines, 2000)) * 3:]
+    if level:
+        lv = level.upper()
+        keep = {"ERROR": ("ERROR", "CRITICAL"), "WARNING": ("WARNING", "ERROR", "CRITICAL")}.get(lv)
+        if keep:
+            rows = [r for r in rows if any(f" {k} " in r for k in keep) or r.startswith((" ", "\t", "Traceback"))]
+    rows = rows[-min(lines, 2000):]
+    secrets_ = [v for v in _secret_values() if len(v) >= 8]
+    key_re = re.compile(r"(sk-[A-Za-z0-9_\-]{8,}|sk-ant-[A-Za-z0-9_\-]{8,}|AIza[0-9A-Za-z_\-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|Bearer\s+\S+)")
+    out = []
+    for r in rows:
+        for v in secrets_:
+            r = r.replace(v, "••••")
+        out.append(key_re.sub("••••", r))
+    return {"lines": out, "path": str(f)}
+
+
+def _secret_values() -> list:
+    s = config.load()
+    vals = [s["app"].get("pclink_code") or ""]
+    for prov in s["llm"].get("providers", {}).values():
+        vals += [str(v) for k, v in prov.items() if "key" in k and v]
+    for sec in ("search",):
+        vals += [str(v) for k, v in _walk(s.get(sec, {})) if "key" in k and v]
+    return vals
+
+
+def _walk(d, prefix=""):
+    for k, v in d.items():
+        if isinstance(v, dict):
+            yield from _walk(v, k)
+        else:
+            yield k, v
+
+
 # ollama
 def _ollama_url(override: Optional[str] = None) -> str:
     return override or config.load()["llm"]["providers"]["ollama"].get("base_url") or ollama_manager.DEFAULT_URL
@@ -277,6 +333,38 @@ async def ollama_start(url: str = ""):
     if not ok:
         st["error"] = "Ollama isn't installed." if not st["installed"] else "Ollama didn't start in time."
     return st
+
+
+# PC link (share this PC's Ollama with the phone app)
+class PcLinkReq(BaseModel):
+    enabled: Optional[bool] = None
+    allow_internet: Optional[bool] = None
+    new_code: bool = False
+
+
+@app.get("/api/pclink")
+def pclink_status():
+    from . import pclink
+    return pclink.status()
+
+
+@app.post("/api/pclink")
+def pclink_set(req: PcLinkReq):
+    from . import pclink
+    if paths.ANDROID:
+        raise HTTPException(400, "PC link is set up in the desktop app.")
+    if req.allow_internet is not None:
+        config.save({"app": {"pclink_allow_internet": bool(req.allow_internet)}})
+    if req.new_code:
+        config.save({"app": {"pclink_code": pclink.new_code()}})
+    try:
+        if req.enabled is False:
+            pclink.stop(save=True)
+        elif req.enabled or ((req.allow_internet is not None or req.new_code) and pclink.running()):
+            pclink.start()
+    except Exception as e:
+        raise _err(e)
+    return pclink.status()
 
 
 @app.get("/api/ollama/recommended")
@@ -348,7 +436,10 @@ def library_status():
 
 @app.post("/api/library/pick-folder")
 async def library_pick():
-    path = await asyncio.to_thread(appctl.pick_folder)
+    try:
+        path = await asyncio.to_thread(appctl.pick_folder)
+    except RuntimeError as e:
+        raise _err(e)
     return {"path": path}
 
 

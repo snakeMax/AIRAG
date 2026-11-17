@@ -137,13 +137,16 @@ def _int(v) -> int:
 
 
 def parse_html(url: str, final: str, html: str, via: str = "http") -> Page:
-    import trafilatura
     from bs4 import BeautifulSoup
+    try:
+        import trafilatura  # better extraction; not available on Android
+    except ImportError:
+        trafilatura = None
 
     p = Page(url, final_url=final, via=via)
     try:
         soup = BeautifulSoup(html, "lxml")
-    except Exception:
+    except Exception:  # lxml missing (Android) or broken markup
         soup = BeautifulSoup(html, "html.parser")
 
     def meta(*names: str) -> str:
@@ -189,11 +192,12 @@ def parse_html(url: str, final: str, html: str, via: str = "http") -> Page:
 
     # Main text
     text = ""
-    try:
-        text = trafilatura.extract(html, url=final, include_comments=False, include_tables=True,
-                                   favor_recall=True, deduplicate=True) or ""
-    except Exception:
-        text = ""
+    if trafilatura is not None:
+        try:
+            text = trafilatura.extract(html, url=final, include_comments=False, include_tables=True,
+                                       favor_recall=True, deduplicate=True) or ""
+        except Exception:
+            text = ""
     if len(text) < 300:
         for t in soup(["script", "style", "noscript", "nav", "footer", "header", "form", "svg", "aside"]):
             t.decompose()

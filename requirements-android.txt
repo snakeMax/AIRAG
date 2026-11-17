@@ -1,0 +1,9 @@
+# Python packages bundled into the Android app (installed by Chaquopy at build time).
+# Only pure-Python packages, so nothing needs compiling for the phone.
+# FastAPI 0.99 is the last release that works with pydantic 1 (pydantic 2 needs a compiled core).
+fastapi==0.99.1
+pydantic==1.10.21
+uvicorn==0.32.1
+httpx==0.27.2
+beautifulsoup4==4.12.3
+pypdf==5.1.0

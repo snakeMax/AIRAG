@@ -65,7 +65,10 @@ def extract(p: Path) -> str:
             return _xml_text(z.read("content.xml").decode("utf-8", "replace"), "text:p")
     if ext in (".html", ".htm"):
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(_read_text(p), "lxml")
+        try:
+            soup = BeautifulSoup(_read_text(p), "lxml")
+        except Exception:
+            soup = BeautifulSoup(_read_text(p), "html.parser")
         for t in soup(["script", "style", "noscript"]):
             t.decompose()
         return soup.get_text("\n", strip=True)
@@ -105,6 +108,7 @@ def chunks_of(text: str) -> List[str]:
 class Library:
     def __init__(self, db_path: Path = LIBRARY_DB):
         self.db_path = db_path
+        self.fts = True   # False when this SQLite build has no FTS5 (some Android builds)
 
     def _conn(self) -> sqlite3.Connection:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -115,10 +119,18 @@ class Library:
         c.executescript("""
             CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY, path TEXT UNIQUE, root TEXT, title TEXT,
                 mtime REAL, size INTEGER, chunks INTEGER DEFAULT 0, error TEXT);
-            CREATE VIRTUAL TABLE IF NOT EXISTS chunks USING fts5(text, title, file_id UNINDEXED, ord UNINDEXED,
-                tokenize='unicode61 remove_diacritics 2');
             CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
         """)
+        try:
+            c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS chunks USING fts5(text, title, file_id UNINDEXED, "
+                      "ord UNINDEXED, tokenize='unicode61 remove_diacritics 2')")
+            self.fts = True
+        except sqlite3.OperationalError:
+            self.fts = False
+            c.execute("CREATE TABLE IF NOT EXISTS chunks(text TEXT, title TEXT, file_id INTEGER, ord INTEGER)")
+            c.execute("CREATE INDEX IF NOT EXISTS chunks_file ON chunks(file_id)")
+        row = c.execute("SELECT sql FROM sqlite_master WHERE name='chunks'").fetchone()
+        self.fts = bool(row and "fts5" in (row[0] or "").lower())
         return c
 
     # ---- sync
@@ -207,9 +219,12 @@ class Library:
         with _lock:
             c = self._conn()
             try:
-                rows = c.execute(
-                    "SELECT file_id, ord, text, bm25(chunks, 1.0, 2.0) AS score FROM chunks WHERE chunks MATCH ? "
-                    "ORDER BY score LIMIT 400", (expr,)).fetchall()
+                if self.fts:
+                    rows = c.execute(
+                        "SELECT file_id, ord, text, bm25(chunks, 1.0, 2.0) AS score FROM chunks WHERE chunks MATCH ? "
+                        "ORDER BY score LIMIT 400", (expr,)).fetchall()
+                else:
+                    rows = self._plain_search(c, expr)
                 by_file: Dict[int, dict] = {}
                 for r in rows:
                     f = by_file.setdefault(int(r["file_id"]), {"score": 0.0, "hits": []})
@@ -234,6 +249,22 @@ class Library:
                 return out
             finally:
                 c.close()
+
+    @staticmethod
+    def _plain_search(c, expr: str) -> list:
+        """Simple keyword scoring for SQLite builds without FTS5."""
+        words = [w.strip('"') for w in expr.split(" OR ")][:12]
+        if not words:
+            return []
+        cond = " OR ".join("lower(text) LIKE ?" for _ in words)
+        rows = c.execute(f"SELECT file_id, ord, text, title FROM chunks WHERE {cond} LIMIT 2000",
+                         [f"%{w}%" for w in words]).fetchall()
+        scored = []
+        for r in rows:
+            low = (r["text"] + " " + (r["title"] or "")).lower()
+            score = sum(low.count(w) for w in words) + 2 * sum(1 for w in words if w in low)
+            scored.append({"file_id": r["file_id"], "ord": r["ord"], "text": r["text"], "score": -float(score)})
+        return sorted(scored, key=lambda x: x["score"])[:400]
 
     # ---- misc
     def get_file(self, fid: int) -> Optional[dict]:

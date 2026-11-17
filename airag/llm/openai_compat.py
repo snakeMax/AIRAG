@@ -146,3 +146,33 @@ class OpenAICompatible(_OpenAIBase):
         {"key": "api_key", "label": "API key (if needed)", "type": "secret", "default": ""},
         {"key": "model", "label": "Model", "type": "model", "default": ""},
     ]
+
+
+@register
+class PcLink(_OpenAIBase):
+    """The Ollama models on the user's own PC, shared with Settings → AI model → Share with my phone."""
+    name = "pc_link"
+    label = "My PC (Ollama)"
+    requires_key = True
+    fields = [
+        {"key": "base_url", "label": "PC address", "type": "text", "default": "",
+         "help": "Shown on the PC under Settings → AI model → Share with my phone, e.g. 192.168.1.20:47120"},
+        {"key": "api_key", "label": "Pairing code", "type": "secret", "default": ""},
+        {"key": "model", "label": "Model", "type": "model", "default": ""},
+    ]
+
+    def _url(self, path: str) -> str:
+        addr = str(self.cfg.get("base_url") or "").strip().rstrip("/")
+        if not addr:
+            raise LLMError("Enter your PC's address (Settings → AI model).")
+        if "://" not in addr:
+            addr = "http://" + addr
+        if not addr.endswith("/v1"):
+            addr += "/v1"
+        return addr + path
+
+    def _headers(self) -> dict:
+        key = str(self.cfg.get("api_key") or "").strip().upper()
+        if not key:
+            raise LLMError("Enter the pairing code shown on your PC (Settings → AI model).")
+        return {"Content-Type": "application/json", "Authorization": f"Bearer {key}"}
