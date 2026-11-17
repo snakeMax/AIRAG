@@ -2,6 +2,7 @@
 import { $, $$, h, safeUrl, favicon, shortUrl, stripThink, rafThrottle, icon, toast, api, apiStream, fmtDate } from "./util.js";
 import { render, allowLinks } from "./markdown.js";
 import { chipHtml, openDatePicker, emptyRange } from "./dates.js";
+import { openTranslate, restoreTranslation } from "./translate.js";
 import { t, has, uiLang } from "./i18n.js";
 import { openSummary } from "./summary.js";
 import { openInteractive } from "./interactive.js";
@@ -243,6 +244,20 @@ $("#runMain").addEventListener("click", e => {
   else if (act === "settings") hooks.openSettings(b.dataset.tab);
   else if (act === "copy") navigator.clipboard.writeText(articleMarkdown(R)).then(() => toast(t("art.copied")));
   else if (act === "save") openSavePop(b, R);
+  else if (act === "tr-original") {
+    restoreTranslation(R, b.dataset.kind);
+    if (b.dataset.kind === "article") { renderArticleBody(R, true); renderArticleSide(R); showTrNote(R); }
+    else renderResults(R);
+    const x = $("#trArtBtn"); if (x) x.innerHTML = `${icon("globe")}${h(t("tr.button"))}`;
+  }
+  else if (act === "translate-article" && R.finished) openTranslate(b, R, "article", {
+    render: (final = true) => { renderArticleBody(R, final); if (final) { renderArticleSide(R); showTrNote(R); } },
+    setBusy: on => { const x = $("#trArtBtn"); if (x) { x.disabled = on; x.innerHTML = on ? `<span class="spinner sm"></span>${h(t("tr.working"))}` : `${icon("globe")}${h(t("tr.button"))}`; } },
+  });
+  else if (act === "translate-results") openTranslate(b, R, "results", {
+    render: () => renderResults(R),
+    setBusy: on => { const x = $("#trResBtn"); if (x) { x.disabled = on; x.innerHTML = on ? `<span class="spinner sm"></span>${h(t("tr.working"))}` : `${icon("globe")}${h(t("tr.button"))}`; } },
+  });
   else if (act === "sum-article") openSummary({ kind: "article", query: R.query, payload: { markdown: stripThink(R.md) }, label: $("#aTitle")?.textContent || R.query, key: `a:${R.id}` });
   else if (act === "sum-results") {
     const items = (R.results?.items || []).filter(s => s.relevance != null).slice(0, 12);
@@ -265,6 +280,21 @@ $("#runMain").addEventListener("click", e => {
 });
 
 // results view
+// "Translated into X with AI · Show original" bar
+function trNote(R, kind) {
+  const code = R.translation?.[kind];
+  if (!code) return "";
+  let name = code;
+  try { name = new Intl.DisplayNames([uiLang()], { type: "language" }).of(code) || code; } catch { /* old browsers */ }
+  return `<div class="tr-note">${icon("globe")}<span>${h(t("tr.note", { lang: name }))}</span>
+    <button type="button" class="btn sm" data-act="tr-original" data-kind="${kind}">${h(t("tr.original"))}</button></div>`;
+}
+
+function showTrNote(R) {
+  const el = $("#trNoteArt");
+  if (el) el.innerHTML = trNote(R, "article");
+}
+
 function renderResults(R) {
   const res = R.results, best = new Set(res.best || []);
   const items = res.items || [];
@@ -277,8 +307,10 @@ function renderResults(R) {
         <div class="row">
           ${assessed.length ? `<button class="btn" data-act="sum-results">${icon("sparkle")}${h(t("sum.button"))}</button>` : ""}
           <button class="btn" data-act="article">${icon("doc")}${h(t("res.toArticle"))}</button>
+          <button class="btn ghost" data-act="translate-results" id="trResBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>
         </div>
       </div>
+      <div id="trNoteRes">${trNote(R, "results")}</div>
       ${imgStrip(res.images)}
       ${assessed.map(s => resultCard(s, best.has(s.id))).join("") || `<p class="muted">${h(t("res.none"))}</p>`}
       ${others.length ? `<div class="also"><div class="also-title">${h(t("res.more"))}</div>${others.map(s => `
@@ -315,9 +347,11 @@ function renderArticle(R) {
           <button class="btn sm ghost" data-act="results">${icon("list")}${h(t("art.results"))}</button>
           <button class="btn sm" data-act="save" id="saveBtn" disabled title="${h(t("save.tip"))}">${icon("download")}${h(t("save.button"))}</button>
           <button class="btn sm ghost" data-act="copy">${icon("copy")}${h(t("art.copy"))}</button>
+          <button class="btn sm ghost" data-act="translate-article" id="trArtBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>
         </div></div>
       ${hero ? `<figure class="a-hero" data-img><img src="${h(hero.src)}" alt="${h(hero.title)}" referrerpolicy="no-referrer" ${imgOnErr}>
         <figcaption>${h(hero.title)}${hero.title ? " · " : ""}<a href="${h(safeUrl(hero.page_url))}" target="_blank" rel="noopener noreferrer">${h(hero.credit)}</a></figcaption></figure>` : ""}
+      <div id="trNoteArt"></div>
       <div class="a-body prose ${/^(zh|ja|ko)/.test(uiLang()) ? "" : "dropcap"}" id="aBody"><span class="cursor"></span></div>
       ${rest.length ? `<section class="a-gallery"><h2>${h(t("art.images"))}</h2><div class="gallery-grid">${rest.map(im => `
         <figure data-img><a href="${h(safeUrl(im.page_url || im.src))}" target="_blank" rel="noopener noreferrer"><img src="${h(im.thumb || im.src)}" alt="${h(im.title)}" loading="lazy" referrerpolicy="no-referrer" ${imgOnErr}></a>

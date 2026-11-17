@@ -434,5 +434,14 @@
  "save.richHelp": "Pictures are stored inside the saved copy so they work offline. Larger files.",
  "save.richHelpNoInter": "Pictures are stored inside the saved copy so they work offline; open the interactive explainer first to include it too. Larger files.",
  "save.source": "Save page",
- "save.sourceTip": "Save a light, text-only copy of this page to My library"
+ "save.sourceTip": "Save a light, text-only copy of this page to My library",
+ "tr.button": "Translate with AI…",
+ "tr.to": "Translate into",
+ "tr.help": "The AI translates naturally, keeping expressions, citations and numbers intact.",
+ "tr.go": "Translate",
+ "tr.original": "Show original",
+ "tr.working": "Translating\u2026",
+ "tr.translated": "Translated",
+ "tr.tip": "Pick a language, and the AI translates this page naturally (not word for word)",
+ "tr.note": "Translated into {lang} with AI"
 }

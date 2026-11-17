@@ -730,6 +730,34 @@ async def research(req: ResearchReq):
                                                     req.from_id, req.date_from, req.date_to, req.merge_id).run())
 
 
+class TranslateReq(BaseModel):
+    lang: str
+    markdown: str = ""
+    id: Optional[str] = None
+    items: list = []
+
+
+@app.post("/api/translate/article")
+async def translate_article(req: TranslateReq):
+    from . import translate
+    settings = config.load()
+
+    async def run(emit):
+        async for piece in translate.article(settings, req.markdown, req.lang, req.id):
+            await emit({"type": "token", "text": piece})
+        await emit({"type": "done"})
+    return _ndjson(run)
+
+
+@app.post("/api/translate/items")
+async def translate_items(req: TranslateReq):
+    from . import translate
+    try:
+        return {"items": await translate.items(config.load(), req.items, req.lang)}
+    except Exception as e:
+        raise _err(e)
+
+
 class SummaryReq(BaseModel):
     kind: str          # article | results | source | text
     query: str = ""

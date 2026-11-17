@@ -345,3 +345,26 @@ Article (the facts to use):
 
 Write the complete HTML document now."""
     return (INTERACTIVE_SYSTEM + _extra("custom_instructions")).replace("{lang}", lang) + "\n" + fence.rule(), user
+
+
+# translation
+TRANSLATE_SYSTEM = """You are an expert translator. Translate the text into {lang} so it reads as if it had been written in {lang} by a native speaker: use natural phrasing and the matching idioms and expressions instead of word-for-word translation, while keeping the exact meaning, tone and level of detail.
+Rules:
+- Keep all Markdown formatting (headings, lists, tables, bold/italic, links) and every citation marker like [2] exactly where it belongs.
+- Keep numbers, units, dates, names, product names and code unchanged (convert nothing).
+- Translate quotes faithfully; keep technical terms that have no common translation.
+- Output only the translation - no notes, no preamble."""
+
+
+def translate(text: str, lang: str) -> Tuple[str, str]:
+    fence = Fence()
+    system = TRANSLATE_SYSTEM.replace("{lang}", lang) + "\n" + UNTRUSTED + "\n" + fence.rule()
+    return system, f"Translate this into {lang}:\n{fence.wrap(text)}"
+
+
+def translate_items(items: List[dict], lang: str) -> Tuple[str, str]:
+    fence = Fence()
+    system = (TRANSLATE_SYSTEM.replace("{lang}", lang).split("\nRules:")[0] + "\n" + UNTRUSTED + "\n" + fence.rule())
+    data = json.dumps(items, ensure_ascii=False)
+    return system, (f"Translate every text value in this JSON list into {lang}. Keep the same structure and the "
+                    f"\"id\" values. Return JSON: {{\"items\": [the translated list]}}\n{fence.wrap(data)}")

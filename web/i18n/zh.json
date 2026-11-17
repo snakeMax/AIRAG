@@ -40,4 +40,5 @@
 "run.again":"重新搜索","run.againTip":"进行一次新的搜索,并同时使用这里找到的来源。此次搜索会保留在历史记录中。",
 "save.button":"保存","save.saved":"已保存","save.tip":"将这篇文章连同来源保存为 Markdown 文件到“我的资料库”","save.done":"已保存到“我的资料库”:{path}",
 "my.title":"我的资料库","my.intro":"保存的文章和你添加的文件都放在这里。可以放在任意磁盘上,勾选“我的资料库”时总会搜索它。","my.addFiles":"添加文件:","my.copy":"复制","my.move":"移动","my.other":"其他要搜索的文件夹","my.files":"{n} 个文件","my.notYet":"保存第一篇文章时创建","my.change":"更改","my.default":"使用默认位置","my.moveConfirm":"把选中的文件移动到“我的资料库”?它们会从原来的位置移走。","my.added":"已向“我的资料库”添加 {n} 个文件","my.addedCopied":"已添加 {n} 个文件(部分应用只允许复制,因此保留了原文件)",
-"saved.title":"已保存的文章","saved.empty":"还没有保存的文章。在文章上点“保存”即可存到“我的资料库”。","saved.rich":"含图片","save.rich":"包含图片和互动讲解","save.richHelp":"图片会保存在副本里,离线也能显示。文件会更大。","save.richHelpNoInter":"图片会保存在副本里,离线也能显示;如需一并保存互动讲解,请先打开它。文件会更大。","save.source":"保存页面","save.sourceTip":"把此页面的轻量纯文本副本保存到“我的资料库”"}
+"saved.title":"已保存的文章","saved.empty":"还没有保存的文章。在文章上点“保存”即可存到“我的资料库”。","saved.rich":"含图片","save.rich":"包含图片和互动讲解","save.richHelp":"图片会保存在副本里,离线也能显示。文件会更大。","save.richHelpNoInter":"图片会保存在副本里,离线也能显示;如需一并保存互动讲解,请先打开它。文件会更大。","save.source":"保存页面","save.sourceTip":"把此页面的轻量纯文本副本保存到“我的资料库”",
+"tr.button":"用 AI 翻译…","tr.to":"翻译成","tr.help":"AI 会自然地翻译,保留表达方式、引用编号和数字。","tr.go":"翻译","tr.original":"显示原文","tr.working":"正在翻译…","tr.translated":"已翻译","tr.tip":"选择一种语言,AI 会自然地翻译此页面(不是逐字翻译)","tr.note":"已用 AI 翻译成{lang}"}

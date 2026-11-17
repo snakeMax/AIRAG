@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 
 from airag import fetch
 from airag.llm import register
@@ -81,9 +82,21 @@ class MockLLM(LLMProvider):
             return '{"suitable": true, "idea": "A slider that shows how body size changes wingbeat rate.", "reason": "quantitative"}'
         if "interactive explainers" in system:
             return HTML
+        if "expert translator" in system:   # results page: tag every text so tests can see it was translated
+            m = re.search(r">>\n(\[.*\])\n<<", user, re.S)
+            items = json.loads(m.group(1)) if m else []
+            for it in items:
+                it["title"] = "[NB] " + it.get("title", "")
+                it["summary"] = "[NB] " + it.get("summary", "")
+            return json.dumps({"items": items})
         return "OK"
 
     async def stream(self, system, user, max_tokens=4096):
+        if "expert translator" in system:
+            text = "# Hvor raskt slår kolibrienes vinger?\n\nDe fleste kolibrier slår vingene **10 til 80 ganger i sekundet** [1]."
+            for i in range(0, len(text), 40):
+                yield text[i:i + 40]
+            return
         text = ARTICLE if "research journalist" in system else "**Bottom line:** 10-80 beats per second.\n\n- Smaller birds beat faster [1]\n- Giant hummingbird: 10-15 [2]"
         for i in range(0, len(text), 40):
             await asyncio.sleep(0.005)

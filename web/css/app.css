@@ -491,3 +491,9 @@ html, body { overflow-x: hidden; }
 .recent-head .link-btn svg { width: 15px; height: 15px; }
 .drawer-head .seg button { font-size: 14px; }
 .save-pop .switch { font-size: 13.5px; font-weight: 600; }
+.tr-label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.tr-label .input { height: 36px; }
+.tr-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; padding: 8px 12px; border-radius: 10px;
+  background: var(--accent-soft); color: var(--text); font-size: 13px; }
+.tr-note svg { width: 15px; height: 15px; }
+.tr-note span { flex: 1; min-width: 140px; }
