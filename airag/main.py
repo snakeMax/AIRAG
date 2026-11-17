@@ -460,6 +460,13 @@ async def repair_reinstall():
     return jobs.start("update", lambda j: updater.download_and_install(j, appctl.quit_app, reinstall=True)).public()
 
 
+def _reindex_soon() -> None:
+    """Index new files in the library folders in the background (only changed files are read)."""
+    if jobs.running("library-sync"):
+        return
+    asyncio.get_running_loop().run_in_executor(None, lambda: LIBRARY.sync(**library_args(config.load())))
+
+
 # My library: personal folder for saved articles and imported files
 @app.get("/api/mylibrary")
 def mylibrary_status():
@@ -511,6 +518,7 @@ async def mylibrary_save(req: SaveReq):
         raise _err(e)
     rec["saved_path"] = str(path)
     history.save(rec, int(s["app"].get("history_limit", 300)))
+    _reindex_soon()
     return {"path": str(path)}
 
 
@@ -548,6 +556,7 @@ async def mylibrary_save_source(req: SaveSourceReq):
         path = await asyncio.to_thread(mylibrary.save_source, page, s, req.query)
     except OSError as e:
         raise _err(e)
+    _reindex_soon()
     return {"path": str(path)}
 
 
@@ -563,12 +572,14 @@ async def mylibrary_import(req: ImportReq):
     if paths.ANDROID:
         from . import android_bridge
         added = await asyncio.to_thread(android_bridge.import_files, str(dest), req.move)
+        _reindex_soon()
         return {"added": [a["path"] for a in added], "moved": sum(1 for a in added if a.get("moved"))}
     files = await asyncio.to_thread(appctl.pick_files)
     try:
         added = await asyncio.to_thread(mylibrary.import_files, files, s, req.move)
     except OSError as e:
         raise _err(e)
+    _reindex_soon()
     return {"added": added, "moved": len(added) if req.move else 0}
 
 

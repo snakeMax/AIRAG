@@ -7,6 +7,7 @@ version = sys.argv[1].lstrip("v")
 text = Path(__file__).resolve().parent.parent.joinpath("CHANGELOG.md").read_text(encoding="utf-8")
 m = re.search(rf"^## \[?{re.escape(version)}\]?.*?$(.*?)(?=^## |\Z)", text, re.M | re.S)
 body = m.group(1).strip() if m else f"AIRAG {version}"
-print(body + "\n\n---\n**Install:** download `AIRAG-Setup-" + version + ".exe` below and run it. "
+print(body + "\n\n---\n**Windows:** download `AIRAG-Setup-" + version + ".exe` below and run it. "
       "Already installed? AIRAG will offer the update automatically.\n"
-      "**Portable:** unzip `AIRAG-" + version + "-portable-win64.zip` anywhere and run `AIRAG.exe`.")
+      "**Portable (Windows):** unzip `AIRAG-" + version + "-portable-win64.zip` anywhere and run `AIRAG.exe`.\n"
+      "**Android:** open this page on your phone, download `AIRAG-" + version + ".apk` and open it.")

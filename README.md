@@ -8,6 +8,8 @@
 > 1. Download **`AIRAG-Setup-x.y.z.exe`** from the [latest release](https://github.com/snakeMax/AIRAG/releases/latest).
 > 2. Run it and follow the steps. No admin rights needed; you can pick any install folder.
 > 3. If Windows warns you, see [Windows Defender / SmartScreen warnings](#windows-defender--smartscreen-warnings) below.
+>
+> **Android:** download **`AIRAG-x.y.z.apk`** from the same release on your phone and open it (see [Install (Android)](#install-android)).
 
 ---
 
@@ -26,17 +28,25 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 - **Summarize** any article, result list or single source, focused on what you searched for.
 - **Interactive explainers**: for articles where it helps (physics, statistics, how things work...), AIRAG can generate a small simulation you can play with. It runs sandboxed, with no network access.
 - **Library ("Retrieve & Get")**: add your own folders (Obsidian vaults, PDFs, Word documents, notes) and tick *My library* to include them in searches. Indexed locally.
+- **My library and saving**: save articles as Markdown with their sources (optionally with pictures and the interactive explainer), save light text copies of source pages, and reopen saved articles without the AI.
+- **Search again, date ranges and translation**: rerun a search building on what it found before, limit results to a period of time, and translate articles or results with AI.
+- **Android app**, and **Share with my phone** to use your PC's Ollama models from the phone over your home Wi-Fi.
+- **Check & repair** and a **log viewer** in Settings for when something goes wrong.
 - **Local or cloud AI**: Ollama (with a model picker and downloader), Anthropic Claude, OpenAI, DeepSeek, or any OpenAI-compatible server (LM Studio, vLLM, OpenRouter...).
 - **Search engines**: DuckDuckGo (no key needed), Brave, Google Programmable Search, or your own SearXNG.
 - **Desktop window or browser tab + tray icon**, chosen during install and switchable in Settings.
 - **9 interface languages** (English, Norsk, Svenska, Dansk, Deutsch, Français, Español, 日本語, 简体中文); answers in 20+ languages.
 - **Themes**: light/dark, four gray palettes and any accent colour.
 - **Custom prompts**: writing style, length, your own instructions, or a fully replaced article prompt (safety rules always stay on).
-- **Automatic updates** from GitHub Releases.
+- **Automatic updates** from GitHub Releases, on Windows and Android.
 
 ## Updates
 
 Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
+
+### 0.3.0
+The Android app, My library with saving and reopening articles, Search again, date ranges, translation, sharing your PC's Ollama with your phone, and Check & repair. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
+Fixes: summaries now use your search language, DuckDuckGo failures retry, the interactive explainer no longer opens blank, and phone screens no longer overflow.
 
 ### 0.2.0 (17 Nov 2026)
 First public release: Windows installer, research agent with results/articles/suggestions, summaries, interactive explainers, local library, Ollama and cloud AI support, 9 languages, themes and automatic updates.
@@ -48,6 +58,14 @@ First public release: Windows installer, research agent with results/articles/su
 3. On first start, choose your AI:
    - **Local**: install [Ollama](https://ollama.com/download), then start it from AIRAG's setup screen and download a recommended model for your PC.
    - **Cloud**: paste an API key from [Anthropic](https://console.anthropic.com/settings/keys), [OpenAI](https://platform.openai.com/api-keys) or [DeepSeek](https://platform.deepseek.com/api_keys).
+
+## Install (Android)
+
+1. On your phone, open the [latest release](https://github.com/snakeMax/AIRAG/releases/latest) and download **`AIRAG-x.y.z.apk`**.
+2. Open the file. Android asks you to allow your browser (or file app) to install apps; allow it once.
+3. Open AIRAG and add an API key, or connect to your PC's Ollama: on the PC open *Settings → AI model → Share with my phone*, then on the phone pick *My PC (Ollama)* and paste the address and pairing code. This works on the same Wi-Fi network.
+
+Updates: AIRAG checks GitHub when it starts and offers new versions; Android asks you to confirm the install.
 
 ### Windows Defender / SmartScreen warnings
 

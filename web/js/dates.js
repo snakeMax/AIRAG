@@ -4,6 +4,8 @@ import { $, h, icon } from "./util.js";
 import { t, uiLang } from "./i18n.js";
 
 export const emptyRange = () => ({ from: "", to: "" });
+// YYYY-MM-DD in the user's own time zone (toISOString would give the UTC date)
+const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 export const hasRange = d => !!(d && (d.from || d.to));
 
 export function fmtRange(d) {
@@ -23,7 +25,7 @@ export function closeDatePicker() { open?.remove(); open = null; }
 /** Shows the picker under `anchor`; calls onApply({from, to}) when the user applies or clears. */
 export function openDatePicker(anchor, current, onApply, applyLabel = t("date.apply")) {
   if (open) { const was = open.dataset.for === anchor.id; closeDatePicker(); if (was) return; }
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDay(new Date());
   const pop = document.createElement("div");
   pop.className = "date-pop";
   pop.dataset.for = anchor.id;
@@ -49,7 +51,7 @@ export function openDatePicker(anchor, current, onApply, applyLabel = t("date.ap
   const from = $("#dpFrom", pop), to = $("#dpTo", pop);
   pop.querySelectorAll("[data-days]").forEach(b => (b.onclick = () => {
     const d = new Date(Date.now() - +b.dataset.days * 864e5);
-    from.value = d.toISOString().slice(0, 10);
+    from.value = localDay(d);
     to.value = "";
   }));
   $("#dpClear", pop).onclick = () => { closeDatePicker(); onApply(emptyRange()); };
