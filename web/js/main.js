@@ -26,10 +26,10 @@ function showView(name) {
   document.body.classList.toggle("running", name === "run");
 }
 
-function go(q, mode = state.mode, library = state.library) {
+function go(q, mode = state.mode, library = state.library, fromId = null) {
   q = (q || "").trim();
   if (!q) return;
-  const hash = `#/search?q=${encodeURIComponent(q)}&mode=${mode}${library ? "&lib=1" : ""}`;
+  const hash = `#/search?q=${encodeURIComponent(q)}&mode=${mode}${library ? "&lib=1" : ""}${fromId ? "&from=" + encodeURIComponent(fromId) : ""}`;
   if (location.hash === hash) route();
   else location.hash = hash;
 }
@@ -39,7 +39,7 @@ function route() {
   if (hash.startsWith("#/search")) {
     const p = new URLSearchParams(hash.split("?")[1] || "");
     const q = p.get("q");
-    if (q) { startResearch(q, p.get("mode") || state.mode, p.get("lib") === "1"); return; }
+    if (q) { startResearch(q, p.get("mode") || state.mode, p.get("lib") === "1", p.get("from")); return; }
   }
   if (hash.startsWith("#/view/")) { openRecord(decodeURIComponent(hash.slice(7))); return; }
   if (hash.startsWith("#/settings")) { showHome(); openSettings(hash.split("/")[2] || "general"); history.replaceState(null, "", "#/"); return; }

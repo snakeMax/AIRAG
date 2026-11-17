@@ -18,7 +18,7 @@ function newRun(query, mode, library) {
 }
 
 // live run
-export async function startResearch(query, mode, library) {
+export async function startResearch(query, mode, library, fromId = null) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
@@ -30,7 +30,7 @@ export async function startResearch(query, mode, library) {
   document.title = `${query} - AIRAG`;
   renderShell(R);
   try {
-    await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang() }, ev => {
+    await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId }, ev => {
       if (RUN.current !== R) return false;
       onEvent(R, ev);
     }, ctrl.signal);
@@ -178,7 +178,7 @@ $("#runMain").addEventListener("click", e => {
   const R = RUN.current;
   if (!b || !R) return;
   const act = b.dataset.act;
-  if (act === "article") hooks.go(R.query, "article", R.library);
+  if (act === "article") hooks.go(R.query, "article", R.library, R.id);   // reuse this search's sources
   else if (act === "results") hooks.go(R.query, "results", R.library);
   else if (act === "retry") hooks.go(R.query, R.mode || "auto", R.library);
   else if (act === "search") hooks.go(b.dataset.q, "auto", R.library);

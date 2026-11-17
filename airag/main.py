@@ -597,13 +597,15 @@ class ResearchReq(BaseModel):
     mode: str = "auto"
     include_library: bool = False
     ui_lang: Optional[str] = None
+    from_id: Optional[str] = None     # reuse the sources of this earlier search
 
 
 @app.post("/api/research")
 async def research(req: ResearchReq):
     settings = config.load()
     prompts_mod.use(settings)
-    return _ndjson(lambda emit: Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang).run())
+    return _ndjson(lambda emit: Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang,
+                                                    req.from_id).run())
 
 
 class SummaryReq(BaseModel):

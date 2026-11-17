@@ -55,7 +55,10 @@ def _slug(text: str) -> str:
 
 class Research:
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
-                 include_library: bool = False, ui_lang: Optional[str] = None):
+                 include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None):
+        self.prev = history.get(from_id) if from_id else None   # reuse the sources of an earlier search
+        if self.prev and self.prev.get("query"):
+            query = self.prev["query"]
         self.query = " ".join(query.split())
         if not self.query:
             raise ValueError("Empty search")
@@ -131,6 +134,8 @@ class Research:
         await self.emit({"type": "start", "id": self.id, "query": self.query, "mode": self.mode,
                          "model": self.llm.describe(), "search": self.search.label if self.use_web else "Library only",
                          "created": self.created, "library": self.use_library})
+        if self.prev and self.prev.get("plan") and self.prev.get("sources"):
+            return await self.run_from_previous(t0)
         await self.make_plan()
         if self.use_library:
             await self.library_round()
@@ -166,18 +171,22 @@ class Research:
                 searched_images = []
         images = self.collect_images(searched_images)
 
-        record = {"id": self.id, "query": self.query, "mode": self.mode, "created": self.created,
-                  "model": self.llm.describe(), "search": self.search.label, "plan": self.plan,
-                  "tried": self.tried, "images": images, "library": self.use_library, "web": self.use_web,
-                  "language": self.lang}
-
+        record = self.base_record(images)
         if self.mode == "results" or outcome == "results":
             record.update(await self.show_results(images))
         elif len(self.useful_findings()) >= int(self.r["min_findings"]) or (self.mode == "article" and self.useful_sources()):
             record.update(await self.write_article(images))
         else:
             record.update(await self.suggest())
+        return await self.finish(record, t0)
 
+    def base_record(self, images: List[dict]) -> dict:
+        return {"id": self.id, "query": self.query, "mode": self.mode, "created": self.created,
+                "model": self.llm.describe(), "search": self.search.label, "plan": self.plan,
+                "tried": self.tried, "images": images, "library": self.use_library, "web": self.use_web,
+                "language": self.lang}
+
+    async def finish(self, record: dict, t0: float) -> dict:
         record["steps"] = list(self.steps.values())
         record["sources"] = [self.pub(self.sources[u]) for u in self.order]
         record["elapsed"] = round(time.time() - t0, 1)
@@ -188,6 +197,64 @@ class Research:
             self.warnings.append(f"Couldn't save history: {e}")
         await self.emit({"type": "done", "id": self.id, "elapsed": record["elapsed"], "outcome": record["outcome"]})
         return record
+
+    async def run_from_previous(self, t0: float) -> dict:
+        """Write an article from the sources an earlier search already found ("Write an article anyway"):
+        no new planning or searching. Pages already assessed are re-opened (usually from the cache) to get
+        their text back; if that isn't enough material, the best unread results are read too."""
+        p = self.prev
+        self.mode = "article"
+        self.plan = p["plan"]
+        self.terms = list(dict.fromkeys(tokenize(self.query) + tokenize(" ".join(self.plan.get("key_terms") or []))))
+        self.tried = list(p.get("tried") or [])
+        self.use_library = bool(p.get("library"))
+        await self.emit({"type": "plan", "plan": self.plan})
+        n = len(p["sources"])
+        await self.step("plan", "Understanding the question", "done", self.plan.get("intent", ""))
+        for src in p["sources"]:
+            s = {k: v for k, v in src.items() if k != "excerpt"}
+            s["id"] = len(self.order) + 1
+            self.sources[s["url"]] = s
+            self.order.append(s["url"])
+        await self.emit({"type": "sources", "items": [self.pub(self.sources[u]) for u in self.order]})
+        await self.step("reuse", f"Using {n} sources from the previous search", "done", "")
+
+        known = [s for s in self.useful_sources()]
+        if known:
+            await self.step("reopen", f"Re-opening {len(known)} pages", "running", ", ".join(s["domain"] for s in known))
+            await asyncio.gather(*(self.reopen(s) for s in known))
+            await self.step("reopen", f"Re-opened {len(known)} pages", "done", "")
+        if len(self.useful_findings()) < int(self.r["min_findings"]):
+            unread = [self.sources[u] for u in self.order if self.sources[u].get("status") == "found"]
+            unread.sort(key=lambda x: (x.get("round") or 9, x.get("rank") or 0))
+            await self.read_round(1, unread)
+        record = self.base_record(p.get("images") or [])
+        if self.useful_sources():
+            record.update(await self.write_article(record["images"]))
+        else:
+            record.update(await self.suggest())
+        return await self.finish(record, t0)
+
+    async def reopen(self, s: dict) -> None:
+        """Get an assessed source's text back for the article writer (no new AI assessment)."""
+        try:
+            if s.get("local"):
+                from .library import allowed_file, extract
+                if not s.get("path") or not allowed_file(s["path"], self.s):
+                    return
+                text = await asyncio.to_thread(extract, Path(s["path"]))
+            else:
+                async with self._sem_fetch:
+                    page = await fetch_page(s["url"], self.s["fetch"])
+                if not page.ok:
+                    return
+                text = page.text
+            excerpt, suspicious = guard.clean(select_passages(text, self.terms, int(self.r["passage_chars"])), self.s)
+            s["excerpt"] = excerpt
+            if suspicious:
+                s["suspicious"] = True
+        except Exception:
+            pass  # the findings and summary from the first search are still used
 
     # stages
     async def make_plan(self) -> None:

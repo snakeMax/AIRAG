@@ -65,3 +65,19 @@ def test_library_only(tmp_path):
     rec, _ = run("hummingbird wing beats", s=s, library=True)
     assert rec["web"] is False
     assert any(src.get("local") for src in rec["sources"])
+
+
+def test_article_from_previous_results_reuses_sources():
+    from airag.pipeline import Research
+    rec, _ = run("results test")
+    assert rec["outcome"] == "results"
+    events = []
+
+    async def emit(e):
+        events.append(e)
+    art = asyncio.run(Research("ignored", "article", settings(), emit, False, "en", from_id=rec["id"]).run())
+    steps = [e["id"] for e in events if e["type"] == "step"]
+    assert not any(s.startswith("search") for s in steps), steps      # no new web searches
+    assert "reuse" in steps
+    assert art["outcome"] == "article" and art["query"] == rec["query"]
+    assert {s["url"] for s in art["article_sources"]} <= {s["url"] for s in rec["sources"]}

@@ -390,5 +390,9 @@
  "repair.reinstall": "Reinstall {v}",
  "repair.reinstallHelp": "Downloads this version again from GitHub and reinstalls it. Settings, history and library stay.",
  "repair.reinstallConfirm": "Download and reinstall this version of AIRAG? Your settings, history and library are kept.",
- "repair.done": "Repair finished."
+ "repair.done": "Repair finished.",
+ "step.reuse.done": "Using {n} sources from the previous search",
+ "step.reuse.run": "Using {n} sources from the previous search",
+ "step.reopen.run": "Re-opening {n} pages",
+ "step.reopen.done": "Re-opened {n} pages"
 }
