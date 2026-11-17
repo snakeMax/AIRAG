@@ -10,6 +10,7 @@ import asyncio
 import json
 import logging
 import os
+import secrets
 import subprocess
 import sys
 from pathlib import Path
@@ -39,13 +40,27 @@ LOOPBACK = {"127.0.0.1", "localhost", "::1", "[::1]"}
 app.state.loopback_only = True
 
 
+# A random token for this run. The page gets it as a same-site cookie when it loads,
+# and every API call must carry it, so other websites open in the browser can't use the API.
+SESSION_TOKEN = secrets.token_urlsafe(24)
+SESSION_COOKIE = "airag_session"
+OPEN_PATHS = {"/", "/api/app/ping", "/api/app/show", "/favicon.ico"}
+
+
 @app.middleware("http")
 async def only_local(request: Request, call_next):
-    """Block DNS-rebinding: when bound to localhost, only accept localhost Host headers."""
+    """Block DNS rebinding (Host check) and requests from other sites (session cookie + Sec-Fetch-Site)."""
     if app.state.loopback_only:
         host = (request.headers.get("host") or "").rsplit(":", 1)[0].strip("[]").lower()
         if host and host not in LOOPBACK and host != "::1":
             return JSONResponse({"detail": "Forbidden host"}, status_code=403)
+    path = request.url.path
+    if path.startswith("/api/") and path not in OPEN_PATHS:
+        if request.headers.get("sec-fetch-site") == "cross-site":
+            return JSONResponse({"detail": "Cross-site request blocked"}, status_code=403)
+        given = request.cookies.get(SESSION_COOKIE) or request.headers.get("x-airag-token") or ""
+        if not secrets.compare_digest(given.encode(), SESSION_TOKEN.encode()):
+            return JSONResponse({"detail": "Reload AIRAG to continue (session expired)."}, status_code=401)
     return await call_next(request)
 
 
@@ -71,7 +86,9 @@ async def _shutdown() -> None:
 
 @app.get("/")
 def index():
-    return FileResponse(WEB / "index.html", headers={"Cache-Control": "no-cache"})
+    r = FileResponse(WEB / "index.html", headers={"Cache-Control": "no-cache"})
+    r.set_cookie(SESSION_COOKIE, SESSION_TOKEN, httponly=True, samesite="strict", path="/")
+    return r
 
 
 def _err(e: Exception, code: int = 400) -> HTTPException:
@@ -494,12 +511,10 @@ def _library_file(fid: int) -> Path:
     f = LIBRARY.get_file(fid)
     if not f:
         raise HTTPException(404, "File not in library")
-    p = Path(f["path"])
-    allowed = [Path(x).expanduser().resolve() for x in config.load()["library"].get("folders") or []]
-    rp = p.resolve()
-    if not any(rp == a or a in rp.parents for a in allowed) or not rp.is_file():
+    from .library import allowed_file
+    if not allowed_file(f["path"], config.load()):
         raise HTTPException(404, "File no longer available")
-    return rp
+    return Path(f["path"]).resolve()
 
 
 @app.get("/api/library/file/{fid}")

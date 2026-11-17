@@ -78,5 +78,9 @@ def test_log_hides_secrets(tmp_path):
     config.save({"llm": {"providers": {"openai": {"api_key": "zz-secret-value-123456"}}}})
     paths.ensure_dirs()
     (paths.LOG_DIR / "airag.log").write_text("x INFO a: key zz-secret-value-123456 and sk-ant-abcdefghijk\n", encoding="utf-8")
-    lines = TestClient(app, base_url="http://127.0.0.1").get("/api/app/log").json()["lines"]
+    client = TestClient(app, base_url="http://127.0.0.1")
+    assert client.get("/api/app/log").status_code == 401       # no session yet
+    client.get("/")                                             # the page sets the session cookie
+    assert client.get("/api/app/log", headers={"sec-fetch-site": "cross-site"}).status_code == 403
+    lines = client.get("/api/app/log").json()["lines"]
     assert lines and "zz-secret" not in lines[-1] and "sk-ant-abc" not in lines[-1]

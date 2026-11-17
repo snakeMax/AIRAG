@@ -139,13 +139,18 @@ class Library:
              cancelled: Callable[[], bool] = lambda: False) -> dict:
         exts = {e.strip().lower() if e.strip().startswith(".") else "." + e.strip().lower() for e in extensions if e.strip()}
         roots = [str(Path(f).expanduser()) for f in folders if f and Path(f).expanduser().is_dir()]
+        protected = _protected_roots()
         files: Dict[str, tuple] = {}
         for root in roots:
-            for dirpath, dirnames, filenames in os.walk(root):
+            for dirpath, dirnames, filenames in os.walk(root):  # doesn't follow symlinked folders
+                here = Path(dirpath).resolve()
+                if any(here == r or r in here.parents for r in protected):
+                    dirnames[:] = []
+                    continue
                 dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIRS and not d.startswith(".")]
                 for fn in filenames:
                     p = Path(dirpath) / fn
-                    if p.suffix.lower() not in exts or fn.startswith("~$"):
+                    if p.suffix.lower() not in exts or fn.startswith("~$") or is_secret_file(p) or p.is_symlink():
                         continue
                     try:
                         st = p.stat()
@@ -308,6 +313,65 @@ class Library:
 
 _CJK_UNSPACE = re.compile(r" ([぀-ヿ㐀-䶿一-鿿가-힯豈-﫿]) ")
 LIBRARY = Library()
+
+
+# ---- what AIRAG may read
+# Never indexed or served, even inside a folder the user added: AIRAG's own data,
+# and files that typically hold passwords, keys or certificates.
+SECRET_NAMES = {"settings.json", ".env", ".envrc", ".netrc", ".npmrc", ".pypirc", ".git-credentials", "credentials",
+                "credentials.json", "secrets.json", "secrets.yaml", "secrets.yml", "id_rsa", "id_ed25519", "id_ecdsa",
+                "id_dsa", "known_hosts", "authorized_keys", "wallet.dat", "keystore.json", "service-account.json"}
+SECRET_EXTS = {".pem", ".key", ".p12", ".pfx", ".jks", ".keystore", ".kdbx", ".kdb", ".1pux", ".opvault", ".agilekeychain",
+               ".gpg", ".asc", ".ppk", ".ovpn", ".crt", ".cer", ".der", ".sqlite", ".db"}
+SECRET_WORDS = {"password", "passwords", "passwd", "credential", "credentials", "secrets", "apikey", "apikeys",
+                "privatekey", "seedphrase", "mnemonic", "2fa", "backupcodes", "recoverycodes"}
+
+
+def _protected_roots() -> List[Path]:
+    from . import paths
+    roots = [paths.CONFIG_DIR, paths.LOCAL_DIR, paths.APP_DIR if paths.FROZEN else None]
+    out = []
+    for r in roots:
+        try:
+            if r:
+                out.append(Path(r).resolve())
+        except OSError:
+            pass
+    return out
+
+
+def is_secret_file(p: Path) -> bool:
+    name = p.name.lower()
+    if name in SECRET_NAMES or p.suffix.lower() in SECRET_EXTS or name.startswith(".env"):
+        return True
+    words = re.split(r"[^a-z0-9]+", p.stem.lower())
+    joined = {a + b for a, b in zip(words, words[1:])}   # "api-key", "recovery codes"
+    return bool(SECRET_WORDS & (set(words) | joined))
+
+
+def allowed_file(path, settings: dict) -> bool:
+    """True only for a real file, of an allowed type, inside a library folder, outside AIRAG's own
+    folders and not a likely secrets file. Symlinks and '..' are resolved before checking."""
+    try:
+        rp = Path(path).expanduser().resolve()
+    except (OSError, RuntimeError):
+        return False
+    args = settings_args(settings)
+    exts = {e.strip().lower() if e.strip().startswith(".") else "." + e.strip().lower()
+            for e in args["extensions"] if e.strip()}
+    if rp.suffix.lower() not in exts or is_secret_file(rp):
+        return False
+    if any(rp == r or r in rp.parents for r in _protected_roots()):
+        return False
+    roots = []
+    for f in args["folders"]:
+        try:
+            roots.append(Path(f).expanduser().resolve())
+        except (OSError, RuntimeError):
+            pass
+    if not any(r in rp.parents for r in roots):
+        return False
+    return rp.is_file()
 
 
 def settings_args(settings: dict) -> dict:

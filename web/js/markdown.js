@@ -17,11 +17,18 @@ function expandCites(inner) {
   return out;
 }
 
+// Links in AI-written text are only kept when they point to a source of the current
+// article, so a web page can't get the AI to slip in a phishing or tracking link.
+let allowed = null;
+const normUrl = u => String(u || "").replace(/\/+$/, "").replace(/^http:/, "https:");
+export function allowLinks(urls) { allowed = urls ? new Set(urls.map(normUrl)) : null; }
+
 export function inline(src) {
   let s = esc(src);
   const codes = [];
   s = s.replace(/`([^`]+)`/g, (m, c) => { codes.push(c); return `\u0001${codes.length - 1}\u0001`; });
-  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, t, u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`);
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, t, u) =>
+    allowed && !allowed.has(normUrl(u.replace(/&amp;/g, "&"))) ? t : `<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`);
   s = s.replace(/\[(\d+(?:\s*[,;–-]\s*\d+)*)\]/g, (m, inner) => {
     const ns = expandCites(inner);
     return ns.length ? ns.map(n => `<sup class="cite" data-n="${n}">${n}</sup>`).join("") : m;

@@ -465,3 +465,5 @@ details.tried summary { cursor: pointer; }
   input, select, textarea { font-size: 16px; }   /* stops phones zooming in on focus */
 }
 @media (hover: none) { .has-tip:hover .tip-text { display: none; } .has-tip:focus .tip-text { display: block; } }
+.sus { display: inline-flex; color: var(--bad); margin-left: 4px; vertical-align: middle; }
+.sus svg { width: 14px; height: 14px; }

@@ -21,7 +21,7 @@ from urllib.parse import urldefrag, urlparse
 
 from copy import deepcopy
 
-from . import history, languages, prompts
+from . import guard, history, languages, prompts
 from .fetch import fetch_page
 from .library import LIBRARY, settings_args as library_args
 from .llm import LLMError, get_llm
@@ -34,7 +34,7 @@ Emit = Callable[[dict], Awaitable[None]]
 
 PUBLIC_KEYS = ("id", "n", "url", "domain", "title", "snippet", "query", "round", "status", "relevance", "coverage",
                "trust", "trust_reason", "source_type", "summary", "findings", "prior", "prior_label", "published",
-               "author", "site_name", "og_image", "error", "via", "date", "local", "path", "file_id")
+               "author", "site_name", "og_image", "error", "via", "date", "local", "path", "file_id", "suspicious")
 
 
 def domain_of(url: str) -> str:
@@ -237,10 +237,11 @@ class Research:
         except Exception as e:
             await self.step("library", "Searching your library", "warn", f"Library error: {e}"[:200])
             return
+        from .library import allowed_file
         fresh = []
         for h in hits:
             url = f"/api/library/file/{h['file_id']}"
-            if url in self.sources:
+            if url in self.sources or not allowed_file(h["path"], self.s):
                 continue
             root_name = Path(h["root"]).name or h["root"]
             src = {"id": len(self.order) + 1, "url": url, "domain": "library", "title": h["title"],
@@ -377,6 +378,9 @@ class Research:
                 s["prior"], s["prior_label"] = domain_prior(s["domain"], scholarly=True)
             s["_images"] = page.images
             excerpt = select_passages(page.text, self.terms, int(self.r["passage_chars"]))
+        excerpt, suspicious = guard.clean(excerpt, self.s)
+        if suspicious:
+            s["suspicious"] = True
         s["status"] = "assessing"
         await self.emit_source(s)
         s["excerpt"] = excerpt
@@ -400,7 +404,8 @@ class Research:
         s.update({
             "relevance": _clamp(a.get("relevance")) or 0,
             "coverage": _clamp(a.get("coverage")) or 0,
-            "trust": _clamp(a.get("trust")) if _clamp(a.get("trust")) is not None else s["prior"],
+            "trust": max(0, (_clamp(a.get("trust")) if _clamp(a.get("trust")) is not None else s["prior"])
+                         - (3 if s.get("suspicious") else 0)),
             "trust_reason": str(a.get("trust_reason") or s["prior_label"]).strip(),
             "source_type": str(a.get("source_type") or "").strip(),
             "summary": str(a.get("summary") or "").strip(),

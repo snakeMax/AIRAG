@@ -1,7 +1,10 @@
 // Summary side sheet: short, query-focused summaries of articles, result lists and single sources.
 import { $, h, icon, apiStream, toast, stripThink } from "./util.js";
-import { render } from "./markdown.js";
+import { render as renderAll, allowLinks } from "./markdown.js";
 import { t, uiLang } from "./i18n.js";
+
+// summaries never need links of their own
+const render = md => { allowLinks([]); try { return renderAll(md); } finally { allowLinks(null); } };
 
 const cache = new Map();
 let ctrl = null;

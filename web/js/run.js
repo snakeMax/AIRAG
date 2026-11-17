@@ -1,6 +1,6 @@
 // A research run: live progress, then results / article / suggestions. Also re-opens saved runs.
 import { $, $$, h, safeUrl, favicon, shortUrl, stripThink, rafThrottle, icon, toast, api, apiStream, fmtDate } from "./util.js";
-import { render } from "./markdown.js";
+import { render, allowLinks } from "./markdown.js";
 import { t, has, uiLang } from "./i18n.js";
 import { openSummary } from "./summary.js";
 import { openInteractive } from "./interactive.js";
@@ -154,7 +154,8 @@ function trustBadge(s, short = false) {
   if (v == null) return "";
   const lvl = v >= 7 ? "high" : v >= 4 ? "mid" : "low";
   const bars = Array.from({ length: 5 }, (_, i) => `<i class="${i < Math.round(v / 2) ? "on" : ""}"></i>`).join("");
-  return `<span class="trust t-${lvl}" title="${h(s.trust_reason || s.prior_label || "")}"><span class="bars">${bars}</span>${short ? "" : h(t("trust." + lvl))}</span>`;
+  const warn = s.suspicious ? `<span class="sus" title="${h(t("src.suspicious"))}">${icon("warn")}</span>` : "";
+  return `<span class="trust t-${lvl}" title="${h(s.trust_reason || s.prior_label || "")}"><span class="bars">${bars}</span>${short ? "" : h(t("trust." + lvl))}</span>${warn}`;
 }
 const meter = (key, v) => (v == null ? "" : `<span class="meter">${h(t(key))} <span class="rel"><i style="width:${v * 10}%"></i></span> ${v}/10</span>`);
 const imgOnErr = `onerror="this.closest('[data-img]').remove()"`;
@@ -307,7 +308,9 @@ function renderArticleBody(R, final = false) {
   const { title, dek, body: md } = parseArticle(R.md);
   if (title) { $("#aTitle").textContent = title; document.title = `${title} - AIRAG`; }
   if (dek) $("#aDek").textContent = dek;
+  allowLinks([...R.articleSources, ...Object.values(R.sources)].map(x => x.url));
   body.innerHTML = render(md) + (final ? "" : '<span class="cursor"></span>');
+  allowLinks(null);
   const max = R.articleSources.length;
   $$(".cite", body).forEach(c => { if (+c.dataset.n > max || +c.dataset.n < 1) c.classList.add("missing"); });
 }

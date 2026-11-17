@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import AsyncIterator, Optional
 
-from . import languages, prompts
+from . import guard, languages, prompts
 from .fetch import fetch_page
 from .library import LIBRARY
 from .llm import get_llm
@@ -28,7 +28,8 @@ async def summarize(settings: dict, kind: str, query: str, payload: dict, ui_lan
         url = str(payload.get("url", ""))
         if url.startswith("/api/library/file/"):
             f = LIBRARY.get_file(int(url.rsplit("/", 1)[-1]))
-            if not f:
+            from .library import allowed_file
+            if not f or not allowed_file(f["path"], settings):
                 raise ValueError("File not found in your library")
             from .library import extract
             from pathlib import Path
@@ -42,5 +43,6 @@ async def summarize(settings: dict, kind: str, query: str, payload: dict, ui_lan
             text = select_passages(page.text, terms, 12000)
     else:
         what, text = "text", str(payload.get("text", ""))[:20000]
+    text, _ = guard.clean(text, settings)
     async for piece in llm.stream(*prompts.summary(query, what, text, lang), max_tokens=700):
         yield piece
