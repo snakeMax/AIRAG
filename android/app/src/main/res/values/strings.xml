@@ -4,4 +4,8 @@
     <string name="starting">Starting AIRAG…</string>
     <string name="start_failed">AIRAG couldn\'t start:\n%1$s</string>
     <string name="no_app">No app on this phone can open that file.</string>
+    <string name="perm_title">Allow AIRAG to install updates?</string>
+    <string name="perm_message">To install the update, Android needs you to allow AIRAG to install apps. Turn on \"Allow from this source\" on the next screen, then come back.</string>
+    <string name="perm_give">Give permission</string>
+    <string name="perm_later">Not now</string>
 </resources>

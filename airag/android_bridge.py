@@ -38,8 +38,9 @@ def render_page(url: str, timeout_s: int = 20) -> str:
     return str(html) if html else ""
 
 
-def install_apk(path: str) -> None:
-    _bridge().installApk(str(path))
+def install_apk(path: str) -> str:
+    """'ok', or 'permission' when Android first needs the user to allow installing apps."""
+    return str(_bridge().installApk(str(path)))
 
 
 def start(data_dir: str) -> int:

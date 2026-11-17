@@ -10,9 +10,10 @@ import android.webkit.MimeTypeMap
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import org.json.JSONArray
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
+import org.json.JSONArray
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
@@ -135,20 +136,55 @@ object Bridge {
         return html
     }
 
-    /** Hands a downloaded update to Android's package installer. */
+    /** An update waiting for the "install unknown apps" permission. */
+    private var pendingApk: String? = null
+
+    /**
+     * Hands a downloaded update to Android's package installer. Without the "install unknown apps"
+     * permission it opens that settings page instead and returns "permission"; the install then starts
+     * by itself when the user comes back with the permission granted (see onResume).
+     */
     @JvmStatic
-    fun installApk(path: String) {
-        val a = activity() ?: return
-        a.runOnUiThread {
-            if (!a.packageManager.canRequestPackageInstalls()) {
-                a.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + a.packageName)))
-                return@runOnUiThread
-            }
-            val intent = Intent(Intent.ACTION_VIEW)
-                .setDataAndType(uriFor(a, File(path)), "application/vnd.android.package-archive")
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-            a.startActivity(intent)
+    fun installApk(path: String): String {
+        val a = activity() ?: return "error"
+        if (!a.packageManager.canRequestPackageInstalls()) {
+            pendingApk = path
+            a.runOnUiThread { openInstallPermission(a) }
+            return "permission"
+        }
+        a.runOnUiThread { launchInstaller(a, path) }
+        return "ok"
+    }
+
+    private fun openInstallPermission(a: MainActivity) {
+        try {
+            a.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + a.packageName)))
+        } catch (_: Exception) {
+            a.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+        }
+    }
+
+    private fun launchInstaller(a: MainActivity, path: String) {
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uriFor(a, File(path)), "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        a.startActivity(intent)
+    }
+
+    /** Called when AIRAG comes back to the front, e.g. from the permission settings page. */
+    fun onResume(a: MainActivity) {
+        val path = pendingApk ?: return
+        if (!File(path).exists()) { pendingApk = null; return }
+        if (a.packageManager.canRequestPackageInstalls()) {
+            pendingApk = null
+            launchInstaller(a, path)
+        } else {
+            AlertDialog.Builder(a)
+                .setTitle(R.string.perm_title)
+                .setMessage(R.string.perm_message)
+                .setPositiveButton(R.string.perm_give) { _, _ -> openInstallPermission(a) }
+                .setNegativeButton(R.string.perm_later) { _, _ -> pendingApk = null }
+                .show()
         }
     }
 }

@@ -155,9 +155,13 @@ async def download_and_install(job, quit_app, reinstall: bool = False) -> dict:
                 dest.unlink(missing_ok=True)
                 raise RuntimeError("Downloaded file is corrupted (checksum mismatch). Please try again.")
     if ANDROID:
-        job.message = "Opening the installer"
         from .android_bridge import install_apk
-        install_apk(str(dest))
+        if install_apk(str(dest)) == "permission":
+            # Android's settings page is open; the install continues by itself once the user allows it,
+            # and asks again (with a "Give permission" button) if they come back without allowing it.
+            job.message = "Allow AIRAG to install apps, then come back"
+            return {"version": info["latest"], "needs_permission": True}
+        job.message = "Opening the installer"
         return {"version": info["latest"]}
     job.message = "Installing - AIRAG will restart"
     flags = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
