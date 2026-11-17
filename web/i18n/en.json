@@ -371,5 +371,6 @@
  "log.empty": "The log is empty.",
  "log.copyFailed": "Couldn't copy. Select the text instead.",
  "log.help": "Shows the latest activity from AIRAG's log. API keys and pairing codes are hidden, so you can paste it into a bug report.",
- "src.suspicious": "This page contained text that tried to give the AI instructions. It was removed and the source's reliability lowered."
+ "src.suspicious": "This page contained text that tried to give the AI instructions. It was removed and the source's reliability lowered.",
+ "lib.noFolders": "Add a folder first (for example your Obsidian vault), then tick My library to search it too."
 }

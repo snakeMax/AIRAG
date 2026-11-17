@@ -1,5 +1,5 @@
 // Entry point: start-up, routing and the search box.
-import { $, $$, h, api, hydrateIcons, icon } from "./util.js";
+import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
 import { initI18n, t, applyI18n } from "./i18n.js";
 import { loadLocal, setAppearance, onAppearanceChange, effectiveTheme } from "./theme.js";
 import { RUN, startResearch, openRecord, setRunHooks } from "./run.js";
@@ -22,7 +22,7 @@ function showView(name) {
   $("#view-home").hidden = name !== "home";
   $("#view-run").hidden = name !== "run";
   $("#topSearch").hidden = name === "home";
-  $("#topLib").hidden = name === "home" || !state.status?.library_folders;
+  $("#topLib").hidden = name === "home";
   document.body.classList.toggle("running", name === "run");
 }
 
@@ -71,10 +71,8 @@ async function refreshStatus() {
     const warn = st.needs_key || (st.ollama && (!st.ollama.running || !st.ollama.model_present));
     $("#engineLine").innerHTML = `<span class="dot ${warn ? "off" : ""}"></span>${h(st.llm)} &nbsp;·&nbsp; ${h(st.search)}`;
     $("#engineLine").title = warn ? t("home.engineWarn") : "";
-    const hasLib = st.library_folders > 0;
-    $("#libChip").hidden = !hasLib;
-    if (!$("#view-run").hidden) $("#topLib").hidden = !hasLib;
-    if (!hasLib) state.library = false;
+    // the tickbox is always shown; with no folders added it leads to Settings -> Library
+    if (!(st.library_folders > 0)) state.library = false;
     renderModes();
   } catch {
     $("#engineLine").textContent = t("home.offline");
@@ -88,6 +86,12 @@ function wire() {
   $$("#modes button").forEach(b => (b.onclick = () => { state.mode = b.dataset.mode; localStorage.setItem("airag.mode", state.mode); renderModes(); }));
   for (const id of ["#libChk", "#topLibChk"]) {
     $(id).onchange = e => {
+      if (e.target.checked && !(state.status?.library_folders > 0)) {
+        e.target.checked = false;
+        toast(t("lib.noFolders"), 5000);
+        openSettings("library");
+        return;
+      }
       state.library = e.target.checked;
       renderModes();
       api("/api/settings", { method: "POST", body: { app: { include_library: state.library } } }).catch(() => {});
