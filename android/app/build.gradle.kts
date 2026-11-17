@@ -63,6 +63,8 @@ val syncPython by tasks.registering(Sync::class) {
     into(pythonSrc)
 }
 tasks.named("preBuild") { dependsOn(syncPython) }
+// Chaquopy's own tasks read that folder, so they must run after the copy
+tasks.matching { it.name.contains("Python") && it.name != "syncPython" }.configureEach { dependsOn(syncPython) }
 
 chaquopy {
     defaultConfig {
