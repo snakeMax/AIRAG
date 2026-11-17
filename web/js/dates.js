@@ -1,7 +1,7 @@
 // Date range filter: a chip that opens a small popover with "from" and "to" date pickers.
 // Used on the home page (for the next search) and above results (search again with the range).
 import { $, h, icon } from "./util.js";
-import { t, uiLang } from "./i18n.js";
+import { t } from "./i18n.js";
 
 export const emptyRange = () => ({ from: "", to: "" });
 // YYYY-MM-DD in the user's own time zone (toISOString would give the UTC date)
@@ -10,7 +10,7 @@ export const hasRange = d => !!(d && (d.from || d.to));
 
 export function fmtRange(d) {
   if (!hasRange(d)) return t("date.any");
-  const f = s => new Date(s + "T12:00:00").toLocaleDateString(uiLang(), { day: "numeric", month: "short", year: "numeric" });
+  const f = s => new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
   if (d.from && d.to) return d.from === d.to ? f(d.from) : `${f(d.from)} – ${f(d.to)}`;
   return d.from ? t("date.since", { d: f(d.from) }) : t("date.until", { d: f(d.to) });
 }

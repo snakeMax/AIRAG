@@ -43,11 +43,16 @@ class MainActivity : AppCompatActivity() {
     val filesPicker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         Bridge.onFilesPicked(uris)
     }
+    val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        speech?.onPermission(granted)
+    }
+    private var speech: Speech? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Bridge.attach(this)
         buildViews()
+        clearCacheAfterUpdate()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (::web.isInitialized && web.canGoBack()) web.goBack()
@@ -69,6 +74,8 @@ class MainActivity : AppCompatActivity() {
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = true
             settings.setSupportMultipleWindows(false)
+            settings.useWideViewPort = true          // honour the page's viewport tag (no zoomed-out desktop layout)
+            settings.loadWithOverviewMode = false
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                     val url = request.url
@@ -83,6 +90,7 @@ class MainActivity : AppCompatActivity() {
             }
             webChromeClient = WebChromeClient()
         }
+        speech = Speech(this, web).also { web.addJavascriptInterface(it, "AIRAGNative") }
         val bar = ProgressBar(this).apply { isIndeterminate = true }
         splashText = TextView(this).apply {
             text = getString(R.string.starting)
@@ -109,11 +117,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** After installing a new version, drop the WebView's cached copies of the old version's pages. */
+    private fun clearCacheAfterUpdate() {
+        val prefs = getSharedPreferences("airag", MODE_PRIVATE)
+        val stamp = packageManager.getPackageInfo(packageName, 0).lastUpdateTime.toString()  // changes with every install
+        if (prefs.getString("cache_stamp", null) != stamp) {
+            web.clearCache(true)
+            prefs.edit().putString("cache_stamp", stamp).apply()
+        }
+    }
+
+    fun clearWebCache() = runOnUiThread { web.clearCache(true) }
+
     private fun startServer() {
         val dataDir = File(filesDir, "airag").absolutePath
         thread(name = "airag-start") {
             try {
-                val p = Python.getInstance().getModule("airag.android_bridge").callAttr("start", dataDir).toInt()
+                val zone = java.util.TimeZone.getDefault().id
+                val p = Python.getInstance().getModule("airag.android_bridge").callAttr("start", dataDir, zone).toInt()
                 runOnUiThread {
                     port = p
                     web.loadUrl("http://127.0.0.1:$p/")
@@ -137,6 +158,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         Bridge.detach(this)
+        speech?.destroy()
         if (::web.isInitialized) web.destroy()
         super.onDestroy()
     }

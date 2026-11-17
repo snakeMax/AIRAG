@@ -9,6 +9,7 @@ import { showDisclaimer, checkUpdates } from "./banners.js";
 import { openDrawer, closeDrawer, refreshRecent } from "./history.js";
 import { closeSummary } from "./summary.js";
 import { chipHtml, openDatePicker, emptyRange, hasRange } from "./dates.js";
+import { initSpeech } from "./speech.js";
 
 const state = {
   mode: localStorage.getItem("airag.mode") || "auto",
@@ -147,6 +148,7 @@ async function boot() {
   state.library = !!state.settings?.app.include_library;
   hydrateIcons();
   wire();
+  initSpeech(info?.mode === "desktop");
   setRunHooks({ go, openSettings, showView, refreshRecent });
   setSettingsHooks({ onSaved: (s, langChanged) => { state.settings = s; if (langChanged) location.reload(); else refreshStatus(); } });
   setSetupHooks({ onDone: langChanged => (langChanged ? location.reload() : refreshStatus()) });

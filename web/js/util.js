@@ -27,8 +27,9 @@ export function fmtBytes(n) {
   return `${n.toFixed(n < 10 && i ? 1 : 0)} ${u[i]}`;
 }
 
-export function fmtDate(iso, lang) {
-  try { return new Date(iso).toLocaleDateString(lang || undefined, { year: "numeric", month: "long", day: "numeric" }); } catch { return ""; }
+// Dates follow the device's own regional format and time zone (not the app's interface language).
+export function fmtDate(iso) {
+  try { return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }); } catch { return ""; }
 }
 
 export function fmtAgo(iso, lang) {
@@ -73,6 +74,8 @@ const ICONS = {
   upload: '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',
   key: '<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/>',
   power: '<path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0"/>',
+  mic: '<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
+  cpu2: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   minus: '<path d="M5 12h14"/>',
 };
 export const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;

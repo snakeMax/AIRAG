@@ -153,6 +153,11 @@ async def delete(base_url: str, model: str) -> None:
 def recommended() -> dict:
     data = json.loads((PACKAGE_DATA / "ollama_models.json").read_text(encoding="utf-8"))
     ram = total_ram_gb()
+    try:
+        from .hardware import best_vram_gb
+        vram = best_vram_gb()
+    except Exception:
+        vram = 0.0
     models = data["models"]
     fitting = [m for m in models if ram and m["min_ram_gb"] <= ram + 0.6]
     pick = None
@@ -161,10 +166,17 @@ def recommended() -> dict:
         if m:
             pick = m["name"]
             break
+    if vram >= 4:   # prefer the best model that fits in graphics memory: much faster than running on the CPU
+        for name in data.get("preference", []):
+            m = next((x for x in fitting if x["name"] == name and x.get("size_gb", 99) <= vram * 0.9), None)
+            if m:
+                pick = m["name"]
+                break
     for m in models:
         m["fits"] = (not ram) or m["min_ram_gb"] <= ram + 0.6
+        m["gpu"] = bool(vram and m.get("size_gb", 99) <= vram * 0.9)
         m["recommended"] = m["name"] == pick
-    return {"ram_gb": ram, "models": models, "note": data.get("note", "")}
+    return {"ram_gb": ram, "vram_gb": vram, "models": models, "note": data.get("note", "")}
 
 
 def total_ram_gb() -> float:

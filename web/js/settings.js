@@ -4,6 +4,7 @@
 import { $, $$, h, icon, api, toast, pollJob, progressBar, fmtBytes, fmtAgo } from "./util.js";
 import { t, has, uiLang, uiLanguages } from "./i18n.js";
 import { PALETTES, ACCENTS, getAppearance, setAppearance } from "./theme.js";
+import { showUpdatePopup } from "./banners.js";
 
 const S = { schema: null, settings: null, info: null, dlg: null, onSaved: null };
 const android = () => S.info?.platform === "android";
@@ -182,8 +183,8 @@ function wireGeneral(dlg) {
     const u = await api("/api/update/check?force=true").catch(e => ({ error: e.message }));
     if (u.newer) {
       el.className = "status-line ok";
-      el.innerHTML = `${h(t("banner.update", { v: u.latest }))} ${u.can_self_update ? `<button type="button" class="btn sm primary" id="doUpd">${h(t("banner.updateNow"))}</button>` : `<a href="${h(u.url)}" target="_blank" rel="noopener">${h(t("banner.download"))}</a>`}`;
-      $("#doUpd")?.addEventListener("click", () => { dlg.close(); window.dispatchEvent(new CustomEvent("airag:update")); });
+      el.textContent = t("banner.update", { v: u.latest });
+      showUpdatePopup(u);
     } else if (u.error) { el.className = "status-line err"; el.textContent = u.error; }
     else { el.className = "status-line ok"; el.textContent = t("gen.upToDate", { v: u.current }); }
   };

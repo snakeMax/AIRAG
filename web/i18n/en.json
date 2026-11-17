@@ -443,5 +443,16 @@
  "tr.working": "Translating\u2026",
  "tr.translated": "Translated",
  "tr.tip": "Pick a language, and the AI translates this page naturally (not word for word)",
- "tr.note": "Translated into {lang} with AI"
+ "tr.note": "Translated into {lang} with AI",
+ "upd.title": "AIRAG {v} is available",
+ "upd.youHave": "You have version {v}. Here's what's new:",
+ "upd.size": "Download size: about {mb} MB",
+ "upd.skip": "Skip this version",
+ "upd.skipTip": "Don't ask again until a newer version comes out",
+ "upd.permission": "Allow AIRAG to install apps on the screen that opened; the update installs when you come back.",
+ "mic.start": "Speak your search",
+ "mic.stop": "Stop listening",
+ "mic.denied": "AIRAG needs microphone access for this. Allow it in your device settings.",
+ "mic.nomatch": "Didn't catch that. Try again.",
+ "mic.error": "Speech input isn't working right now."
 }

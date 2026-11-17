@@ -55,6 +55,11 @@ async def only_local(request: Request, call_next):
         if host and host not in LOOPBACK and host != "::1":
             return JSONResponse({"detail": "Forbidden host"}, status_code=403)
     path = request.url.path
+    if path.startswith("/static/"):
+        # always check for a newer copy, so an app update never runs with the previous version's scripts
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
     if path.startswith("/api/") and path not in OPEN_PATHS:
         if request.headers.get("sec-fetch-site") == "cross-site":
             return JSONResponse({"detail": "Cross-site request blocked"}, status_code=403)
@@ -284,6 +289,26 @@ def job_list(key: str = ""):
 @app.post("/api/jobs/{job_id}/cancel")
 def job_cancel(job_id: str):
     return {"cancelled": jobs.cancel(job_id)}
+
+
+@app.get("/api/system")
+def system_info(refresh: bool = False):
+    from . import hardware
+    return hardware.info(refresh)
+
+
+# clear caches (Settings): pages read during searches, the update check, and (on Android) the WebView cache
+@app.post("/api/app/clear-cache")
+def clear_cache():
+    from . import fetch
+    pages = len(fetch._cache)
+    fetch._cache.clear()
+    fetch._cache_chars = 0
+    updater.CACHE.unlink(missing_ok=True)
+    if paths.ANDROID:
+        from .android_bridge import clear_web_cache
+        clear_web_cache()
+    return {"pages": pages}
 
 
 # log viewer (Settings → About). Secrets are blanked out before the text leaves the server.

@@ -45,16 +45,31 @@ def render_page(url: str, timeout_s: int = 20) -> str:
     return str(html) if html else ""
 
 
+def device_info() -> dict:
+    import json
+    return json.loads(str(_bridge().deviceInfo()))
+
+
+def clear_web_cache() -> None:
+    _bridge().clearWebCache()
+
+
 def install_apk(path: str) -> str:
     """'ok', or 'permission' when Android first needs the user to allow installing apps."""
     return str(_bridge().installApk(str(path)))
 
 
-def start(data_dir: str) -> int:
-    """Start the local server; returns the port the WebView should load."""
+def start(data_dir: str, time_zone: str = "") -> int:
+    """Start the local server; returns the port the WebView should load.
+    time_zone is the phone's zone (e.g. Europe/Oslo): Python doesn't pick it up by itself on Android."""
     global _server
     os.environ["AIRAG_DATA_DIR"] = data_dir
     os.environ["AIRAG_PLATFORM"] = "android"
+    if time_zone:
+        os.environ["TZ"] = time_zone
+        import time
+        if hasattr(time, "tzset"):
+            time.tzset()
     if _server is not None and _server.is_alive():
         from . import appctl
         return appctl.port

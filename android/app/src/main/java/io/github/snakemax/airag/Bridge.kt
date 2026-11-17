@@ -189,6 +189,33 @@ object Bridge {
         return html
     }
 
+    @JvmStatic
+    fun clearWebCache() { activity()?.clearWebCache() }
+
+    /** Phone model, chip, memory and storage for Settings -> System. */
+    @JvmStatic
+    fun deviceInfo(): String {
+        val a = activity() ?: return "{}"
+        val mem = android.app.ActivityManager.MemoryInfo()
+        (a.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(mem)
+        val stat = android.os.StatFs(Environment.getDataDirectory().path)
+        val o = JSONObject()
+            .put("manufacturer", Build.MANUFACTURER)
+            .put("model", Build.MODEL)
+            .put("android", Build.VERSION.RELEASE)
+            .put("sdk", Build.VERSION.SDK_INT)
+            .put("abi", Build.SUPPORTED_ABIS.firstOrNull() ?: "")
+            .put("cores", Runtime.getRuntime().availableProcessors())
+            .put("ram_gb", Math.round(mem.totalMem / 1073741824.0 * 10) / 10.0)
+            .put("ram_free_gb", Math.round(mem.availMem / 1073741824.0 * 10) / 10.0)
+            .put("storage_free_gb", Math.round(stat.availableBytes / 1073741824.0 * 10) / 10.0)
+            .put("storage_total_gb", Math.round(stat.totalBytes / 1073741824.0 * 10) / 10.0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            o.put("soc", "${Build.SOC_MANUFACTURER} ${Build.SOC_MODEL}".trim())
+        }
+        return o.toString()
+    }
+
     /** An update waiting for the "install unknown apps" permission. */
     private var pendingApk: String? = null
 

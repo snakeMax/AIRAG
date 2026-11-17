@@ -168,4 +168,4 @@ async def download_and_install(job, quit_app, reinstall: bool = False) -> dict:
     subprocess.Popen([str(dest), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/AIRAGUPDATE"],
                      creationflags=flags, close_fds=True)
     quit_app(delay=1.0)
-    return {"version": info["latest"]}
+    return {"version": info["latest"], "restarting": True}

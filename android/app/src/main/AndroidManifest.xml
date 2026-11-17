@@ -11,6 +11,14 @@
         android:maxSdkVersion="32" />
     <!-- Installing app updates downloaded from GitHub -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Microphone button in the search box (Android's own speech recognition) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <application
         android:name="com.chaquo.python.android.PyApplication"
