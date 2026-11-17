@@ -7,6 +7,14 @@ from . import register
 from .base import ImageResult, SearchBackend, SearchError, SearchResult, to_int
 
 
+def _have_ddgs() -> bool:
+    try:
+        _ddgs()
+        return True
+    except SearchError:
+        return False
+
+
 def _ddgs():
     try:
         from ddgs import DDGS  # current package name
@@ -33,12 +41,13 @@ class DuckDuckGo(SearchBackend):
         def run():
             return list(_ddgs().text(query, max_results=n, **self._kw()) or [])
         raw = None
-        for attempt in range(2):
-            try:
-                raw = await asyncio.to_thread(run)
-                break
-            except Exception:  # package missing (Android), rate limit or network error
-                await asyncio.sleep(1.0 + attempt)
+        if _have_ddgs():
+            for attempt in range(2):
+                try:
+                    raw = await asyncio.to_thread(run)
+                    break
+                except Exception:  # rate limit or network error
+                    await asyncio.sleep(1.0 + attempt)
         if raw is None:
             from . import ddg_html  # plain-HTML fallback
             kw = self._kw()

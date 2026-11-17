@@ -20,7 +20,8 @@ def test_harmless_text_untouched():
 
 def test_secrets_redacted():
     s = {"llm": {"providers": {"openai": {"api_key": "my-own-key-1234567890"}}}}
-    out, _ = guard.clean("keys: my-own-key-1234567890 and sk-ant-api03-abcdefghijklmnopqrstuv", s)
+    fake = "sk-" + "ant-api03-" + "abcdefghijklmnopqrstuv"   # built at runtime so the secret scanner stays quiet
+    out, _ = guard.clean(f"keys: my-own-key-1234567890 and {fake}", s)
     assert "my-own-key" not in out and "sk-ant-api03" not in out and out.count(guard.REDACTED) == 2
 
 

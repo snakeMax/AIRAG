@@ -7,6 +7,10 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.Settings
 import android.webkit.MimeTypeMap
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import org.json.JSONArray
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
@@ -87,6 +91,48 @@ object Bridge {
                 Toast.makeText(a, a.getString(R.string.no_app), Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    /**
+     * Loads a page in a hidden WebView and returns its HTML once loaded (or "" on timeout).
+     * Used when a site blocks plain requests: the WebView looks like the phone's normal browser.
+     * Images are not loaded, to save data and battery.
+     */
+    @JvmStatic
+    fun renderPage(url: String, timeoutMs: Int): String {
+        val a = activity() ?: return ""
+        val latch = CountDownLatch(1)
+        var html = ""
+        var view: WebView? = null
+        a.runOnUiThread {
+            val w = WebView(a)
+            view = w
+            w.settings.javaScriptEnabled = true
+            w.settings.domStorageEnabled = true
+            w.settings.loadsImagesAutomatically = false
+            w.settings.blockNetworkImage = true
+            w.settings.mediaPlaybackRequiresUserGesture = true
+            w.webViewClient = object : WebViewClient() {
+                private var done = false
+                override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest) = false
+                override fun onPageFinished(v: WebView, u: String) {
+                    if (done) return
+                    // give scripts a moment to fill in the content
+                    v.postDelayed({
+                        if (done) return@postDelayed
+                        done = true
+                        v.evaluateJavascript("document.documentElement.outerHTML") { result ->
+                            html = try { JSONArray("[$result]").getString(0) } catch (_: Exception) { "" }
+                            latch.countDown()
+                        }
+                    }, 900)
+                }
+            }
+            w.loadUrl(url)
+        }
+        latch.await(timeoutMs.toLong(), TimeUnit.MILLISECONDS)
+        a.runOnUiThread { view?.stopLoading(); view?.destroy() }
+        return html
     }
 
     /** Hands a downloaded update to Android's package installer. */

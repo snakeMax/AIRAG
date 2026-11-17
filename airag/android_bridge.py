@@ -32,6 +32,12 @@ def open_path(path: str, reveal: bool = False) -> None:
     _bridge().openFile(str(path))
 
 
+def render_page(url: str, timeout_s: int = 20) -> str:
+    """Load a page in a hidden WebView and return its HTML after scripts ran ("" on failure)."""
+    html = _bridge().renderPage(str(url), int(timeout_s * 1000))
+    return str(html) if html else ""
+
+
 def install_apk(path: str) -> None:
     _bridge().installApk(str(path))
 

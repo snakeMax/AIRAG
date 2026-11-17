@@ -84,3 +84,15 @@ def test_log_hides_secrets(tmp_path):
     assert client.get("/api/app/log", headers={"sec-fetch-site": "cross-site"}).status_code == 403
     lines = client.get("/api/app/log").json()["lines"]
     assert lines and "zz-secret" not in lines[-1] and "sk-ant-abc" not in lines[-1]
+
+
+def test_lite_and_mojeek_parsers():
+    from airag.search.ddg_html import parse_lite, parse_mojeek
+    lite = """<table><tr><td><a class="result-link" href="https://example.com/a">Example A</a></td></tr>
+      <tr><td class="result-snippet">Snippet A</td></tr></table>"""
+    r = parse_lite(lite, 5)
+    assert r[0].url == "https://example.com/a" and r[0].snippet == "Snippet A"
+    moj = """<ul class="results-standard"><li><h2><a class="title" href="https://example.org/b">B title</a></h2>
+      <p class="s">Snippet B</p></li></ul>"""
+    r = parse_mojeek(moj, 5)
+    assert r[0].url == "https://example.org/b" and r[0].title == "B title" and r[0].snippet == "Snippet B"

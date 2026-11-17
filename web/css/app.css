@@ -113,7 +113,7 @@ body.running .topbar, body.scrolled .topbar { border-bottom-color: var(--border)
 /* Run layout */
 .run { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; max-width: 1180px; margin: 0 auto; padding: 26px 24px 80px; }
 .run-side > .sticky { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 100px); overflow: auto; padding-bottom: 8px; }
-@media (max-width: 980px) { .run { grid-template-columns: 1fr; } .run-side > .sticky { position: static; max-height: none; } }
+@media (max-width: 980px) { .run { grid-template-columns: minmax(0, 1fr); } .run-side > .sticky { position: static; max-height: none; } }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
 .side-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
 .side-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); font-weight: 650; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
@@ -467,3 +467,10 @@ details.tried summary { cursor: pointer; }
 @media (hover: none) { .has-tip:hover .tip-text { display: none; } .has-tip:focus .tip-text { display: block; } }
 .sus { display: inline-flex; color: var(--bad); margin-left: 4px; vertical-align: middle; }
 .sus svg { width: 14px; height: 14px; }
+
+/* Never let long questions, URLs or code push the page wider than the screen */
+html, body { overflow-x: hidden; }
+.run-main, .run-side, .ph-text { min-width: 0; }
+.ph-title, .run pre, .prose, .article h1, .r-title, .r-url { overflow-wrap: anywhere; }
+.prose pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.prose table { display: block; max-width: 100%; overflow-x: auto; }

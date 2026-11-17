@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 import httpx
 
 from .config import DEFAULT_UA
+from .paths import ANDROID
 
 MAX_BYTES = 8_000_000
 MAX_TEXT = 200_000
@@ -60,6 +61,10 @@ async def fetch_page(url: str, cfg: dict) -> Page:
         bp = await _fetch_browser(url, cfg)
         if page is None or (bp.ok and len(bp.text) > len(page.text)):
             page = bp
+    elif ANDROID and page is not None and not page.binary and (not page.ok or len(page.text) < 500):
+        wp = await _fetch_webview(url, cfg)   # pages that block plain requests or need JavaScript
+        if wp.ok and len(wp.text) > len(page.text):
+            page = wp
     assert page is not None
     _cache[url] = page
     _cache_chars += len(page.text)
@@ -226,6 +231,22 @@ async def _get_browser():
             _pw = await async_playwright().start()
             _browser = await _pw.chromium.launch(headless=True)
     return _browser
+
+
+_webview_lock = asyncio.Lock()
+
+
+async def _fetch_webview(url: str, cfg: dict) -> Page:
+    """Android: render the page in a hidden WebView (one at a time, to spare the battery)."""
+    from . import android_bridge
+    async with _webview_lock:
+        try:
+            html = await asyncio.to_thread(android_bridge.render_page, url, int(cfg.get("timeout") or 15) + 5)
+        except Exception as e:
+            return Page(url, error=f"WebView: {e}"[:200], via="webview")
+    if not html:
+        return Page(url, error="Page didn't load", via="webview")
+    return parse_html(url, url, html, via="webview")
 
 
 async def _fetch_browser(url: str, cfg: dict) -> Page:
