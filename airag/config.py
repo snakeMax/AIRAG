@@ -226,7 +226,10 @@ def load_raw() -> dict:
 
 
 def load(with_env: bool = True) -> dict:
-    s = _coerce(deep_merge(defaults(), load_raw()))
+    raw = load_raw()
+    if "defaults" not in raw and raw.get("app", {}).get("include_library"):
+        raw["defaults"] = {"library": True}   # 0.2 kept the My library tickbox in "app"
+    s = _coerce(deep_merge(defaults(), raw))
     if with_env:
         for path, f in _secret_fields():
             if not _get(s, path) and f.get("env") and os.environ.get(f["env"]):

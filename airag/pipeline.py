@@ -305,6 +305,7 @@ class Research:
         their text back; if that isn't enough material, the best unread results are read too."""
         p = self.prev
         self.mode = "article"
+        self.extras = p.get("extras", True) is not False
         if not self.dates and p.get("dates"):
             self.dates = tuple(p["dates"])
         self.plan = p["plan"]
