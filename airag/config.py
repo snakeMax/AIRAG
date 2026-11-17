@@ -20,7 +20,7 @@ MASK = "••••"
 DEFAULT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 
-SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts")
+SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults")
 
 GENERAL_SCHEMA: dict = {
     "app": [
@@ -44,6 +44,17 @@ GENERAL_SCHEMA: dict = {
         {"key": "pclink_code", "label": "", "type": "hidden", "default": ""},
         {"key": "pclink_allow_internet", "label": "", "type": "hidden", "default": False},
     ],
+    # what new searches start with (each can still be changed for one search on the home page)
+    "defaults": [
+        {"key": "mode", "label": "Search mode", "type": "select", "default": "auto", "options": ["auto", "article", "results"]},
+        {"key": "library", "label": "Include My library", "type": "bool", "default": False,
+         "help": "Tick My library on the home page by default."},
+        {"key": "extras", "label": "Pictures and interactive explainer", "type": "bool", "default": True,
+         "help": "Look for pictures and check whether an interactive explainer fits. Turn off to use fewer AI tokens."},
+        {"key": "dates", "label": "Time range", "type": "select", "default": "any", "options": ["any", "week", "month", "year"]},
+        {"key": "translate_to", "label": "Translate into", "type": "hidden", "default": ""},
+        {"key": "save_rich", "label": "Save articles with pictures and the explainer", "type": "bool", "default": False},
+    ],
     "library": [
         {"key": "folders", "label": "Folders", "type": "hidden", "default": []},
         {"key": "personal_folder", "label": "", "type": "hidden", "default": ""},
@@ -62,6 +73,9 @@ GENERAL_SCHEMA: dict = {
          "options": ["balanced", "concise", "detailed", "academic", "simple"]},
         {"key": "length", "label": "Article length", "type": "select", "default": "auto",
          "options": ["auto", "short", "medium", "long"]},
+        {"key": "explainer_level", "label": "Interactive explainer detail", "type": "select", "default": "medium",
+         "options": ["simple", "medium", "detailed"],
+         "help": "Simple uses the fewest tokens; detailed makes richer simulations and games but costs more."},
         {"key": "custom_instructions", "label": "Your instructions", "type": "textarea", "default": "",
          "help": "Added to the article, summary and explainer prompts. E.g. 'Always use metric units', 'Prefer peer-reviewed sources', 'Explain like I'm a nurse'."},
         {"key": "planner_instructions", "label": "Search instructions", "type": "textarea", "default": "",
@@ -104,8 +118,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "enough_findings", "label": "Stop searching after N findings", "type": "number", "default": 10, "min": 2, "max": 60, "step": 1},
         {"key": "article_max_tokens", "label": "Max article length (tokens)", "type": "number", "default": 4096, "min": 512, "max": 32000, "step": 256},
         {"key": "max_article_sources", "label": "Max sources per article", "type": "number", "default": 12, "min": 2, "max": 30, "step": 1},
-        {"key": "images", "label": "Find images", "type": "bool", "default": True},
-        {"key": "interactive_check", "label": "Offer interactive explainers for articles", "type": "bool", "default": True,
+        {"key": "images", "label": "Find images", "type": "hidden", "default": True},
+        {"key": "interactive_check", "label": "Offer interactive explainers for articles", "type": "hidden", "default": True,
          "help": "After writing an article, the AI checks whether a small simulation would help explain it (one extra short AI call)."},
         {"key": "max_images", "label": "Max images", "type": "number", "default": 6, "min": 0, "max": 20, "step": 1},
         {"key": "skip_domains", "label": "Skip domains", "type": "text",
@@ -148,6 +162,7 @@ def _base_defaults() -> dict:
                    "backends": {n: field_defaults(c.fields) for n, c in BACKENDS.items()}},
         "fetch": field_defaults(GENERAL_SCHEMA["fetch"]),
         "research": field_defaults(GENERAL_SCHEMA["research"]),
+        "defaults": field_defaults(GENERAL_SCHEMA["defaults"]),
     }
 
 

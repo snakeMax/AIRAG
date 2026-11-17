@@ -305,12 +305,6 @@ Summarize this {what}:
 
 
 # interactive explainers
-def _outline(md: str, opening: int = 3000) -> str:
-    """Headings plus the start of an article: enough to judge what it's about, at a fraction of the size."""
-    heads = [line.strip() for line in md.splitlines() if line.lstrip().startswith("#")]
-    return md[:opening] + ("\n\n[…]\nAll headings:\n" + "\n".join(heads[:40]) if len(md) > opening else "")
-
-
 def interactive_check(query: str, article_md: str) -> Tuple[str, str]:
     system = ("You decide whether a small interactive simulation, visualization or learning game would genuinely help "
               "a reader understand an article. Good fits: physical or biological processes, mechanisms, math and "
@@ -323,8 +317,8 @@ def interactive_check(query: str, article_md: str) -> Tuple[str, str]:
     system += "\n" + fence.rule()
     user = f"""Reader's search: {query}
 
-Article (outline and opening):
-{fence.wrap(_outline(article_md))}
+Article:
+{fence.wrap(article_md[:9000])}
 
 Return JSON: {{"suitable": true/false, "idea": "one sentence describing the interactive explainer you would build (empty if not suitable)", "reason": "short reason, max 12 words"}}"""
     return system, user
@@ -334,7 +328,7 @@ INTERACTIVE_SYSTEM = """You build small, self-contained interactive explainers (
 Requirements:
 - Output ONE complete HTML document and nothing else (no Markdown fences, no explanations).
 - Everything inline: CSS in <style>, JavaScript in <script>. No external files, fonts, libraries, images, network requests, storage, cookies, alerts or popups. It runs in a locked-down sandbox.
-- Use <canvas> or inline SVG for graphics. Keep it under ~400 lines and make sure the code runs without errors.
+- Use <canvas> or inline SVG for graphics. {size} Make sure the code runs without errors.
 - Controls the reader can play with (sliders, buttons, toggles, draggable items, play/pause), with live numbers and labels.
 - A title, a one-line "how to use" hint, and a short "What this shows" note that ties back to the article.
 - Be faithful to the article: use its facts and figures. If you must use illustrative or simplified values, label them clearly as illustrative/simplified.
@@ -343,7 +337,19 @@ Requirements:
 """ + SAFETY + "\n" + UNTRUSTED
 
 
-def interactive(query: str, idea: str, article_md: str, lang: str) -> Tuple[str, str]:
+EXPLAINER_LEVELS = {
+    "simple": ("Keep it small: under ~150 lines, one clear idea with one or two controls.", 4000),
+    "medium": ("Keep it under ~400 lines.", 8000),
+    "detailed": ("Make it rich: up to ~800 lines, with several connected controls, modes or levels "
+                 "(e.g. a guided walkthrough plus a free-play mode, or a short quiz at the end).", 14000),
+}
+
+
+def explainer_level(level: str) -> Tuple[str, int]:
+    return EXPLAINER_LEVELS.get(level, EXPLAINER_LEVELS["medium"])
+
+
+def interactive(query: str, idea: str, article_md: str, lang: str, level: str = "medium") -> Tuple[str, str]:
     fence = Fence()
     user = f"""Reader's search: {query}
 Explainer to build: {idea or 'choose the most helpful interactive explainer for this article'}
@@ -352,7 +358,8 @@ Article (the facts to use):
 {fence.wrap(article_md[:14000])}
 
 Write the complete HTML document now."""
-    return (INTERACTIVE_SYSTEM + _extra("custom_instructions")).replace("{lang}", lang) + "\n" + fence.rule(), user
+    system = INTERACTIVE_SYSTEM.replace("{size}", explainer_level(level)[0])
+    return (system + _extra("custom_instructions")).replace("{lang}", lang) + "\n" + fence.rule(), user
 
 
 # translation
@@ -376,3 +383,17 @@ def translate_items(items: List[dict], lang: str) -> Tuple[str, str]:
     data = json.dumps(items, ensure_ascii=False)
     return system, (f"Translate every text value in this JSON list into {lang}. Keep the same structure and the "
                     f"\"id\" values. Return JSON: {{\"items\": [the translated list]}}\n{fence.wrap(data)}")
+
+
+# choosing article pictures
+def judge_images(query: str, intent: str, images: List[dict], with_pixels: bool) -> Tuple[str, str]:
+    system = ("You pick pictures for a research article. Keep only pictures that directly show what the reader asked "
+              "about (the thing, place, species, device, process or a clear diagram of it). Drop logos, ads, "
+              "unrelated stock photos, people unrelated to the topic, screenshots of text, tiny icons and duplicates. "
+              "Never keep pictures that are graphic, sexual or upsetting.\n" + UNTRUSTED)
+    lines = [f"[{i}] {(im.get('title') or '')[:120]} - from {im.get('credit', '')}" for i, im in enumerate(images)]
+    how = ("The pictures are attached in the same order." if with_pixels
+           else "You can't see the pictures; judge from their captions and where they come from.")
+    user = (f"Reader's search: {query}\nWhat they want to know: {intent}\n{how}\n\nPictures:\n" + "\n".join(lines) +
+            '\n\nReturn JSON: {"keep": [numbers of good pictures, best first]}')
+    return system, user

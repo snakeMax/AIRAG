@@ -22,6 +22,7 @@ export async function openInteractive(run, force = false) {
       ? { html: run.interactiveHtml }
       : await api("/api/interactive", { method: "POST", body: { id: run.id, force, ui_lang: uiLang() } });
     run.interactiveHtml = res.html;
+    if (res.interactive) run.interactive = res.interactive;
     const frame = document.createElement("iframe");
     frame.setAttribute("sandbox", "allow-scripts");
     frame.setAttribute("referrerpolicy", "no-referrer");
@@ -31,6 +32,7 @@ export async function openInteractive(run, force = false) {
     frame.addEventListener("load", () => { frame.style.display = "none"; void frame.offsetHeight; frame.style.display = ""; }, { once: true });
     $("#interBody").replaceChildren(frame);
   } catch (e) {
+    if (run.interactive == null && /wouldn't help/.test(e.message)) run.interactive = { suitable: false };
     $("#interBody").innerHTML = `<div class="inter-wait"><div class="status-line err">${h(e.message)}</div></div>`;
   }
 }

@@ -38,6 +38,12 @@ class LLMProvider:
         self.temperature = temperature
         self.model = str(cfg.get("model") or "").strip()
 
+    # Providers that can look at pictures (used to pick article images). `user` may then be a list of parts.
+    supports_vision = False
+
+    def vision_content(self, text: str, image_urls: List[str]):
+        raise NotImplementedError
+
     def describe(self) -> str:
         return f"{self.label} · {self.model or 'no model'}"
 

@@ -12,9 +12,10 @@ import { chipHtml, openDatePicker, emptyRange, hasRange } from "./dates.js";
 import { initSpeech } from "./speech.js";
 
 const state = {
-  mode: localStorage.getItem("airag.mode") || "auto",
+  mode: "auto",
   library: false,
   dates: emptyRange(),   // optional date range for the next search
+  extras: true,          // pictures + interactive explainer check
   settings: null,
   status: null,
 };
@@ -29,12 +30,12 @@ function showView(name) {
   document.body.classList.toggle("running", name === "run");
 }
 
-function go(q, mode = state.mode, library = state.library, fromId = null, dates = state.dates, mergeId = null) {
+function go(q, mode = state.mode, library = state.library, fromId = null, dates = state.dates, mergeId = null, extras = state.extras) {
   q = (q || "").trim();
   if (!q) return;
   const hash = `#/search?q=${encodeURIComponent(q)}&mode=${mode}${library ? "&lib=1" : ""}` +
     (fromId ? "&from=" + encodeURIComponent(fromId) : "") + (mergeId ? "&merge=" + encodeURIComponent(mergeId) : "") +
-    (dates?.from ? "&df=" + dates.from : "") + (dates?.to ? "&dt=" + dates.to : "");
+    (dates?.from ? "&df=" + dates.from : "") + (dates?.to ? "&dt=" + dates.to : "") + (extras === false ? "&x=0" : "");
   if (location.hash === hash) route();
   else location.hash = hash;
 }
@@ -46,7 +47,7 @@ function route() {
     const q = p.get("q");
     if (q) {
       startResearch(q, p.get("mode") || state.mode, p.get("lib") === "1", p.get("from"),
-                    { from: p.get("df") || "", to: p.get("dt") || "" }, p.get("merge"));
+                    { from: p.get("df") || "", to: p.get("dt") || "" }, p.get("merge"), p.get("x") !== "0");
       return;
     }
   }
@@ -68,6 +69,22 @@ function showHome() {
 }
 
 // home widgets
+/** What new searches start with (Settings -> Defaults). */
+function applyDefaults(d) {
+  if (!d) return;
+  state.mode = ["auto", "article", "results"].includes(d.mode) ? d.mode : "auto";
+  state.library = !!d.library;
+  state.extras = d.extras !== false;
+  state.dates = presetRange(d.dates);
+}
+
+function presetRange(name) {
+  const days = { week: 7, month: 31, year: 365 }[name];
+  if (!days) return emptyRange();
+  const d = new Date(Date.now() - days * 864e5);
+  return { from: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, to: "" };
+}
+
 function renderHomeDates() {
   $("#homeDates").innerHTML = chipHtml("dateChip", state.dates);
   $("#dateChip").onclick = e => openDatePicker(e.currentTarget, state.dates, d => { state.dates = d; renderHomeDates(); });
@@ -77,6 +94,8 @@ function renderModes() {
   $$("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === state.mode));
   for (const id of ["#libChk", "#topLibChk"]) $(id).checked = state.library;
   $$(".lib-chip").forEach(c => c.classList.toggle("on", state.library));
+  $("#xChk").checked = state.extras;
+  $("#xChip").classList.toggle("on", state.extras);
 }
 
 async function refreshStatus() {
@@ -98,7 +117,9 @@ async function refreshStatus() {
 function wire() {
   $("#homeSearch").onsubmit = e => { e.preventDefault(); go(e.target.q.value); };
   $("#topSearch").onsubmit = e => { e.preventDefault(); e.target.q.blur(); go(e.target.q.value); };
-  $$("#modes button").forEach(b => (b.onclick = () => { state.mode = b.dataset.mode; localStorage.setItem("airag.mode", state.mode); renderModes(); }));
+  // these only change the next searches; the permanent choice is in Settings -> Defaults
+  $$("#modes button").forEach(b => (b.onclick = () => { state.mode = b.dataset.mode; renderModes(); }));
+  $("#xChk").onchange = e => { state.extras = e.target.checked; renderModes(); };
   for (const id of ["#libChk", "#topLibChk"]) {
     $(id).onchange = e => {
       if (e.target.checked && !(state.status?.library_folders > 0)) {
@@ -109,7 +130,6 @@ function wire() {
       }
       state.library = e.target.checked;
       renderModes();
-      api("/api/settings", { method: "POST", body: { app: { include_library: state.library } } }).catch(() => {});
     };
   }
   $("#engineLine").onclick = () => openSettings("model");
@@ -145,12 +165,19 @@ async function boot() {
   onAppearanceChange((appearance, theme) => {
     api("/api/settings", { method: "POST", body: { app: { appearance, theme_hint: theme } } }).catch(() => {});
   });
-  state.library = !!state.settings?.app.include_library;
+  applyDefaults(state.settings?.defaults);
   hydrateIcons();
   wire();
   initSpeech(info?.mode === "desktop");
-  setRunHooks({ go, openSettings, showView, refreshRecent });
-  setSettingsHooks({ onSaved: (s, langChanged) => { state.settings = s; if (langChanged) location.reload(); else refreshStatus(); } });
+  setRunHooks({ go, openSettings, showView, refreshRecent, defaults: () => state.settings?.defaults });
+  setSettingsHooks({ onSaved: (s, langChanged) => {
+    state.settings = s;
+    if (langChanged) { location.reload(); return; }
+    applyDefaults(s.defaults);
+    renderModes();
+    renderHomeDates();
+    refreshStatus();
+  } });
   setSetupHooks({ onDone: langChanged => (langChanged ? location.reload() : refreshStatus()) });
   renderModes();
   renderHomeDates();

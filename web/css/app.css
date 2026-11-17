@@ -509,3 +509,8 @@ html, body { overflow-x: hidden; }
 .mic-btn.listening { background: var(--bad); color: #fff; animation: mic-pulse 1.2s ease-in-out infinite; }
 @keyframes mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 45%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
 .searchbox.sm .mic-btn { width: 30px; height: 30px; }
+.license { font-size: 13.5px; }
+.license ul { padding-left: 20px; margin: 6px 0 10px; }
+.license li { margin: 3px 0; }
+.license summary { cursor: pointer; font-weight: 600; margin: 4px 0 8px; }
+.license pre { max-height: 260px; }

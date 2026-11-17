@@ -109,3 +109,19 @@ def test_translation_files_have_no_duplicate_keys():
         keys = re.findall(r'"([A-Za-z0-9_.]+)"\s*:', f.read_text(encoding="utf-8"))
         dupes = [k for k, c in collections.Counter(keys).items() if c > 1]
         assert not dupes, (f.name, dupes)
+
+
+def test_backup_round_trip_leaves_out_keys(tmp_path):
+    import json
+    from airag import backup, history
+    config.save({"llm": {"providers": {"anthropic": {"api_key": "my-real-key-1234567890"}}},
+                 "defaults": {"mode": "results"}})
+    history.save({"id": "20261118-010101-test", "query": "q", "outcome": "results"}, 300)
+    f = backup.export(tmp_path)
+    raw = f.read_text(encoding="utf-8")
+    assert "my-real-key" not in raw and json.loads(raw)["settings"]["defaults"]["mode"] == "results"
+    history.delete("20261118-010101-test")
+    config.save({"defaults": {"mode": "auto"}})
+    r = backup.import_file(f)
+    assert r["history"] == 1 and config.load()["defaults"]["mode"] == "results"
+    assert config.load()["llm"]["providers"]["anthropic"]["api_key"] == "my-real-key-1234567890"   # kept

@@ -100,12 +100,13 @@ def _slug(text: str) -> str:
 class Research:
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
                  include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None,
-                 date_from: str = "", date_to: str = "", merge_id: Optional[str] = None):
+                 date_from: str = "", date_to: str = "", merge_id: Optional[str] = None, extras: bool = True):
         self.prev = history.get(from_id) if from_id else None   # reuse the sources of an earlier search
         self.merge = history.get(merge_id) if merge_id and not from_id else None   # search again, keep old sources
         if self.prev and self.prev.get("query"):
             query = self.prev["query"]
         self.query = " ".join(query.split())
+        self.extras = bool(extras)   # pictures + interactive explainer check (off = fewer tokens)
         from .search.base import date_range
         self.dates = date_range(f"{date_from or ''}..{date_to or ''}") if (date_from or date_to) else None
         if not self.query:
@@ -141,7 +142,7 @@ class Research:
         self.skip = [d.strip().lower() for d in str(self.r.get("skip_domains", "")).split(",") if d.strip()]
         self._sem_llm = asyncio.Semaphore(max(1, int(self.r["llm_concurrency"])))
         self._sem_fetch = asyncio.Semaphore(max(1, int(settings["fetch"]["max_concurrency"])))
-        self._texts: Dict[str, str] = {}   # fingerprint of page text -> url, to skip copies of the same article
+        self._texts: Dict[str, set] = {}   # url -> five-word runs of its text, to spot copies of the same article
 
     # helpers
     async def step(self, sid: str, label: str, status: str = "running", detail: str = "") -> None:
@@ -240,7 +241,8 @@ class Research:
             await self.library_round()
 
         img_task = None
-        if self.use_web and self.r.get("images") and int(self.r.get("max_images", 0)) > 0 and self.img_search and self.plan.get("image_query"):
+        if (self.extras and self.use_web and int(self.r.get("max_images", 0)) > 0 and self.img_search
+                and self.plan.get("image_query")):
             img_task = asyncio.create_task(self.search_images())
 
         outcome = None
@@ -268,7 +270,7 @@ class Research:
                 searched_images = await img_task
             except Exception:
                 searched_images = []
-        images = self.collect_images(searched_images)
+        images = await self.choose_images(self.collect_images(searched_images)) if self.extras else []
 
         record = self.base_record(images)
         if self.mode == "results" or outcome == "results":
@@ -283,7 +285,7 @@ class Research:
         return {"id": self.id, "query": self.query, "mode": self.mode, "created": self.created,
                 "model": self.llm.describe(), "search": self.search.label, "plan": self.plan,
                 "tried": self.tried, "images": images, "library": self.use_library, "web": self.use_web,
-                "language": self.lang, "dates": list(self.dates) if self.dates else None}
+                "language": self.lang, "dates": list(self.dates) if self.dates else None, "extras": self.extras}
 
     async def finish(self, record: dict, t0: float) -> dict:
         record["steps"] = list(self.steps.values())
@@ -558,7 +560,7 @@ class Research:
             s["_images"] = page.images
             if await self.skip_without_ai(s, page.text):
                 return
-            excerpt = select_passages(page.text, self.terms, int(self.r["passage_chars"]))
+            excerpt = select_passages(page.text, list(self.search_terms()), self.excerpt_budget(page.text))
         excerpt, suspicious = guard.clean(excerpt, self.s)
         if suspicious:
             s["suspicious"] = True
@@ -598,25 +600,43 @@ class Research:
         self.check_dates(s)
         await self.emit_source(s)
 
+    @staticmethod
+    def _shingles(text: str) -> set:
+        words = re.findall(r"\w+", text[:8000].lower())
+        return {" ".join(words[i:i + 5]) for i in range(0, max(0, len(words) - 4))}
+
+    def search_terms(self) -> set:
+        """Key words from the question, the planner's key terms and every search the AI ran."""
+        terms = set(self.terms)
+        for q in self.tried:
+            terms.update(tokenize(q))
+        return terms
+
     async def skip_without_ai(self, s: dict, text: str) -> bool:
-        """Save an AI call on pages that can't help: copies of a page already read (syndicated news,
-        mirrors) and pages that never mention any of the question's key words."""
-        fp = re.sub(r"\W+", " ", text[:3000].lower()).strip()[:1500]
-        if len(fp) > 400:
-            first = self._texts.setdefault(fp, s["url"])
-            if first != s["url"]:
-                s.update({"status": "assessed", "relevance": 0, "coverage": 0, "trust": s["prior"], "findings": [],
-                          "summary": "Same text as another source.", "trust_reason": s["prior_label"]})
-                await self.emit_source(s)
-                return True
-        if len(self.plan.get("key_terms") or []) >= 4:   # only when the plan gave words in several languages
-            words = set(tokenize(text[:200000]))
-            if not any(t in words for t in self.terms):
-                s.update({"status": "assessed", "relevance": 0, "coverage": 0, "trust": s["prior"], "findings": [],
-                          "summary": "Doesn't mention the topic.", "trust_reason": s["prior_label"]})
-                await self.emit_source(s)
-                return True
+        """Skip the AI only for copies of a page already read (syndicated news, mirrors). Copies are found by
+        comparing overlapping five-word runs of the text (no tokens used): pages that share most of their wording
+        count as the same article, while pages that only quote each other or share a template don't."""
+        sh = self._shingles(text)
+        if len(sh) >= 60:
+            for url, other in self._texts.items():
+                if url != s["url"] and len(sh & other) / len(sh | other) >= 0.8:
+                    s.update({"status": "assessed", "relevance": 0, "coverage": 0, "trust": s["prior"], "findings": [],
+                              "summary": "Same text as another source.", "trust_reason": s["prior_label"],
+                              "duplicate_of": url})
+                    await self.emit_source(s)
+                    return True
+            self._texts[s["url"]] = sh
         return False
+
+    def excerpt_budget(self, text: str) -> int:
+        """Full reading budget for pages that use the search's key words; a short read for pages that don't
+        (they still get looked at - a research agent can find useful facts in unexpected places)."""
+        full = int(self.r["passage_chars"])
+        words = set(tokenize(text[:200000]))
+        terms = self.search_terms()
+        if terms and not any(t in words for t in terms):
+            return min(full, 900)
+        return full
 
     # images
     async def search_images(self) -> List[dict]:
@@ -667,6 +687,34 @@ class Research:
             add(im)
         return out[:limit]
 
+    async def choose_images(self, candidates: List[dict]) -> List[dict]:
+        """Let the AI keep only pictures that really show the topic. Models that can see images look at
+        them; others judge from captions and sources. On any failure the candidates are kept as they are."""
+        if len(candidates) < 2:
+            return candidates
+        from .llm.jsonutil import extract_json
+        pixels = bool(getattr(self.llm, "supports_vision", False))
+        sys_p, text = prompts.judge_images(self.query, self.plan.get("intent", ""), candidates, pixels)
+        user = self.llm.vision_content(text, [c["src"] for c in candidates]) if pixels else text
+        try:
+            async with self._sem_llm:
+                raw = await self.llm.complete(sys_p + "\nRespond with ONE valid JSON object and nothing else.",
+                                              user, max_tokens=300)
+            keep = [int(i) for i in (extract_json(raw) or {}).get("keep", []) if str(i).isdigit()]
+        except Exception:
+            if not pixels:
+                return candidates
+            try:   # an image the provider couldn't download fails the whole request: retry from captions
+                sys_p, text = prompts.judge_images(self.query, self.plan.get("intent", ""), candidates, False)
+                async with self._sem_llm:
+                    raw = await self.llm.complete(sys_p + "\nRespond with ONE valid JSON object and nothing else.",
+                                                  text, max_tokens=300)
+                keep = [int(i) for i in (extract_json(raw) or {}).get("keep", []) if str(i).isdigit()]
+            except Exception:
+                return candidates
+        chosen = [candidates[i] for i in dict.fromkeys(keep) if 0 <= i < len(candidates)]
+        return chosen
+
     # outcomes
     async def show_results(self, images: List[dict]) -> dict:
         await self.step("rank", "Ranking results")
@@ -703,7 +751,7 @@ class Research:
         m = re.search(r"^#\s+(.+)$", re.sub(r"<think>.*?</think>", "", md, flags=re.S), re.M)
         await self.step("write", "Wrote the article", "done", f"{len(md.split())} words from {len(chosen)} sources")
         inter = None
-        if self.r.get("interactive_check", True):
+        if self.extras:
             from .interactive import check
             inter = await check(self.llm, self.query, md)
             await self.emit({"type": "interactive", **inter})

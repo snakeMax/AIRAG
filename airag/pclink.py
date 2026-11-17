@@ -169,7 +169,9 @@ def start() -> dict:
     changed["pclink_enabled"] = True
     config.save({"app": changed})
     s = config.load()
-    app = _make_app(s["app"]["pclink_code"], bool(s["app"].get("pclink_allow_internet")), _ollama_url(s))
+    # Home network only for now. Access from the internet (through a Cloudflare tunnel, with a clear security
+    # warning) is planned for a later version; until then the old switch is ignored.
+    app = _make_app(s["app"]["pclink_code"], False, _ollama_url(s))
     with _lock:
         _server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=port, log_config=None,
                                                 log_level="warning", lifespan="off"))
@@ -210,7 +212,7 @@ def status() -> dict:
     on = running()
     return {"running": on, "enabled": bool(s.get("pclink_enabled")), "port": _state["port"] if on else 0,
             "addresses": lan_ips() if on else [], "code": s.get("pclink_code") or "",
-            "allow_internet": bool(s.get("pclink_allow_internet")), "error": _state["error"]}
+            "allow_internet": False, "error": _state["error"]}
 
 
 def autostart() -> None:

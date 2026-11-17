@@ -11,20 +11,20 @@ export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
 export function setRunHooks(x) { hooks = { ...hooks, ...x }; }
 
-function newRun(query, mode, library, dates = emptyRange()) {
+function newRun(query, mode, library, dates = emptyRange(), extras = true) {
   return {
-    query, mode, library, dates, id: null, model: "", search: "", created: new Date().toISOString(), steps: [], sources: {},
+    query, mode, library, dates, extras, id: null, model: "", search: "", created: new Date().toISOString(), steps: [], sources: {},
     plan: null, outcome: null, images: [], md: "", articleSources: [], related: [], results: null, suggestions: null,
     interactive: null, finished: false, error: null, t0: Date.now(), elapsed: null,
   };
 }
 
 // live run
-export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null) {
+export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
-  const R = newRun(query, mode, library, dates);
+  const R = newRun(query, mode, library, dates, extras);
   RUN.current = R;
   hooks.showView("run");
   scrollTo(0, 0);
@@ -33,7 +33,7 @@ export async function startResearch(query, mode, library, fromId = null, dates =
   renderShell(R);
   try {
     await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId,
-      date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId }, ev => {
+      date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId, extras }, ev => {
       if (RUN.current !== R) return false;
       onEvent(R, ev);
     }, ctrl.signal);
@@ -86,7 +86,7 @@ function updateSaveButton(R) {
 
 function openSavePop(anchor, R) {
   if ($(".save-pop")) { $(".save-pop").remove(); return; }
-  const rich = localStorage.getItem("airag.saveRich") === "1";
+  const rich = !!hooks.defaults?.()?.save_rich;
   const pop = document.createElement("div");
   pop.className = "date-pop save-pop";
   pop.innerHTML = `<label class="switch"><input type="checkbox" id="saveRich" ${rich ? "checked" : ""}> ${h(t("save.rich"))}</label>
@@ -99,7 +99,6 @@ function openSavePop(anchor, R) {
   pop.style.top = (r.bottom + scrollY + 8) + "px";
   $("#saveGo", pop).onclick = () => {
     const on = $("#saveRich", pop).checked;
-    localStorage.setItem("airag.saveRich", on ? "1" : "0");
     pop.remove();
     saveArticle(R, on);
   };
@@ -158,7 +157,7 @@ function renderShell(R, done = false) {
     <div class="src-list" id="srcList"><div class="muted" style="font-size:13px">${h(t("src.waiting"))}</div></div></div></div>`;
   $("#progressToggle").onclick = () => $("#progress").classList.toggle("collapsed");
   $("#runDates").onclick = e => openDatePicker(e.currentTarget, R.dates,
-    d => hooks.go(R.query, R.mode || "auto", R.library, null, d), t("date.searchAgain"));
+    d => hooks.go(R.query, R.mode || "auto", R.library, null, d, null, R.extras), t("date.searchAgain"));
 }
 
 function setSub(text) { const el = $("#phSub"); if (el) el.textContent = text; }
@@ -239,7 +238,7 @@ $("#runMain").addEventListener("click", e => {
   const act = b.dataset.act;
   if (act === "article") hooks.go(R.query, "article", R.library, R.id);   // reuse this search's sources
   else if (act === "results") hooks.go(R.query, "results", R.library);
-  else if (act === "retry" || act === "again") hooks.go(R.query, R.mode || "auto", R.library, null, R.dates, R.id);
+  else if (act === "retry" || act === "again") hooks.go(R.query, R.mode || "auto", R.library, null, R.dates, R.id, R.extras);
   else if (act === "search") hooks.go(b.dataset.q, "auto", R.library);
   else if (act === "settings") hooks.openSettings(b.dataset.tab);
   else if (act === "copy") navigator.clipboard.writeText(articleMarkdown(R)).then(() => toast(t("art.copied")));
@@ -251,10 +250,12 @@ $("#runMain").addEventListener("click", e => {
     const x = $("#trArtBtn"); if (x) x.innerHTML = `${icon("globe")}${h(t("tr.button"))}`;
   }
   else if (act === "translate-article" && R.finished) openTranslate(b, R, "article", {
+    defaultLang: hooks.defaults?.()?.translate_to,
     render: (final = true) => { renderArticleBody(R, final); if (final) { renderArticleSide(R); showTrNote(R); } },
     setBusy: on => { const x = $("#trArtBtn"); if (x) { x.disabled = on; x.innerHTML = on ? `<span class="spinner sm"></span>${h(t("tr.working"))}` : `${icon("globe")}${h(t("tr.button"))}`; } },
   });
   else if (act === "translate-results") openTranslate(b, R, "results", {
+    defaultLang: hooks.defaults?.()?.translate_to,
     render: () => renderResults(R),
     setBusy: on => { const x = $("#trResBtn"); if (x) { x.disabled = on; x.innerHTML = on ? `<span class="spinner sm"></span>${h(t("tr.working"))}` : `${icon("globe")}${h(t("tr.button"))}`; } },
   });
@@ -367,6 +368,15 @@ function updateInteractiveButton(R) {
   const b = $("#interBtn"), tip = $("#interTip");
   if (!b) return;
   const info = R.interactive;
+  if (!info && R.finished && !R.error && R.extras === false && R.id && !R.savedFile) {
+    // searched without the explainer check: the reader can ask for it now
+    b.setAttribute("aria-disabled", "false");
+    tip.className = "tip-text";
+    tip.textContent = t("inter.checkNow");
+    tip.style.whiteSpace = "normal";
+    tip.style.width = "260px";
+    return;
+  }
   if (!info) {
     b.setAttribute("aria-disabled", "true");
     tip.className = "tip-text";
@@ -538,7 +548,8 @@ function showNotFound(e) {
 }
 
 function showRecord(rec) {
-  const R = newRun(rec.query, rec.mode, rec.library, rec.dates ? { from: rec.dates[0], to: rec.dates[1] } : emptyRange());
+  const R = newRun(rec.query, rec.mode, rec.library, rec.dates ? { from: rec.dates[0], to: rec.dates[1] } : emptyRange(),
+                   rec.extras !== false);
   Object.assign(R, {
     id: rec.id, model: rec.model, search: rec.search, created: rec.created, plan: rec.plan, outcome: rec.outcome,
     images: rec.images || [], md: rec.article || "", articleSources: rec.article_sources || [], related: rec.related || [],

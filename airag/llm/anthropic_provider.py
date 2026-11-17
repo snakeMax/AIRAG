@@ -30,6 +30,12 @@ class Anthropic(LLMProvider):
     def _url(self, path: str) -> str:
         return str(self.cfg.get("base_url") or "https://api.anthropic.com").rstrip("/") + path
 
+    supports_vision = True
+
+    def vision_content(self, text, image_urls):
+        return [{"type": "text", "text": text}] + [{"type": "image", "source": {"type": "url", "url": u}}
+                                                    for u in image_urls]
+
     def _body(self, system, user, max_tokens, stream, temperature=True) -> dict:
         body = {"model": self.model, "max_tokens": max_tokens, "system": system,
                 "messages": [{"role": "user", "content": user}]}

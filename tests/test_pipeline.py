@@ -120,18 +120,22 @@ def test_pages_outside_the_date_range_are_left_out():
     assert old.get("out_of_range") and not new.get("out_of_range") and not undated.get("out_of_range")
 
 
-def test_pages_that_cant_help_skip_the_ai():
+def test_copies_skip_the_ai_but_off_topic_pages_get_a_short_read():
     from airag.pipeline import Research
 
     async def emit(e):
         pass
     r = Research("x", "auto", settings(), emit)
-    r.plan = {"key_terms": ["hummingbird", "wingbeat", "kolibri", "vingeslag"]}
-    r.terms = ["hummingbird", "wingbeat", "kolibri", "vingeslag"]
-    text = "A page about hummingbird flight. " * 40
+    r.terms = ["hummingbird", "wingbeat"]
+    r.tried = ["kolibri vingeslag per sekund"]
+    words = " ".join(f"word{i}" for i in range(400))
+    text = "Hummingbird wingbeat study. " + words
     a = {"url": "https://a.example/1", "prior": 5, "prior_label": "x"}
     b = {"url": "https://mirror.example/1", "prior": 5, "prior_label": "x"}
     c = {"url": "https://c.example/2", "prior": 5, "prior_label": "x"}
     assert asyncio.run(r.skip_without_ai(a, text)) is False
-    assert asyncio.run(r.skip_without_ai(b, text)) is True and b["relevance"] == 0       # same text again
-    assert asyncio.run(r.skip_without_ai(c, "Cooking pasta at home. " * 40)) is True    # off topic
+    assert asyncio.run(r.skip_without_ai(b, text + " Copyright mirror.")) is True and b["relevance"] == 0
+    other = "Hummingbird wingbeat study. " + " ".join(f"other{i}" for i in range(400))
+    assert asyncio.run(r.skip_without_ai(c, other)) is False          # same topic, different wording
+    assert r.excerpt_budget("Cooking pasta at home. " * 40) == 900    # off topic: short read, not skipped
+    assert r.excerpt_budget("Om kolibri og vingeslag. " * 40) > 900   # matches a word from the AI's searches

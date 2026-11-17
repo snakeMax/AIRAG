@@ -32,7 +32,7 @@ export async function openTranslate(anchor, R, kind, hooks) {
   if ($(".tr-pop")) { $(".tr-pop").remove(); return; }
   const list = await langs();
   const current = R.translation?.[kind];
-  const pick = current || localStorage.getItem("airag.translateTo") || uiLang();
+  const pick = current || hooks.defaultLang || localStorage.getItem("airag.translateTo") || uiLang();
   const pop = popover(anchor, `
     <label class="tr-label">${h(t("tr.to"))}
       <select class="input" id="trLang">${list.map(l => `<option value="${l.code}" ${l.code === pick ? "selected" : ""}>${h(l.native)}${l.native !== l.name ? ` (${h(l.name)})` : ""}</option>`).join("")}</select></label>

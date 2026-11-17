@@ -57,8 +57,8 @@ const fields = (list, sec, base, values) => list.map(f => field(f, sec, `${base}
 
 // dialog
 const TABS = [
-  ["general", "home"], ["appearance", "palette"], ["model", "cpu"], ["search", "globe"], ["library", "folder"],
-  ["prompts", "doc"], ["fetch", "book"], ["research", "sliders"], ["about", "info"],
+  ["general", "home"], ["defaults", "check"], ["appearance", "palette"], ["model", "cpu"], ["search", "globe"],
+  ["library", "folder"], ["research", "sliders"], ["prompts", "doc"], ["system", "cpu2"], ["about", "info"],
 ];
 
 export async function openSettings(tab = "general") {
@@ -73,18 +73,20 @@ export async function openSettings(tab = "general") {
     <form method="dialog" id="settingsForm">
       <div class="dlg-head"><h2>${h(t("set.title"))}</h2><button class="icon-btn" value="cancel" formnovalidate>${icon("x")}</button></div>
       <div class="dlg-main">
-        <nav class="dlg-tabs">${TABS.map(([k, ic]) => `<button type="button" data-tab="${k}">${icon(ic)}${h(t("tab." + k))}</button>`).join("")}</nav>
+        <nav class="dlg-tabs">${TABS.map(([k, ic]) => `<button type="button" data-tab="${k}" title="${h(t(`tab.${k}.tip`))}">${icon(ic)}${h(t("tab." + k))}</button>`).join("")}</nav>
         <div class="dlg-body">
           <section data-pane="general">${generalPane(sc, st)}</section>
+          <section data-pane="defaults" hidden>${defaultsPane(sc, st)}</section>
           <section data-pane="appearance" hidden>${appearancePane()}</section>
           <section data-pane="model" hidden>${modelPane(sc, st)}</section>
           <section data-pane="search" hidden>${searchPane(sc, st)}</section>
           <section data-pane="library" hidden>${libraryPane(sc, st)}</section>
           <section data-pane="prompts" hidden><h3>${h(t("tab.prompts"))}</h3><p>${h(t("set.promptsIntro"))}</p>${fields(sc.prompts, "prompts", "prompts", st.prompts)}</section>
-          <section data-pane="fetch" hidden>${fetchPane(sc, st)}</section>
           <section data-pane="research" hidden><h3>${h(t("tab.research"))}</h3><p>${h(t("set.researchIntro"))}</p>
             <div class="field-grid">${fields(sc.research.filter(f => f.type === "number"), "research", "research", st.research)}</div>
-            ${fields(sc.research.filter(f => f.type !== "number"), "research", "research", st.research)}</section>
+            ${fields(sc.research.filter(f => f.type !== "number"), "research", "research", st.research)}
+            ${fetchPane(sc, st)}</section>
+          <section data-pane="system" hidden>${systemPane(sc, st)}</section>
           <section data-pane="about" hidden>${aboutPane()}</section>
         </div>
       </div>
@@ -98,9 +100,8 @@ export async function openSettings(tab = "general") {
     $$("[data-pane]", dlg).forEach(p => (p.hidden = p.dataset.pane !== k));
     if (k === "model") { refreshOllama(); refreshPcLink(); }
     if (k === "library") refreshLibrary();
-    if (k === "fetch") refreshBrowser();
-    if (k === "general") refreshStorage();
-    if (k === "about") refreshLog();
+    if (k === "research") refreshBrowser();
+    if (k === "system") { refreshSystem(); refreshStorage(); refreshLog(); }
   };
   $$(".dlg-tabs button", dlg).forEach(b => (b.onclick = () => showTab(b.dataset.tab)));
   wireGeneral(dlg);
@@ -109,8 +110,7 @@ export async function openSettings(tab = "general") {
   wireSearch(dlg);
   wireLibrary(dlg);
   wirePrompts(dlg);
-  wireFetch(dlg);
-  wireAbout(dlg);
+  wireSystem(dlg);
   $("#saveSettings").onclick = save;
   showTab(TABS.some(x => x[0] === tab) ? tab : "general");
   if (!dlg.open) dlg.showModal();
@@ -157,15 +157,7 @@ function generalPane(sc, st) {
     <div class="status-card"><span class="dot ok"></span><div class="grow"><b>${h(t("gen." + mode))}</b><div class="muted" style="font-size:12.5px">${h(t("gen.windowHelp"))}</div></div>
       ${S.info.can_restart ? `<button type="button" class="btn sm" id="switchMode" data-mode="${other}">${icon("refresh")}${h(t("gen.switchTo", { x: t("gen." + other) }))}</button>`
         : `<span class="muted" style="font-size:12.5px">${h(t("gen.restartManual"))}</span>`}</div>`}
-    <h4>${h(t("gen.updates"))}</h4>
-    ${field(sc.app.find(f => f.key === "check_updates"), "app", "app.check_updates", st.app.check_updates)}
-    <div class="row" style="margin-bottom:8px"><button type="button" class="btn sm" id="checkUpd">${icon("refresh")}${h(t("gen.checkNow"))}</button>
-      <button type="button" class="btn sm" id="checkRepair">${icon("check")}${h(t("repair.check"))}</button><span class="status-line" id="updStatus"></span></div>
-    <div id="repairBox" style="margin-bottom:14px"></div>
-    <h4>${h(t("gen.storage"))}</h4>
-    <div class="list-box" id="storageBox"><div class="list-empty">${h(t("common.loading"))}</div></div>
-    <div class="field-grid">${field(sc.app.find(f => f.key === "history_limit"), "app", "app.history_limit", st.app.history_limit)}
-      ${android() ? "" : field(sc.app.find(f => f.key === "port"), "app", "app.port", st.app.port)}</div>`;
+    <div class="field-grid">${field(sc.app.find(f => f.key === "history_limit"), "app", "app.history_limit", st.app.history_limit)}</div>`;
 }
 
 function wireGeneral(dlg) {
@@ -175,6 +167,61 @@ function wireGeneral(dlg) {
     await api("/api/app/restart", { method: "POST", body: { mode: m } });
     toast(t("gen.restarting"), 6000);
   });
+}
+
+// system: this device, updates, storage, maintenance, logs
+function systemPane(sc, st) {
+  return `<h3>${h(t("tab.system"))}</h3><p>${h(t("sys.intro"))}</p>
+    <h4>${h(t("sys.device"))}</h4>
+    <div class="list-box" id="sysBox"><div class="list-empty">${h(t("common.loading"))}</div></div>
+    <h4>${h(t("gen.updates"))}</h4>
+    ${field(sc.app.find(f => f.key === "check_updates"), "app", "app.check_updates", st.app.check_updates)}
+    <div class="row" style="margin-bottom:8px"><button type="button" class="btn sm" id="checkUpd">${icon("refresh")}${h(t("gen.checkNow"))}</button>
+      <button type="button" class="btn sm" id="checkRepair">${icon("check")}${h(t("repair.check"))}</button><span class="status-line" id="updStatus"></span></div>
+    <div id="repairBox" style="margin-bottom:14px"></div>
+    <h4>${h(t("gen.storage"))}</h4>
+    <div class="list-box" id="storageBox"><div class="list-empty">${h(t("common.loading"))}</div></div>
+    <h4>${h(t("sys.maintenance"))}</h4>
+    <div class="list-box">
+      <div class="list-row"><div class="grow"><div class="lr-t">${h(t("sys.cache"))}</div><div class="lr-s">${h(t("sys.cacheHelp"))}</div></div>
+        <button type="button" class="btn sm" id="clearCache">${icon("refresh")}${h(t("sys.clearCache"))}</button></div>
+      <div class="list-row"><div class="grow"><div class="lr-t">${h(t("sys.backup"))}</div><div class="lr-s">${h(t("sys.backupHelp"))}</div>
+          <label class="switch" style="margin-top:6px;font-size:12.5px"><input type="checkbox" id="bkKeys"> ${h(t("sys.backupKeys"))}</label></div>
+        <button type="button" class="btn sm" id="bkExport">${icon("download")}${h(t("sys.export"))}</button>
+        <button type="button" class="btn sm" id="bkImport">${icon("upload")}${h(t("sys.import"))}</button></div>
+    </div>
+    ${android() ? "" : `<div class="field-grid">${field(sc.app.find(f => f.key === "port"), "app", "app.port", st.app.port)}</div>`}
+    <h4>${h(t("log.title"))}</h4>
+    ${android() ? "" : `<div class="row" style="margin-bottom:8px"><span class="muted grow" style="font-size:12.5px">${h(S.info.local_dir)}</span>
+      <button type="button" class="btn sm ghost" data-open-logs>${icon("folder")}${h(t("gen.openFolder"))}</button></div>`}
+    <div class="row" style="margin-bottom:8px"><select id="logLevel" style="width:auto">
+        <option value="">${h(t("log.all"))}</option><option value="WARNING">${h(t("log.warnings"))}</option><option value="ERROR">${h(t("log.errors"))}</option></select>
+      <button type="button" class="btn sm" id="logRefresh">${icon("refresh")}${h(t("log.refresh"))}</button>
+      <button type="button" class="btn sm ghost" id="logCopy">${icon("copy")}${h(t("pclink.copy"))}</button></div>
+    <pre class="log-view" id="logView">${h(t("common.loading"))}</pre>
+    <div class="help">${h(t("log.help"))}</div>`;
+}
+
+async function refreshSystem() {
+  const box = $("#sysBox");
+  if (!box) return;
+  const d = await api("/api/system").catch(e => ({ error: e.message }));
+  if (d.error) { box.innerHTML = `<div class="list-empty">${h(d.error)}</div>`; return; }
+  const row = (k, v) => v ? `<div class="list-row"><div class="grow"><div class="lr-t">${h(k)}</div><div class="lr-s">${h(v)}</div></div></div>` : "";
+  const dev = d.device || {};
+  box.innerHTML = [
+    dev.model ? row(t("sys.phone"), `${dev.manufacturer || ""} ${dev.model}`.trim()) : "",
+    row(t("sys.os"), d.os),
+    row(t("sys.cpu"), [dev.soc || d.cpu, `${d.cores} ${t("sys.cores")}`].filter(Boolean).join(" · ")),
+    row(t("sys.ram"), d.ram_gb ? `${d.ram_gb} GB` + (dev.ram_free_gb ? ` · ${t("sys.free", { n: dev.ram_free_gb })}` : "") : ""),
+    ...(d.gpus || []).map(g => row(t("sys.gpu"), g.name + (g.vram_gb ? ` · ${g.vram_gb} GB ${t("sys.vram")}` : ""))),
+    dev.storage_total_gb ? row(t("sys.storage"), `${t("sys.free", { n: dev.storage_free_gb })} / ${dev.storage_total_gb} GB`) : "",
+    ...(d.disks || []).map(k => row(t("sys.disk"), `${t("sys.free", { n: k.free_gb })} / ${k.total_gb} GB · ${k.path}`)),
+    row(t("sys.app"), `AIRAG ${d.app_version} · Python ${d.python}`),
+  ].join("");
+}
+
+function wireSystem(dlg) {
   $("#checkRepair", dlg).onclick = runRepairCheck;
   $("#checkUpd", dlg).onclick = async () => {
     const el = $("#updStatus");
@@ -188,6 +235,41 @@ function wireGeneral(dlg) {
     } else if (u.error) { el.className = "status-line err"; el.textContent = u.error; }
     else { el.className = "status-line ok"; el.textContent = t("gen.upToDate", { v: u.current }); }
   };
+  $("#clearCache", dlg).onclick = async () => {
+    const r = await api("/api/app/clear-cache", { method: "POST" }).catch(e => ({ error: e.message }));
+    if (r.error) { toast(r.error, 4000); return; }
+    toast(t("sys.cacheCleared"), 3000);
+    setTimeout(() => location.reload(), 600);
+  };
+  $("#bkExport", dlg).onclick = async () => {
+    const r = await api("/api/backup/export", { method: "POST", body: { include_keys: $("#bkKeys").checked } }).catch(e => ({ error: e.message }));
+    toast(r.error || t("sys.exported", { path: r.path }), 7000);
+  };
+  $("#bkImport", dlg).onclick = async () => {
+    if (!confirm(t("sys.importConfirm"))) return;
+    const r = await api("/api/backup/import", { method: "POST" }).catch(e => ({ error: e.message }));
+    if (r.error) { toast(r.error, 6000); return; }
+    if (!r.imported) return;
+    toast(t("sys.imported", { s: r.settings ? "✓" : "-", n: r.history }), 6000);
+    setTimeout(() => location.reload(), 1200);
+  };
+  $("[data-open-logs]", dlg)?.addEventListener("click", () => api("/api/app/open-folder", { method: "POST", body: { target: "logs" } }));
+  $("#logRefresh", dlg).onclick = refreshLog;
+  $("#logLevel", dlg).onchange = refreshLog;
+  $("#logCopy", dlg).onclick = async () => {
+    try { await navigator.clipboard.writeText($("#logView").textContent); toast(t("pclink.copied")); } catch { toast(t("log.copyFailed")); }
+  };
+}
+
+// defaults: what new searches start with
+function defaultsPane(sc, st) {
+  const d = st.defaults || {};
+  const langs = sc.languages || [];
+  return `<h3>${h(t("tab.defaults"))}</h3><p>${h(t("def.intro"))}</p>
+    ${fields(sc.defaults, "defaults", "defaults", d)}
+    <div class="field"><label>${h(t("f.defaults.translate_to"))}</label><select data-path="defaults.translate_to">
+      <option value="">${h(t("def.translateUi"))}</option>
+      ${langs.map(l => `<option value="${l.code}" ${l.code === d.translate_to ? "selected" : ""}>${h(l.native)}${l.native !== l.name ? ` (${h(l.name)})` : ""}</option>`).join("")}</select></div>`;
 }
 
 // check & repair
@@ -544,8 +626,7 @@ async function refreshPcLink() {
         <button type="button" class="btn sm ghost" id="pclNewCode" title="${h(t("pclink.newCodeHelp"))}">${icon("refresh")}${h(t("pclink.newCode"))}</button></div>
     </div>
     <div class="help">${h(t("pclink.steps"))}</div>
-    <div class="field"><label class="switch"><input type="checkbox" id="pclInternet" ${st.allow_internet ? "checked" : ""}> ${h(t("pclink.internet"))}</label>
-      <div class="help">${h(t("pclink.internetHelp"))}</div></div>` : ""}`;
+</div>` : ""}`;
   const set = async body => {
     const r = await api("/api/pclink", { method: "POST", body }).catch(e => { toast(e.message, 4000); return null; });
     if (r?.error) toast(r.error, 4000);
@@ -553,15 +634,14 @@ async function refreshPcLink() {
   };
   $("#pclToggle").onclick = e => { e.currentTarget.disabled = true; set({ enabled: !on }); };
   $("#pclNewCode")?.addEventListener("click", () => { if (confirm(t("pclink.newCodeConfirm"))) set({ new_code: true }); });
-  $("#pclInternet")?.addEventListener("change", e => set({ allow_internet: e.target.checked }));
   $$("[data-copy]", box).forEach(b => (b.onclick = async () => {
     try { await navigator.clipboard.writeText(b.dataset.copy); toast(t("pclink.copied")); } catch { toast(b.dataset.copy, 5000); }
   }));
 }
 
 function fetchPane(sc, st) {
-  if (android()) return `<h3>${h(t("tab.fetch"))}</h3><p>${h(t("set.fetchIntro"))}</p>${fields(sc.fetch.filter(f => f.key !== "fetcher"), "fetch", "fetch", st.fetch)}`;
-  return `<h3>${h(t("tab.fetch"))}</h3><p>${h(t("set.fetchIntro"))}</p>
+  if (android()) return `<h4>${h(t("tab.fetch"))}</h4><p class="muted" style="font-size:13px">${h(t("set.fetchIntro"))}</p>${fields(sc.fetch.filter(f => f.key !== "fetcher"), "fetch", "fetch", st.fetch)}`;
+  return `<h4>${h(t("tab.fetch"))}</h4><p class="muted" style="font-size:13px">${h(t("set.fetchIntro"))}</p>
     <div class="status-card" id="browserCard"></div>
     ${fields(sc.fetch, "fetch", "fetch", st.fetch)}`;
 }
@@ -587,7 +667,6 @@ async function refreshBrowser(job) {
   });
 }
 
-function wireFetch() { /* buttons are wired in refreshBrowser */ }
 
 // about
 function aboutPane() {
@@ -596,21 +675,39 @@ function aboutPane() {
     <div class="list-box">
       <div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.version"))}</div><div class="lr-s">${h(i.version)}${i.frozen ? "" : " (source)"}${i.portable ? " · portable" : ""}</div></div></div>
       ${i.port ? `<div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.port"))}</div><div class="lr-s mono">${h(i.port)}</div></div></div>` : ""}
-      <div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.license"))}</div><div class="lr-s">MIT</div></div></div>
       <div class="list-row"><div class="grow"><div class="lr-t">GitHub</div><div class="lr-s">github.com/${h(i.repo)}</div></div>
         <a class="btn sm" href="https://github.com/${h(i.repo)}" target="_blank" rel="noopener">${icon("ext")}${h(t("about.open"))}</a></div>
-      ${android() ? "" : `<div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.logs"))}</div><div class="lr-s">${h(i.local_dir)}</div></div>
-        <button type="button" class="btn sm" onclick="fetch('/api/app/open-folder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:'logs'})})">${icon("folder")}${h(t("gen.openFolder"))}</button></div>`}
     </div>
-    <h4>${h(t("log.title"))}</h4>
-    <div class="row" style="margin-bottom:8px"><select id="logLevel" style="width:auto">
-        <option value="">${h(t("log.all"))}</option><option value="WARNING">${h(t("log.warnings"))}</option><option value="ERROR">${h(t("log.errors"))}</option></select>
-      <button type="button" class="btn sm" id="logRefresh">${icon("refresh")}${h(t("log.refresh"))}</button>
-      <button type="button" class="btn sm ghost" id="logCopy">${icon("copy")}${h(t("pclink.copy"))}</button></div>
-    <pre class="log-view" id="logView">${h(t("common.loading"))}</pre>
-    <div class="help">${h(t("log.help"))}</div>
+    <h4>${h(t("about.license"))}</h4>
+    <div class="license">
+      <p>${h(t("lic.summary"))}</p>
+      <ul><li>${h(t("lic.can"))}</li><li>${h(t("lic.must"))}</li><li>${h(t("lic.not"))}</li><li>${h(t("lic.name"))}</li></ul>
+      <details><summary>${h(t("lic.full"))}</summary><pre class="log-view">${h(MIT)}</pre></details>
+    </div>
     <p class="muted" style="font-size:13px">${h(t("banner.disclaimer"))}</p>`;
 }
+
+const MIT = `MIT License
+
+Copyright (c) 2026 snakeMax
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.`;
 
 async function refreshLog() {
   const view = $("#logView");
@@ -620,10 +717,3 @@ async function refreshLog() {
   view.scrollTop = view.scrollHeight;
 }
 
-function wireAbout(dlg) {
-  $("#logRefresh", dlg).onclick = refreshLog;
-  $("#logLevel", dlg).onchange = refreshLog;
-  $("#logCopy", dlg).onclick = async () => {
-    try { await navigator.clipboard.writeText($("#logView").textContent); toast(t("pclink.copied")); } catch { toast(t("log.copyFailed")); }
-  };
-}

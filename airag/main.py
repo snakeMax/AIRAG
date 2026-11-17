@@ -191,6 +191,7 @@ def schema():
         "research": config.GENERAL_SCHEMA["research"],
         "library": config.GENERAL_SCHEMA["library"],
         "prompts": config.GENERAL_SCHEMA["prompts"],
+        "defaults": config.GENERAL_SCHEMA["defaults"],
         "default_article_prompt": prompts_mod.ARTICLE_RULES,
         "languages": languages.public_list(),
         "version": __version__,
@@ -297,6 +298,44 @@ def system_info(refresh: bool = False):
     return hardware.info(refresh)
 
 
+# backup: export / import settings and history
+class ExportReq(BaseModel):
+    include_keys: bool = False
+
+
+@app.post("/api/backup/export")
+def backup_export(req: ExportReq):
+    from . import backup, mylibrary
+    try:
+        path = backup.export(mylibrary.ensure(config.load()) / "Backups", req.include_keys)
+    except OSError as e:
+        raise _err(e)
+    return {"path": str(path)}
+
+
+@app.post("/api/backup/import")
+async def backup_import():
+    from . import backup
+    if paths.ANDROID:
+        from . import android_bridge
+        tmp = paths.LOCAL_DIR / "import"
+        picked = await asyncio.to_thread(android_bridge.import_files, str(tmp), False)
+        files = [p["path"] for p in picked]
+    else:
+        files = await asyncio.to_thread(appctl.pick_files)
+    if not files:
+        return {"imported": False}
+    try:
+        result = await asyncio.to_thread(backup.import_file, Path(files[0]))
+    except ValueError as e:
+        raise _err(e)
+    finally:
+        if paths.ANDROID:
+            for f in files:
+                Path(f).unlink(missing_ok=True)
+    return result
+
+
 # clear caches (Settings): pages read during searches, the update check, and (on Android) the WebView cache
 @app.post("/api/app/clear-cache")
 def clear_cache():
@@ -395,14 +434,12 @@ def pclink_set(req: PcLinkReq):
     from . import pclink
     if paths.ANDROID:
         raise HTTPException(400, "PC link is set up in the desktop app.")
-    if req.allow_internet is not None:
-        config.save({"app": {"pclink_allow_internet": bool(req.allow_internet)}})
     if req.new_code:
         config.save({"app": {"pclink_code": pclink.new_code()}})
     try:
         if req.enabled is False:
             pclink.stop(save=True)
-        elif req.enabled or ((req.allow_internet is not None or req.new_code) and pclink.running()):
+        elif req.enabled or (req.new_code and pclink.running()):
             pclink.start()
     except Exception as e:
         raise _err(e)
@@ -756,6 +793,7 @@ class ResearchReq(BaseModel):
     date_from: str = ""               # only results from this period (YYYY-MM-DD, either may be empty)
     date_to: str = ""
     merge_id: Optional[str] = None    # search again, also using the sources of this earlier search
+    extras: bool = True               # pictures + interactive explainer check
 
 
 @app.post("/api/research")
@@ -763,7 +801,8 @@ async def research(req: ResearchReq):
     settings = config.load()
     prompts_mod.use(settings)
     return _ndjson(lambda emit: Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang,
-                                                    req.from_id, req.date_from, req.date_to, req.merge_id).run())
+                                                    req.from_id, req.date_from, req.date_to, req.merge_id,
+                                                    req.extras).run())
 
 
 class TranslateReq(BaseModel):

@@ -113,6 +113,12 @@ class OpenAI(_OpenAIBase):
     name = "openai"
     label = "OpenAI"
     requires_key = True
+    supports_vision = True
+
+    def vision_content(self, text, image_urls):
+        return [{"type": "text", "text": text}] + [{"type": "image_url", "image_url": {"url": u, "detail": "low"}}
+                                                    for u in image_urls]
+
     supports_json_mode = True
     use_max_completion_tokens = True
     fields = [

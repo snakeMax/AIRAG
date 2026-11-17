@@ -47,14 +47,20 @@ async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool
         raise ValueError("Article not found")
     if rec.get("interactive_html") and not force:
         return {"html": rec["interactive_html"], "cached": True}
-    info = rec.get("interactive") or {}
-    if not info.get("suitable") and not force:
-        raise ValueError("An interactive explainer isn't available for this article.")
     llm = get_llm(settings)
+    info = rec.get("interactive")
+    if info is None:
+        # the search ran without the explainer check (to save tokens): check now, when the reader asks
+        info = await check(llm, rec["query"], rec.get("article", ""))
+        rec["interactive"] = info
+        history.save(rec, int(settings["app"].get("history_limit", 300)))
+    if not info.get("suitable") and not force:
+        raise ValueError(f"An interactive explainer wouldn't help with this article. {info.get('reason', '')}".strip())
     lang = languages.answer_language(settings, ui_lang, rec["query"])
-    raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang),
-                             max_tokens=8000)
+    level = str(settings.get("prompts", {}).get("explainer_level") or "medium")
+    raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang, level),
+                             max_tokens=prompts.explainer_level(level)[1])
     html = clean_html(raw)
     rec["interactive_html"] = html
     history.save(rec, int(settings["app"].get("history_limit", 300)))
-    return {"html": html, "cached": False}
+    return {"html": html, "cached": False, "interactive": info}
