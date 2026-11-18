@@ -47,6 +47,7 @@ export function initToolbar(x) {
   $("#rtPanelX").onclick = () => showPanel(false);
   $("#rtAsk").onsubmit = e => { e.preventDefault(); const q = $("#rtAskInput").value.trim(); if (q) { ask("ask", q, selText()); $("#rtAskInput").value = ""; } };
   $("#rtCtxX").onclick = clearCtx;
+  $("#rtAskInput").addEventListener("focus", hideSel);
   const mic = micButton($("#rtAskInput"), text => { if (text.trim()) ask("voice", text, selText()); $("#rtAskInput").value = ""; });
   if (mic) $(".rt-mic", dock).replaceWith(mic); else $(".rt-mic", dock).remove();
   document.addEventListener("selectionchange", onSelection);
@@ -90,6 +91,7 @@ function layout() {
 
 function setOpen(open) {
   S.open = open;
+  if (open) hideSel();
   $("#rtFab").classList.toggle("open", open);
   $("#rtFab").setAttribute("aria-expanded", String(open));
   if (phone()) { $("#rtDock").hidden = !open; $("#rtDock").classList.add("as-sheet"); }

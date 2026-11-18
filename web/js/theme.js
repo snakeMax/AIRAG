@@ -61,6 +61,8 @@ function apply() {
   const hex = ACCENTS[current.accent] !== undefined ? ACCENTS[current.accent] : current.accent;
   // recording colour: the accent when it's a real colour, bright red for grey/desaturated accents
   root.style.setProperty("--rec", hex && /^#[0-9a-f]{6}$/i.test(hex) && saturation(hex) > 0.25 ? hex : "#ef4444");
+  // the mark that keeps selected text visible after the phone drops its own selection
+  root.style.setProperty("--mark", hex && /^#[0-9a-f]{6}$/i.test(hex) && saturation(hex) > 0.25 ? hex : "#3b82f6");
   if (hex && /^#[0-9a-f]{6}$/i.test(hex)) {
     root.style.setProperty("--accent", hex);
     root.style.setProperty("--accent-text", contrastText(hex));

@@ -716,9 +716,10 @@ html, body { overflow-x: hidden; }
 #view-home.drop-on .search-box, #view-home.drop-on .home-search { outline: 2px dashed var(--accent); outline-offset: 6px; }
 
 /* the remembered selection: stays marked after the phone drops its own highlight */
-::highlight(rt-ctx) { background-color: color-mix(in srgb, var(--accent) 26%, transparent); }
+::highlight(rt-ctx) { background-color: color-mix(in srgb, var(--mark, #3b82f6) 32%, transparent);
+  text-decoration: underline 2px var(--mark, #3b82f6); text-underline-offset: 3px; }
 .rt-ctx { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 12px; font-size: 13px;
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); min-width: 0; }
+  background: color-mix(in srgb, var(--mark, var(--accent)) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--mark, var(--accent)) 40%, var(--border)); min-width: 0; }
 .rt-ctx-l { color: var(--text-3); font-weight: 600; flex: none; }
 .rt-ctx-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-style: italic; }
 .rt-ctx-x { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--text-3); cursor: pointer; }
