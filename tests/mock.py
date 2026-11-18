@@ -127,6 +127,12 @@ class MockLLM(LLMProvider):
             text = "Most hummingbirds flap 10-80 times a second [1]."
             yield text
             return
+        if "QUICK answer to an existing" in system:
+            yield "## Does decaf count?\n\nThe new sources agree with the article [9]."
+            return
+        if "QUICK answer" in system:
+            yield "# Hummingbird wing beats\n\nMost beat their wings 10-80 times per second [1]."
+            return
         if "THIS IS A NEW VERSION" in user:          # Regenerate article
             text = ARTICLE.replace("Most hummingbirds", "Put simply, most hummingbirds", 1)
             for i in range(0, len(text), 40):

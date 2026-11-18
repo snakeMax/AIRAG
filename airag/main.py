@@ -1071,6 +1071,47 @@ async def research(req: ResearchReq):
     return _follow(holder["run"])
 
 
+class QuickReq(BaseModel):
+    query: str
+    ui_lang: Optional[str] = None
+    context_id: Optional[str] = None   # asked from this article
+    update: bool = True                # add the answer to that article (off: a separate quick answer)
+    include_library: bool = False
+
+
+@app.post("/api/quick")
+async def quick_search(req: QuickReq):
+    """Quick search: a short cited answer from 2-3 pages, or a short new section on an article.
+    Runs as its own kind of job, so it doesn't wait behind a full search."""
+    from . import runs, usage
+    from .quick import QuickResearch
+    settings = config.load()
+    if usage.over_budget(settings):
+        raise HTTPException(402, usage.BUDGET_MESSAGE)
+    holder: dict = {}
+
+    async def emit(ev: dict) -> None:
+        await holder["run"].emit(ev)
+    try:
+        r = QuickResearch(req.query, settings, emit, req.ui_lang, req.context_id, req.update, req.include_library)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    if r.into and runs.RUNS.get(r.run_id) and not runs.RUNS[r.run_id].finished:
+        raise HTTPException(409, "A quick search is already adding to this article. Wait for it to finish.")
+
+    async def go(_emit) -> None:
+        prompts_mod.use(settings)
+        await r.run()
+    while not r.into and r.id in runs.RUNS:
+        r.id += "-2"
+        r.run_id = r.id
+    try:
+        holder["run"] = runs.start(r.run_id, r.query, "article", go, kind="quick", ref=r.id if r.into else "")
+    except runs.TooManyJobs as e:
+        raise HTTPException(429, str(e))
+    return _follow(holder["run"])
+
+
 class SoundReq(BaseModel):
     data: str
     ext: str

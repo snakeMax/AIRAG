@@ -16,7 +16,7 @@ from typing import Callable, Dict, List, Optional
 log = logging.getLogger("airag.runs")
 
 MAX_PARALLEL = 1          # default jobs at a time per kind: keeps the AI provider's rate limits and the phone's battery happy
-LIMITS = {"search": 1, "explainer": 1, "tool": 2}
+LIMITS = {"search": 1, "quick": 1, "explainer": 1, "tool": 2}
 # AI tools on an article (follow-ups, rewrites, summaries, translations, image analysis, calculations):
 # queued in their own group, two at a time; they show in the activity bar like searches
 TOOL_KINDS = ("followup", "rewrite", "image", "translate", "summary", "calc", "tags")

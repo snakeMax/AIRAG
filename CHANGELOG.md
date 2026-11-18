@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- **Quick search** (backend): a short cited answer from 2-3 pages without an AI planning step; on an article it can add the answer as a new short section (kept in Version history). Runs as its own job, so it doesn't wait behind a full search
+
 ## [0.4.1] - 2026-11-19
 
 - **Download summary**: a small Markdown file with only the summary and the sources' links, saved in My library/Summaries. On articles and in the Summarize panel (also for results and single sources); reuses an existing summary

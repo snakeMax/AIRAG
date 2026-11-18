@@ -350,6 +350,55 @@ def addendum(query: str, article_md: str, sources: List[dict], lang: str) -> Tup
     return system, user
 
 
+QUICK_RULES = """You give a QUICK answer for a research search engine, from a few sources only.
+- Start with a level-1 heading: the reader's question, as a short title.
+- Then answer directly in about 80-200 words: the answer first, then the most important detail or caveat.
+- Use only the sources. Cite them by their bracketed numbers, like [1] or [2][3], after the claims they support.
+- If the sources disagree or only partly answer, say so in one sentence. If they don't answer it, say that
+  plainly instead of guessing.
+- No other headings, no source list (the app shows the sources)."""
+
+QUICK_SECTION_RULES = """You add a QUICK answer to an existing research article, from a few new sources only.
+Do not rewrite or repeat the article. Write only the new material, as Markdown:
+- Start with a level-2 heading: the reader's follow-up question, as a short title.
+- Then answer it in about 60-160 words, using only the new sources, cited by their bracketed numbers.
+- Say in one sentence where the new sources confirm or contradict the article.
+- If the sources don't answer it, write the heading and one sentence saying so."""
+
+
+def _quick_blocks(sources: List[dict], fence: "Fence") -> str:
+    per_source = max(500, min(1400, 6000 // max(1, len(sources))))
+    blocks = []
+    for s in sources:
+        findings = "\n".join(f"- {f.get('claim', '')}" for f in s.get("findings") or [])
+        tag = "LIBRARY file" if s.get("local") else s["domain"]
+        blocks.append(f"[{s['n']}] {s.get('title') or s['url']} - {tag}\n"
+                      f"Trust: {s.get('trust', '?')}/10 | Date: {s.get('date') or s.get('published') or 'unknown'}\n"
+                      f"Summary: {s.get('summary', '')}\nFindings:\n{findings or '- (none)'}\n"
+                      f"Excerpts:\n{fence.wrap((s.get('excerpt') or '')[:per_source])}\n")
+    return "\n".join(blocks)
+
+
+def quick_answer(query: str, sources: List[dict], lang: str, context: str = "") -> Tuple[str, str]:
+    fence = Fence()
+    system = (QUICK_RULES + "\n\n" + SAFETY + "\n" + UNTRUSTED + "\n" + DATE_NOTE +
+              f"\nWrite in {lang}.\n" + fence.rule())
+    ctx = f"It's a follow-up to an article titled: {context[:200]}\n" if context else ""
+    user = (f"Reader's question: {query}\n{ctx}Today's date: {_today()}\n\nSOURCES\n{_quick_blocks(sources, fence)}\n"
+            f"Write the quick answer now, in {lang}.")
+    return system, user
+
+
+def quick_section(question: str, article_md: str, sources: List[dict], lang: str) -> Tuple[str, str]:
+    fence = Fence()
+    system = (QUICK_SECTION_RULES + "\n\n" + SAFETY + "\n" + UNTRUSTED + "\n" + DATE_NOTE +
+              f"\nWrite in {lang}.\n" + fence.rule())
+    user = (f"Reader's follow-up question: {question}\nToday's date: {_today()}\n\n"
+            f"THE ARTICLE SO FAR (already written, don't repeat):\n{fence.wrap(article_md[:6000])}\n\n"
+            f"NEW SOURCES\n{_quick_blocks(sources, fence)}\nWrite the new section now, in {lang}.")
+    return system, user
+
+
 # suggestions
 def suggest(query: str, intent: str, tried: List[str], partial: List[str], lang: str) -> Tuple[str, str]:
     system = ("You help users of a research search engine when nothing reliable was found. Suggest alternative searches "
