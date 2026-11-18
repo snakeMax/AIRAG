@@ -124,6 +124,12 @@ GENERAL_SCHEMA: dict = {
          "min": 0, "max": 1.5, "step": 0.05, "help": "Lower is more factual and consistent."},
     ],
     "search": [
+        {"key": "use_wikis", "label": "Also search wikis", "type": "bool", "default": True,
+         "help": "Searches Wikipedia (in your answer language) and any wikis you add, next to the search engine."},
+        {"key": "wiki_results", "label": "Wiki pages per search", "type": "number", "default": 2, "min": 1, "max": 6, "step": 1},
+        {"key": "wikis", "label": "", "type": "hidden", "default": [
+            {"name": "Wikipedia", "api": "wikipedia", "about": "General encyclopedia: overviews, history, science, people, places.",
+             "enabled": True, "trust": 7}]},
         {"key": "region", "label": "Region", "type": "text", "default": "auto",
          "help": "auto = based on your answer language. Or a code like us-en, uk-en, no-no, de-de, wt-wt (worldwide)."},
         {"key": "safesearch", "label": "Safe search", "type": "select", "default": "moderate",
@@ -136,6 +142,10 @@ GENERAL_SCHEMA: dict = {
                  "(browser requires the optional Playwright install)."},
         {"key": "timeout", "label": "Page timeout (s)", "type": "number", "default": 15, "min": 3, "max": 120, "step": 1},
         {"key": "max_concurrency", "label": "Pages read in parallel", "type": "number", "default": 6, "min": 1, "max": 20, "step": 1},
+        {"key": "youtube", "label": "Read YouTube videos", "type": "bool", "default": True,
+         "help": "Reads a video's title, description and captions (spoken text) so it can be used as a source."},
+        {"key": "youtube_retries", "label": "YouTube retries", "type": "number", "default": 1, "min": 0, "max": 5, "step": 1,
+         "help": "How many times to try again when YouTube doesn't answer."},
         {"key": "user_agent", "label": "User agent", "type": "text", "default": DEFAULT_UA},
     ],
     "research": [
@@ -161,9 +171,12 @@ GENERAL_SCHEMA: dict = {
         {"key": "interactive_check", "label": "Offer interactive explainers for articles", "type": "hidden", "default": True,
          "help": "After writing an article, the AI checks whether a small simulation would help explain it (one extra short AI call)."},
         {"key": "max_images", "label": "Max images", "type": "number", "default": 6, "min": 0, "max": 20, "step": 1},
-        {"key": "skip_domains", "label": "Skip domains", "type": "text",
-         "default": "youtube.com, tiktok.com, instagram.com, facebook.com, x.com, twitter.com, pinterest.com",
-         "help": "Comma separated. These sites can't be read as text."},
+        {"key": "skip_domains", "label": "Blocked sites", "type": "text",
+         "default": "tiktok.com, instagram.com, facebook.com, x.com, twitter.com, pinterest.com",
+         "help": "Comma separated. Never read. A site name covers all its subdomains; add a path (site.com/forum) "
+                 "to block only that directory and everything below it."},
+        {"key": "favourite_sites", "label": "Favourite sites", "type": "text", "default": "",
+         "help": "Comma separated, same rules as blocked sites. Pages from these start with a higher trust score."},
     ],
 }
 
@@ -272,6 +285,9 @@ def load(with_env: bool = True) -> dict:
     raw = load_raw()
     if "defaults" not in raw and raw.get("app", {}).get("include_library"):
         raw["defaults"] = {"library": True}   # 0.2 kept the My library tickbox in "app"
+    old_skip = "youtube.com, tiktok.com, instagram.com, facebook.com, x.com, twitter.com, pinterest.com"
+    if raw.get("research", {}).get("skip_domains") == old_skip:   # YouTube can be read now (0.4)
+        raw["research"]["skip_domains"] = old_skip.replace("youtube.com, ", "")
     if raw.get("research", {}).get("article_max_tokens") == 4096:
         raw["research"]["article_max_tokens"] = 8192   # old default, too low for reasoning models
     s = _coerce(deep_merge(defaults(), raw))

@@ -274,6 +274,14 @@ Write the article now, in {lang}."""
     return article_system().replace("{lang}", lang) + "\n" + fence.rule(), user
 
 
+# "Ask AI to describe it" for a wiki the user adds
+def describe_wiki(name: str, text: str, lang: str) -> Tuple[str, str]:
+    fence = Fence()
+    system = ("Describe in ONE short sentence (at most 20 words) what kind of questions this wiki is good for. "
+              f"Plain text, no quotes, in {lang}.\n" + SAFETY + "\n" + UNTRUSTED + "\n" + fence.rule())
+    return system, f"Wiki: {name}\nIts main page:\n{fence.wrap(text[:3000])}"
+
+
 # "Locate more sources": add what new sources contribute, without rewriting the article
 ADDENDUM_RULES = """You extend an existing research article with NEW sources. Do not rewrite or repeat the article.
 Write only the new material, as Markdown:

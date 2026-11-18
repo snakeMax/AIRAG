@@ -56,3 +56,47 @@ def test_pinned_sources():
     with pytest.raises(ValueError):
         pinned.add("file:///etc/passwd", "x", "x")
     assert pinned.remove(item["id"]) and not pinned.is_pinned("https://example.org/bees")
+
+
+def test_site_lists():
+    from airag.sitelists import SiteLists
+    sl = SiteLists({"skip_domains": "example.com/forum, tiktok.com", "favourite_sites": "nature.com, https://www.nasa.gov/missions/"})
+    assert sl.blocked_url("https://example.com/forum/thread/1") and sl.blocked_url("https://sub.example.com/forum")
+    assert not sl.blocked_url("https://example.com/forums") and not sl.blocked_url("https://example.com/news")
+    assert sl.blocked_url("https://www.tiktok.com/@x")
+    assert sl.adjust("https://www.nature.com/articles/x", 6, "Journal")[0] == 8
+    assert sl.adjust("https://nasa.gov/missions/apollo", 7, "")[0] == 9
+    assert sl.adjust("https://nasa.gov/news", 7, "")[0] == 7
+
+
+def test_old_default_block_list_drops_youtube():
+    from airag import config
+    config.save({"research": {"skip_domains": "youtube.com, tiktok.com, instagram.com, facebook.com, x.com, twitter.com, pinterest.com"}})
+    assert "youtube" not in config.load()["research"]["skip_domains"]
+    config.save({"research": {"skip_domains": "youtube.com"}})        # the user's own list stays
+    assert config.load()["research"]["skip_domains"] == "youtube.com"
+
+
+def test_youtube_ids_and_page_parsing():
+    from airag import youtube
+    assert youtube.video_id("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=3") == "dQw4w9WgXcQ"
+    assert youtube.video_id("https://youtu.be/dQw4w9WgXcQ") == "dQw4w9WgXcQ"
+    assert youtube.video_id("https://m.youtube.com/shorts/dQw4w9WgXcQ") == "dQw4w9WgXcQ"
+    assert youtube.video_id("https://youtube.com/channel/abc") is None
+    assert youtube.video_id("https://notyoutube.com/watch?v=dQw4w9WgXcQ") is None
+    html = '<script>var ytInitialPlayerResponse = {"videoDetails": {"title": "T"}, "captions": {}};var x=1</script>'
+    assert youtube._player_response(html)["videoDetails"]["title"] == "T"
+    assert youtube._player_response("<html>changed</html>") is None
+    text = youtube._caption_text({"events": [{"segs": [{"utf8": "Hello"}, {"utf8": " world"}]}, {"tStartMs": 1}, {"segs": [{"utf8": "&amp; more"}]}]})
+    assert text == "Hello world & more"
+    tracks = [{"languageCode": "de", "kind": "asr"}, {"languageCode": "en"}, {"languageCode": "nb", "kind": "asr"}]
+    assert youtube._pick_track(tracks, "nb-NO")["languageCode"] == "nb"
+    assert youtube._pick_track(tracks, "fr")["languageCode"] == "en"
+
+
+def test_wiki_addresses():
+    from airag import wikis
+    assert wikis.api_url("wikipedia", "nb-NO") == "https://no.wikipedia.org/w/api.php"
+    assert wikis.api_url("wikipedia", "de") == "https://de.wikipedia.org/w/api.php"
+    assert wikis.api_url("minecraft.wiki") == "https://minecraft.wiki/api.php"
+    assert wikis.api_url("https://psychonautwiki.org/w/api.php") == "https://psychonautwiki.org/w/api.php"

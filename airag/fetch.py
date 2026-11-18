@@ -52,6 +52,14 @@ async def fetch_page(url: str, cfg: dict) -> Page:
         return _cache[url]
     mode = cfg.get("fetcher", "auto")
     page: Optional[Page] = None
+    if cfg.get("youtube", True):
+        from . import youtube
+        if youtube.video_id(url):     # videos: description + captions instead of the (empty) web page
+            page = await youtube.read(url, cfg, int(cfg.get("youtube_retries", 1)))
+            if page.ok:
+                _cache[url] = page
+                _cache_chars += len(page.text)
+            return page
     if mode in ("auto", "http"):
         page = await _fetch_http(url, cfg)
     want_browser = mode == "browser" or (

@@ -60,7 +60,7 @@ const fields = (list, sec, base, values) => list.map(f => field(f, sec, `${base}
 // dialog
 const TABS = [
   ["general", "home"], ["defaults", "check"], ["appearance", "palette"], ["model", "cpu"], ["search", "globe"],
-  ["library", "folder"], ["research", "sliders"], ["prompts", "doc"], ["usage", "coin"], ["system", "cpu2"], ["about", "info"],
+  ["library", "folder"], ["research", "sliders"], ["prompts", "doc"], ["tools", "tool"], ["usage", "coin"], ["system", "cpu2"], ["about", "info"],
 ];
 
 export async function openSettings(tab = "general") {
@@ -79,7 +79,8 @@ export async function openSettings(tab = "general") {
         <div class="dlg-body">
           <section data-pane="general">${generalPane(sc, st)}</section>
           <section data-pane="defaults" hidden>${defaultsPane(sc, st)}</section>
-          <section data-pane="appearance" hidden>${appearancePane()}${buttonsPane(sc, st)}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
+          <section data-pane="appearance" hidden>${appearancePane()}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
+          <section data-pane="tools" hidden>${buttonsPane(sc, st)}</section>
           <section data-pane="model" hidden>${modelPane(sc, st)}</section>
           <section data-pane="search" hidden>${searchPane(sc, st)}</section>
           <section data-pane="library" hidden>${libraryPane(sc, st)}</section>
@@ -138,6 +139,7 @@ async function save() {
   try {
     const out = collect();
     await saveAudio(out);
+    if (S.wikis) out.search.wikis = S.wikis;
     S.settings = await api("/api/settings", { method: "POST", body: out });
     S.saved = true;
     setAudio(S.settings.audio);
@@ -477,7 +479,7 @@ function wireAudio(dlg) {
 // which tool buttons are shown
 function buttonsPane(sc, st) {
   if (!sc.buttons) return "";
-  return `<h3 style="margin-top:22px">${h(t("btns.title"))}</h3><p>${h(t("btns.intro"))}</p>
+  return `<h3>${h(t("tab.tools"))}</h3><p>${h(t("btns.intro"))}</p>
     <div class="btn-grid">${fields(sc.buttons, "buttons", "buttons", st.buttons)}</div>`;
 }
 
@@ -673,10 +675,68 @@ function searchPane(sc, st) {
     <div class="field"><label>${h(t("search.web"))}</label><select data-path="search.backend" id="backSel">${backOpts}</select></div>
     <div class="field"><label>${h(t("search.images"))}</label><select data-path="search.image_backend" id="imgSel">${imgOpts}</select></div>
     ${sc.search.backends.filter(b => b.fields.length).map(b => `<div class="sub-box" data-backend-box="${b.name}"><div class="side-title">${h(b.label)}</div>${fields(b.fields, "p", `search.backends.${b.name}`, st.search.backends[b.name])}</div>`).join("")}
-    <div class="field-grid">${fields(sc.search.fields, "search", "search", st.search)}</div>`;
+    <div class="field-grid">${fields(sc.search.fields, "search", "search", st.search)}</div>
+    <h4>${h(t("wiki.title"))}</h4><p class="muted" style="font-size:13px">${h(t("wiki.intro"))}</p>
+    <div id="wikiList"></div>
+    <div class="row" style="margin-top:8px"><input type="text" class="input" id="wikiAdd" placeholder="${h(t("wiki.addPh"))}" style="flex:1;min-width:180px">
+      <button type="button" class="btn sm" id="wikiAddBtn">${icon("plus")}${h(t("wiki.add"))}</button></div>
+    <div class="status-line" id="wikiStatus"></div>`;
+}
+
+// wikis searched next to the search engine; edited here and stored on Save
+function drawWikis(dlg) {
+  const list = S.wikis;
+  $("#wikiList", dlg).innerHTML = list.map((w, i) => `<div class="wiki-row" data-wi="${i}">
+      <label class="switch"><input type="checkbox" data-w="enabled" ${w.enabled !== false ? "checked" : ""}> <b>${h(w.name)}</b></label>
+      <span class="muted wiki-api">${h(w.api === "wikipedia" ? t("wiki.wikipediaApi") : w.api)}</span>
+      <input type="text" class="input" data-w="about" value="${h(w.about || "")}" placeholder="${h(t("wiki.aboutPh"))}">
+      <div class="row"><label class="muted" style="font-size:12.5px">${h(t("wiki.trust"))} <input type="number" class="input" min="1" max="10" data-w="trust" value="${w.trust ?? 6}" style="width:70px;padding:4px 8px"></label>
+        <button type="button" class="btn sm ghost" data-w-describe>${icon("sparkle")}${h(t("wiki.describe"))}</button>
+        ${w.api === "wikipedia" ? "" : `<button type="button" class="btn sm ghost" data-w-remove>${icon("trash")}${h(t("wiki.remove"))}</button>`}</div></div>`).join("")
+    || `<div class="h-empty">${h(t("wiki.none"))}</div>`;
+  $$(".wiki-row", dlg).forEach(row => {
+    const w = list[+row.dataset.wi];
+    $$("[data-w]", row).forEach(inp => (inp.oninput = inp.onchange = () => {
+      const k = inp.dataset.w;
+      w[k] = k === "enabled" ? inp.checked : k === "trust" ? Math.max(1, Math.min(10, Number(inp.value) || 6)) : inp.value;
+    }));
+    const rm = $("[data-w-remove]", row);
+    if (rm) rm.onclick = () => { list.splice(+row.dataset.wi, 1); drawWikis(dlg); };
+    $("[data-w-describe]", row).onclick = async e => {
+      const b = e.currentTarget;
+      b.disabled = true;
+      try {
+        const r = await api("/api/wikis/describe", { method: "POST", body: { api: w.api === "wikipedia" ? "https://en.wikipedia.org/w/api.php" : w.api, ui_lang: uiLang() } });
+        w.about = r.about;
+        $("[data-w=about]", row).value = r.about;
+      } catch (err) { toast(err.message, 4000); }
+      b.disabled = false;
+    };
+  });
+}
+
+function wireWikis(dlg) {
+  S.wikis = structuredClone(S.settings.search.wikis || []);
+  drawWikis(dlg);
+  $("#wikiAddBtn", dlg).onclick = async () => {
+    const v = $("#wikiAdd", dlg).value.trim();
+    if (!v) return;
+    const st = $("#wikiStatus", dlg);
+    st.className = "status-line";
+    st.innerHTML = `<span class="spinner sm"></span>${h(t("wiki.checking"))}`;
+    try {
+      const info = await api("/api/wikis/check", { method: "POST", body: { api: v } });
+      if (S.wikis.some(w => w.api === info.api)) { st.textContent = t("wiki.already"); return; }
+      S.wikis.push({ name: info.name, api: info.api, about: "", enabled: true, trust: 6 });
+      $("#wikiAdd", dlg).value = "";
+      st.textContent = t("wiki.added", { name: info.name });
+      drawWikis(dlg);
+    } catch (e) { st.className = "status-line err"; st.textContent = e.message; }
+  };
 }
 
 function wireSearch(dlg) {
+  wireWikis(dlg);
   const sync = () => {
     const used = new Set([$("#backSel").value, $("#imgSel").value]);
     $$("[data-backend-box]", dlg).forEach(b => (b.hidden = !used.has(b.dataset.backendBox)));

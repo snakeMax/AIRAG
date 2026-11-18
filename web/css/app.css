@@ -555,3 +555,11 @@ html, body { overflow-x: hidden; }
 .btn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 14px; }
 .btn-grid .field { margin: 4px 0; }
 .pinned-page .a-actions .seg { margin-right: 4px; }
+.wiki-row { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin: 8px 0; display: grid; gap: 6px; }
+.wiki-row .wiki-api { font-size: 12px; word-break: break-all; }
+.wiki-row input[type=text] { width: 100%; }
+.video-card { position: relative; display: block; width: 220px; max-width: 100%; margin: 6px 0; border-radius: 10px; overflow: hidden; }
+.video-card img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.video-card .vc-play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; }
+.video-card .vc-play svg { width: 38px; height: 38px; padding: 9px; border-radius: 50%; background: rgba(0,0,0,.55); fill: #fff; }
+.video-card .vc-note { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 7px; font-size: 11px; color: #fff; background: rgba(0,0,0,.6); }

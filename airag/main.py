@@ -1057,6 +1057,42 @@ def export_open(req: ExportOpenReq):
     return {"ok": True}
 
 
+class WikiReq(BaseModel):
+    api: str
+    name: str = ""
+    ui_lang: Optional[str] = None
+
+
+@app.post("/api/wikis/check")
+async def wiki_check(req: WikiReq):
+    """Checks that an address is a MediaWiki wiki AIRAG can search."""
+    from . import wikis
+    info = await wikis.site_info(req.api)
+    if not info:
+        raise HTTPException(400, "That address isn't a wiki AIRAG can search (it needs a MediaWiki api.php).")
+    return info
+
+
+@app.post("/api/wikis/describe")
+async def wiki_describe(req: WikiReq):
+    from . import wikis
+    from .fetch import fetch_page
+    from .llm import get_llm
+    s = config.load()
+    info = await wikis.site_info(req.api)
+    if not info:
+        raise HTTPException(400, "Wiki not reachable")
+    page = await fetch_page(info["main"] or req.api, s["fetch"])
+    text, _ = guard.clean(page.text if page.ok else info["name"], s)
+    prompts_mod.use(s)
+    lang = languages.answer_language(s, req.ui_lang, info["name"])
+    try:
+        about = await get_llm(s).complete(*prompts_mod.describe_wiki(info["name"], text, lang), max_tokens=120)
+    except LLMError as e:
+        raise HTTPException(502, str(e))
+    return {"about": " ".join(about.split())[:240]}
+
+
 class PinSourceReq(BaseModel):
     url: str
     title: str = ""

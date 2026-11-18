@@ -38,4 +38,4 @@ def get_image_search(settings: dict) -> Optional[SearchBackend]:
     return _make(settings, name)
 
 
-from . import duckduckgo, searxng, brave, google_cse  # noqa: E402,F401
+from . import duckduckgo, searxng, brave, google_cse, marginalia  # noqa: E402,F401

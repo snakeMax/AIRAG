@@ -130,6 +130,12 @@ def install(settings_patch: bool = True):
     import airag.summarize as Sm
     from airag import config
     F.fetch_page = P.fetch_page = Sm.fetch_page = fake_fetch
+    import airag.wikis as W
+
+    async def fake_wikis(wikis, query, n=3, lang="en"):
+        return [{"title": "Hummingbird", "url": "https://en.wikipedia.org/wiki/Hummingbird",
+                 "snippet": "Hummingbirds are birds native to the Americas", "wiki": "Wikipedia", "trust": 7}]
+    W.search_all = fake_wikis
     if settings_patch:
         orig = config.load
 

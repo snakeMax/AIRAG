@@ -103,8 +103,8 @@ class Research:
                  date_from: str = "", date_to: str = "", merge_id: Optional[str] = None, extras: bool = True,
                  extend_id: Optional[str] = None):
         self.extend = history.get(extend_id) if extend_id else None   # "Locate more sources" for this article
-        if self.extend and (self.extend.get("outcome") != "article" or not self.extend.get("plan")):
-            raise ValueError("More sources can only be added to a finished article.")
+        if self.extend and not self.extend.get("plan"):
+            raise ValueError("More sources can only be looked for after a finished search.")
         if self.extend:
             from_id = merge_id = None
             query = self.extend["query"]
@@ -148,7 +148,8 @@ class Research:
         self.id = self.extend["id"] if self.extend else now.strftime("%Y%m%d-%H%M%S-") + _slug(self.query)
         self.run_id = self.id      # the background job's id (differs when extending an article)
         self.created = now.astimezone().isoformat(timespec="seconds")
-        self.skip = [d.strip().lower() for d in str(self.r.get("skip_domains", "")).split(",") if d.strip()]
+        from .sitelists import SiteLists
+        self.sites = SiteLists(self.r)   # blocked and favourite sites (domains or directories)
         self._sem_llm = asyncio.Semaphore(max(1, int(self.r["llm_concurrency"])))
         self._sem_fetch = asyncio.Semaphore(max(1, int(settings["fetch"]["max_concurrency"])))
         self._texts: Dict[str, set] = {}   # url -> five-word runs of its text, to spot copies of the same article
@@ -259,6 +260,8 @@ class Research:
             await self.library_round()
         if self.r.get("use_pinned", True):
             await self.pinned_round()
+        if self.use_web and self.s["search"].get("use_wikis", True):
+            await self.wiki_round()
 
         img_task = None
         if (self.extras and self.use_web and int(self.r.get("max_images", 0)) > 0 and self.img_search
@@ -363,7 +366,8 @@ class Research:
         """"Locate more sources": search for sources the article doesn't have yet, read them, and add a section
         with what they contribute. The article itself is kept as it is (same history entry, updated)."""
         rec = self.extend
-        self.mode = "article"
+        is_article = rec.get("outcome") == "article"
+        self.mode = "article" if is_article else "results"
         self.extras = False
         if not self.dates and rec.get("dates"):
             self.dates = tuple(rec["dates"])
@@ -398,7 +402,12 @@ class Research:
         old_art = list(rec.get("article_sources") or [])
         record = dict(rec)
         record["tried"] = self.tried
-        if new:
+        if not is_article:
+            # no article: the new sources simply join the search results (nothing is written)
+            record.update(await self.show_results(rec.get("images") or []))
+            if not new:
+                await self.step("write", "No new useful sources found", "warn", "The results are unchanged")
+        elif new:
             first = max([int(x.get("n") or 0) for x in old_art] + [0]) + 1
             for i, s in enumerate(new):
                 s["n"] = first + i
@@ -550,6 +559,38 @@ class Research:
         useful = sum(1 for x in fresh if (x.get("relevance") or 0) >= 4)
         await self.step("pinned", "Read your pinned sources", "done", f"{len(fresh)} checked · {useful} relevant")
 
+    async def wiki_round(self) -> None:
+        """Wikipedia (and any wikis the user added) next to the normal search: titles first, then the
+        matching pages are read like other sources (only their relevant passages)."""
+        from . import wikis
+        lst = self.s["search"].get("wikis") or wikis.DEFAULT
+        if not any(w.get("enabled", True) for w in lst):
+            return
+        lang = (self.s["fetch"].get("accept_language") or "en").split(",")[0]
+        await self.step("wiki", "Looking in wikis")
+        qs = (self.plan.get("direct_queries") or [self.query])[:2]
+        n = int(self.s["search"].get("wiki_results", 2))
+        found = await asyncio.gather(*(wikis.search_all(lst, q, n, lang) for q in qs))
+        fresh = []
+        for q, hits in zip(qs, found):
+            for i, h in enumerate(hits):
+                url = h["url"]
+                if url in self.sources or self._skipped(url):
+                    continue
+                prior, label = self.sites.adjust(url, h["trust"], f"{h['wiki']} (wiki)")
+                src = {"id": self.next_id(), "url": url, "domain": domain_of(url), "title": h["title"],
+                       "snippet": h["snippet"][:240], "query": q, "round": 1, "rank": i, "status": "found",
+                       "prior": prior, "prior_label": label, "site_name": h["wiki"]}
+                self.sources[url] = src
+                self.order.append(url)
+                fresh.append(src)
+        if not fresh:
+            await self.step("wiki", "Looked in wikis", "done", "Nothing matching")
+            return
+        await self.emit({"type": "sources", "items": [self.pub(x) for x in fresh]})
+        await self.step("wiki", "Looked in wikis", "done", ", ".join(dict.fromkeys(x["site_name"] for x in fresh)))
+        await self.read_round(0, fresh[:4])
+
     async def queries_for_round(self, rnd: int) -> List[str]:
         if rnd == 1:
             qs = self.plan["direct_queries"]
@@ -578,8 +619,8 @@ class Research:
             await self.step(f"refine{rnd}", "Looking for gaps", "warn", str(e)[:160])
             return []
 
-    def _skipped(self, domain: str) -> bool:
-        return any(domain == d or domain.endswith("." + d) for d in self.skip)
+    def _skipped(self, url: str) -> bool:
+        return self.sites.blocked_url(url)
 
     async def search_round(self, rnd: int, queries: List[str]) -> List[dict]:
         self.tried += queries
@@ -625,9 +666,9 @@ class Research:
                 if not url.startswith(("http://", "https://")) or url in self.sources:
                     continue
                 dom = domain_of(url)
-                if self._skipped(dom):
+                if self._skipped(url):
                     continue
-                prior, prior_label = domain_prior(dom)
+                prior, prior_label = self.sites.adjust(url, *domain_prior(dom))
                 src = {"id": self.next_id(), "url": url, "domain": dom, "title": item.title, "snippet": item.snippet,
                        "query": q, "round": rnd, "rank": i, "status": "found", "prior": prior, "prior_label": prior_label}
                 self.sources[url] = src

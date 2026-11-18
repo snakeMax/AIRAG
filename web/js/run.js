@@ -133,7 +133,7 @@ function onEvent(R, ev) {
       R.elapsed = ev.elapsed;
       finish(R);
       if (ev.extended !== undefined) {   // "Locate more sources": show the updated article
-        toast(ev.extended ? t("more.added", { n: ev.extended }) : t("more.none"), 4500);
+        toast(ev.extended ? t(R.outcome === "results" ? "more.addedResults" : "more.added", { n: ev.extended }) : t("more.none"), 4500);
         history.replaceState(null, "", `#/view/${encodeURIComponent(ev.id)}`);
         RUN.current = null;
         openRecord(ev.id);
@@ -328,7 +328,7 @@ $("#runMain").addEventListener("click", e => {
   }
   else if (act === "listen-stop") ttsStop();
   else if (act === "pin" && R.id) togglePin(R);
-  else if (act === "more-sources" && R.id && R.finished) startResearch(R.query, "article", R.library, null, R.dates, null, false, R.id);
+  else if (act === "more-sources" && R.id && R.finished) startResearch(R.query, R.outcome === "article" ? "article" : "results", R.library, null, R.dates, null, false, R.id);
   else if (act === "export-html") exportHtml(R, $("article.article"));
   else if (act === "save") openSavePop(b, R);
   else if (act === "tr-original") {
@@ -399,6 +399,7 @@ function renderResults(R) {
         <div class="row">
           ${assessed.length ? `<button class="btn" data-act="sum-results">${icon("sparkle")}${h(t("sum.button"))}</button>` : ""}
           <button class="btn" data-act="article">${icon("doc")}${h(t("res.toArticle"))}</button>
+          ${R.id && R.finished && !R.savedFile ? `<button class="btn ghost" data-act="more-sources" title="${h(t("more.tipResults"))}">${icon("search")}${h(t("more.button"))}</button>` : ""}
           <button class="btn ghost" data-act="translate-results" id="trResBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>
         </div>
       </div>
@@ -498,10 +499,19 @@ function updateInteractiveButton(R) {
   tip.style.width = info.suitable ? "280px" : "";
 }
 
+// YouTube sources get a preview card (thumbnail + play mark) that opens the video
+function videoCard(s) {
+  if (!String(s.via || "").startsWith("youtube") || !s.og_image) return "";
+  return `<a class="video-card" data-img href="${h(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer">
+    <img src="${h(s.og_image)}" alt="" loading="lazy" referrerpolicy="no-referrer" ${imgOnErr}><span class="vc-play">${icon("play")}</span>
+    ${s.via === "youtube-nocaptions" ? `<span class="vc-note">${h(t("yt.noCaptions"))}</span>` : ""}</a>`;
+}
+
 function sourceEntry(s) {
   return `<li class="src-entry" id="src-${s.n}"><span class="se-n">${s.n}</span><div style="min-width:0">
     <div class="se-head">${s.local ? `<span class="fav-lib">${icon("folder")}</span>` : `<img class="fav" src="${favicon(s.domain)}" alt="">`}<a href="${h(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer">${h(s.title || s.url)}</a></div>
     <div class="se-meta"><span>${h(s.local ? s.path : s.site_name || s.domain)}</span>${s.source_type ? `<span class="tag">${h(s.source_type)}</span>` : ""}${trustBadge(s)}${(s.date || s.published) ? `<span>${h(String(s.date || s.published).slice(0, 10))}</span>` : ""}</div>
+    ${videoCard(s)}
     ${s.trust_reason ? `<p class="se-reason">${h(s.trust_reason)}</p>` : ""}
     <div class="r-actions" style="margin-top:4px">${sourceActions(s)}</div></div></li>`;
 }
