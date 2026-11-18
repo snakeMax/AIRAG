@@ -89,7 +89,7 @@ function say() {
   job.id = `tts${++seq}`;
   const v = pick(job.lang);
   if (Native?.ttsSpeak) {
-    Native.ttsSpeak(part, v?.id || "", job.lang || "", Number(S.rate) || 1, job.id);
+    Native.ttsSpeak((window.__airagKey || ""), part, v?.id || "", job.lang || "", Number(S.rate) || 1, job.id);
     return;
   }
   const u = new SpeechSynthesisUtterance(part);

@@ -401,6 +401,7 @@ class Research:
                 break
         new = sorted([s for s in self.useful_sources() if not s.get("_old")], key=self.score, reverse=True)[:6]
         old_art = list(rec.get("article_sources") or [])
+        addendum = ""
         record = dict(rec)
         record["tried"] = self.tried
         if not is_article:
@@ -418,6 +419,7 @@ class Research:
                                                max_tokens=1600):
                 md += piece
             md = re.sub(r"<think>.*?</think>", "", md, flags=re.S).strip()
+            addendum = md
             record["article"] = (rec.get("article") or "").rstrip() + "\n\n" + md + "\n"
             record["article_sources"] = old_art + [self.pub(s) for s in new]
             await self.step("write", "Added what the new sources say", "done", f"{len(new)} new sources")
@@ -426,8 +428,18 @@ class Research:
         record["sources"] = [self.pub(self.sources[u]) for u in self.order]
         record["steps"] = list(rec.get("steps") or []) + [st for st in self.steps.values() if st["id"] not in ("plan",)]
         record["more_sources"] = int(rec.get("more_sources") or 0) + len(new)
+        # save only what this run changed, on top of the saved copy as it is NOW: follow-ups, rewrites or an
+        # explainer made while it was searching are kept, and the new section goes after the current article
+        changed = {k: v for k, v in record.items() if k != "article" and v != rec.get(k)}
+
+        def merge(cur: dict) -> None:
+            cur.update(changed)
+            if addendum:
+                cur["article"] = (cur.get("article") or "").rstrip() + "\n\n" + addendum + "\n"
         try:
-            history.save(record, int(self.s["app"].get("history_limit", 300)))
+            saved = history.update(self.id, merge)
+            if saved is not None:
+                record = saved
         except OSError as e:
             self.warnings.append(f"Couldn't save history: {e}")
         await self.emit({"type": "done", "id": self.id, "elapsed": round(time.time() - t0, 1), "outcome": "article",

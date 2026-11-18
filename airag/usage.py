@@ -262,6 +262,32 @@ def over_budget(settings: dict) -> bool:
     return bool(u.get("stop_at_budget") and s["budget"] and s["spent"] >= s["budget"])
 
 
+BUDGET_MESSAGE = ("Your monthly AI budget is used up. Raise it or turn off "
+                  "'Stop new AI work when the budget is used up' in Settings -> Usage.")
+# set inside a background job that already started: work that's running is allowed to finish
+_grace: contextvars.ContextVar = contextvars.ContextVar("airag_budget_grace", default=False)
+
+
+class BudgetUsedUp(RuntimeError):
+    """Raised before an AI call when the reader's budget stop applies."""
+
+
+def let_running_work_finish() -> None:
+    _grace.set(True)
+
+
+def check_budget(settings: Optional[dict] = None) -> None:
+    """Every AI call passes through here (Metered), so the budget stop covers searches, follow-ups, rewrites,
+    explainers, summaries, translations and image analysis alike, and anything added later."""
+    if _grace.get():
+        return
+    if settings is None:
+        from . import config
+        settings = config.load()
+    if over_budget(settings):
+        raise BudgetUsedUp(BUDGET_MESSAGE)
+
+
 # ---------------------------------------------------------------- metering wrapper
 class Metered:
     """Wraps a provider so every call is counted. Everything else passes through."""
@@ -282,6 +308,7 @@ class Metered:
             log.exception("could not record usage")
 
     async def complete(self, system, user, max_tokens=2048, json_mode=False):
+        check_budget()
         d: dict = {}
         tok = _current.set(d)
         try:
@@ -292,6 +319,7 @@ class Metered:
         return out
 
     async def stream(self, system, user, max_tokens=4096) -> AsyncIterator[str]:
+        check_budget()
         d: dict = {}
         parts = []
         tok = _current.set(d)

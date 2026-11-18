@@ -65,7 +65,7 @@ function start(input, button, onFinal = null) {
   setState(button, true);
   play("mic_start");
   if (Native) {
-    Native.startSpeech(lang());
+    Native.startSpeech((window.__airagKey || ""), lang());   // the key proves the call comes from AIRAG's own page
     return;
   }
   const rec = new WebSpeech();

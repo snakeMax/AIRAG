@@ -14,7 +14,7 @@ export function initImageAsk({ vision }) {
   // Android: a picture shared to AIRAG waits in the app until the page asks for it
   const takeShared = () => {
     try {
-      const img = window.AIRAGShare?.take?.();
+      const img = window.AIRAGShare?.take?.((window.__airagKey || ""));
       if (img) openImageAsk(img);
     } catch { /* not on Android */ }
   };

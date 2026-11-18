@@ -28,7 +28,8 @@ class AudioBridge(private val activity: MainActivity, private val web: WebView) 
     }
 
     @JavascriptInterface
-    fun setMediaVolume(percent: Int) {
+    fun setMediaVolume(key: String, percent: Int) {
+        if (!NativeKey.ok(key)) return
         val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val v = Math.round(percent.coerceIn(0, 100) * max / 100f)
         try { audio.setStreamVolume(AudioManager.STREAM_MUSIC, v, 0) } catch (_: SecurityException) { /* Do Not Disturb */ }
@@ -75,7 +76,8 @@ class AudioBridge(private val activity: MainActivity, private val web: WebView) 
     }
 
     @JavascriptInterface
-    fun ttsSpeak(text: String, voice: String, lang: String, rate: Float, id: String) {
+    fun ttsSpeak(key: String, text: String, voice: String, lang: String, rate: Float, id: String) {
+        if (!NativeKey.ok(key)) return
         withTts {
             val t = tts ?: return@withTts
             val chosen = t.voices?.firstOrNull { it.name == voice }

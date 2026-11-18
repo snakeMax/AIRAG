@@ -78,10 +78,14 @@ def _locked_out(host: str) -> bool:
 def _fail(host: str) -> None:
     n, since = _failures.get(host, (0, time.time()))
     _failures[host] = (n + 1, time.time() if n + 1 >= LOCKOUT_AFTER else since)
+    if len(_failures) > 1000:            # many addresses guessing: forget the oldest, keep the table small
+        for old in sorted(_failures, key=lambda h: _failures[h][1])[:500]:
+            _failures.pop(old, None)
 
 
 def _make_app(code: str, allow_internet: bool, ollama_url: str):
     from starlette.applications import Starlette
+    from starlette.background import BackgroundTask
     from starlette.responses import JSONResponse, Response, StreamingResponse
     from starlette.routing import Route
 
@@ -119,15 +123,19 @@ def _make_app(code: str, allow_internet: bool, ollama_url: str):
             await client.aclose()
             return JSONResponse({"error": "Ollama isn't running on the PC."}, 502)
 
+        async def close():
+            await r.aclose()
+            await client.aclose()
+
         async def relay():
             try:
                 async for chunk in r.aiter_raw():
                     yield chunk
             finally:
-                await r.aclose()
-                await client.aclose()
-        return StreamingResponse(relay(), r.status_code,
-                                 media_type=r.headers.get("content-type", "application/json"))
+                await close()
+        # the background task also closes the connection if the phone leaves before the answer starts
+        return StreamingResponse(relay(), r.status_code, media_type=r.headers.get("content-type", "application/json"),
+                                 background=BackgroundTask(close))
 
     async def ping(request):
         return JSONResponse({"app": "AIRAG", "pclink": True})

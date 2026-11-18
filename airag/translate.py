@@ -25,8 +25,9 @@ async def article(settings: dict, markdown: str, lang: str, rid: Optional[str] =
         out += piece
         yield piece
     if rec is not None and out.strip():
-        rec.setdefault("translations", {})[lang] = out
-        history.save(rec, int(settings["app"].get("history_limit", 300)))
+        def keep(r: dict) -> None:
+            r.setdefault("translations", {})[lang] = out
+        history.update(rec["id"], keep)
 
 
 async def items(settings: dict, entries: List[dict], lang: str) -> List[dict]:

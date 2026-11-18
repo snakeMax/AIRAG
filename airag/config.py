@@ -100,7 +100,8 @@ GENERAL_SCHEMA: dict = {
          "help": "Shown as a bar in Settings -> Usage. 0 = no budget."},
         {"key": "tell_model", "label": "Tell the AI when the budget is nearly used", "type": "bool", "default": True,
          "help": "When 70% is used, the AI is asked to search less and write shorter answers."},
-        {"key": "stop_at_budget", "label": "Stop new searches when the budget is used up", "type": "bool", "default": False},
+        {"key": "stop_at_budget", "label": "Stop new AI work when the budget is used up", "type": "bool", "default": False,
+         "help": "Searches, follow-ups, rewrites, explainers, summaries, translations and image analysis. Work that's already running finishes."},
     ],
     "library": [
         {"key": "folders", "label": "Folders", "type": "hidden", "default": []},
@@ -293,11 +294,42 @@ def _coerce(s: dict) -> dict:
     return s
 
 
+def _backup_path():
+    return SETTINGS_PATH.with_name(SETTINGS_PATH.name + ".bak")
+
+
 def load_raw() -> dict:
+    """The saved settings. If the file is damaged (e.g. a crash while an older version wrote it), the damaged
+    file is put aside and the last good copy is used, never the defaults (which would lose keys and folders)."""
     try:
-        return json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        data = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return data
+        raise ValueError("not an object")
+    except FileNotFoundError:
         return {}
+    except (OSError, ValueError):
+        pass
+    import logging
+    import time as _t
+    log = logging.getLogger("airag")
+    try:
+        damaged = SETTINGS_PATH.with_name(f"settings.damaged-{_t.strftime('%Y%m%d-%H%M%S')}.json")
+        if SETTINGS_PATH.exists() and not any(SETTINGS_PATH.parent.glob("settings.damaged-*.json")):
+            SETTINGS_PATH.replace(damaged)
+            log.error("settings file was damaged; kept it as %s", damaged.name)
+    except OSError:
+        pass
+    try:
+        data = json.loads(_backup_path().read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            log.warning("using the last good copy of the settings")
+            from .paths import atomic_write_text
+            atomic_write_text(SETTINGS_PATH, json.dumps(data, indent=2, ensure_ascii=False))
+            return data
+    except (OSError, ValueError):
+        pass
+    return {}
 
 
 def load(with_env: bool = True) -> dict:
@@ -339,9 +371,13 @@ def save(incoming: dict) -> dict:
         current = deep_merge(defaults(), load_raw())
         new = unmask_into(deep_merge(current, incoming), current)
         paths.ensure_dirs()
-        tmp = SETTINGS_PATH.with_suffix(".tmp")
-        tmp.write_text(json.dumps(new, indent=2, ensure_ascii=False), encoding="utf-8")
-        tmp.replace(SETTINGS_PATH)
+        try:                       # keep the previous good copy, in case something goes wrong later
+            if SETTINGS_PATH.exists():
+                json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+                paths.atomic_write_text(_backup_path(), SETTINGS_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            pass
+        paths.atomic_write_text(SETTINGS_PATH, json.dumps(new, indent=2, ensure_ascii=False))
     return load()
 
 

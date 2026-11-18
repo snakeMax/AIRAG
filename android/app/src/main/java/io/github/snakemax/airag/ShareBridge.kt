@@ -23,7 +23,8 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
 
     /** The web UI asks for the shared picture once it has loaded (or when told one arrived). */
     @JavascriptInterface
-    fun take(): String {
+    fun take(key: String): String {
+        if (!NativeKey.ok(key)) return ""
         val p = pending ?: ""
         pending = null
         return p
@@ -31,7 +32,8 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
 
     /** A Markdown file, saved article or web page opened with AIRAG: {"name": ..., "text": ...} as JSON. */
     @JavascriptInterface
-    fun takeFile(): String {
+    fun takeFile(key: String): String {
+        if (!NativeKey.ok(key)) return ""
         val p = pendingFile ?: ""
         pendingFile = null
         return p

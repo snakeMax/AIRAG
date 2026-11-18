@@ -8,7 +8,10 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -106,12 +109,27 @@ class MainActivity : AppCompatActivity() {
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                     val url = request.url
                     if (url.host == "127.0.0.1" && url.port == port) return false
-                    openExternal(url)
+                    // only links the reader taps in AIRAG's own page open in the browser; frames inside the
+                    // page (e.g. an interactive explainer) never open anything
+                    if (request.isForMainFrame) openExternal(url)
                     return true
                 }
                 override fun onPageFinished(view: WebView, url: String) {
                     view.visibility = View.VISIBLE
                     splash.visibility = View.GONE
+                    if (!keyAtStart && Uri.parse(url).host == "127.0.0.1") {
+                        // older WebViews: hand the key to the main page only (this never runs in inner frames)
+                        view.evaluateJavascript("window.__airagKey='${NativeKey.value}';" +
+                            "window.dispatchEvent(new Event('airag-share'));", null)
+                    }
+                }
+                override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+                    // the page's process crashed (e.g. a runaway explainer used all memory): start the screen
+                    // again instead of closing the app; the server and running searches keep going
+                    (view.parent as? ViewGroup)?.removeView(view)
+                    view.destroy()
+                    recreate()
+                    return true
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -178,6 +196,7 @@ class MainActivity : AppCompatActivity() {
                 val p = Python.getInstance().getModule("airag.android_bridge").callAttr("start", dataDir, zone).toInt()
                 runOnUiThread {
                     port = p
+                    giveKey(p)
                     web.loadUrl("http://127.0.0.1:$p/$pendingHash")
                     pendingHash = ""
                 }
@@ -185,6 +204,17 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { splashText.text = getString(R.string.start_failed, e.message ?: e.toString()) }
             }
         }
+    }
+
+    private var keyAtStart = false
+
+    /** The native key goes only to pages from AIRAG's own address (never the sandboxed explainer frame). */
+    private fun giveKey(p: Int) {
+        if (keyAtStart || !WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return
+        try {
+            WebViewCompat.addDocumentStartJavaScript(web, "window.__airagKey='${NativeKey.value}';", setOf("http://127.0.0.1:$p"))
+            keyAtStart = true
+        } catch (_: Exception) { }
     }
 
     override fun onPause() {

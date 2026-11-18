@@ -95,7 +95,8 @@ def build(rec: dict, body_html: str, title: str, include_explainer: bool = True,
     css = (paths.WEB_DIR / "css" / "export.css").read_text(encoding="utf-8")
     explainer = ""
     if include_explainer and rec.get("interactive_html"):
-        frame = html.escape(rec["interactive_html"], quote=True)
+        from .interactive import safe
+        frame = html.escape(safe(rec["interactive_html"]), quote=True)
         explainer = f"""
 <section class="x-explainer"><h2>Interactive explainer</h2>
 <iframe sandbox="allow-scripts" referrerpolicy="no-referrer" srcdoc="{frame}" title="Interactive explainer"></iframe>

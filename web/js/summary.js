@@ -7,6 +7,12 @@ import { t, uiLang } from "./i18n.js";
 const render = md => { allowLinks([]); try { return renderAll(md); } finally { allowLinks(null); } };
 
 const cache = new Map();
+const CACHE_MAX = 40;        // recent summaries kept in memory; older ones are made again if needed
+const remember = (key, text) => {
+  cache.delete(key);
+  cache.set(key, text);
+  while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
+};
 let ctrl = null;
 
 /** A summary already made in this session, if any (used by Export web page). */
@@ -21,7 +27,7 @@ export async function makeSummary({ kind, query, payload, key }, signal) {
     else if (ev.type === "error") throw new Error(ev.message);
   }, signal);
   text = stripThink(text);
-  cache.set(key, text);
+  remember(key, text);
   return text;
 }
 
@@ -67,7 +73,7 @@ export async function openSummary({ kind, query, payload, label, key, sources })
       } else if (ev.type === "error") throw new Error(ev.message);
     }, c.signal);
     out().innerHTML = render(stripThink(text));
-    cache.set(key, text);
+    remember(key, text);
   } catch (e) {
     if (e.name !== "AbortError") out().innerHTML = `<p class="status-line err">${h(e.message)}</p>`;
   }

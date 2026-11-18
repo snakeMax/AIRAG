@@ -111,3 +111,20 @@ def test_launcher_handover_needs_the_key(tmp_path, monkeypatch):
     c.post("/api/app/open-path", json={"path": str(secret)}, headers={"x-airag-launch": appctl.launch_key})
     assert "can open" in c.get("/api/app/inbox").json()["error"]
     assert c.get("/api/app/inbox").json() == {}
+
+
+def test_import_never_overwrites_or_duplicates(tmp_path):
+    s = config.load()
+    lib = tmp_path / "lib"
+    s["library"]["personal_folder"] = str(lib)
+    a = tmp_path / "a" / "notes.md"
+    b = tmp_path / "b" / "notes.md"
+    a.parent.mkdir(); b.parent.mkdir()
+    a.write_text("first", encoding="utf-8")
+    b.write_text("second", encoding="utf-8")
+    assert len(mylibrary.import_files([str(a)], s)) == 1
+    assert mylibrary.import_files([str(a)], s) == []                    # identical: skipped
+    second = mylibrary.import_files([str(b)], s)                        # same name, different file
+    assert second and second[0].endswith("notes (2).md")
+    assert (lib / "notes.md").read_text(encoding="utf-8") == "first"    # never overwritten
+    assert mylibrary.import_files([str(lib / "notes.md")], s) == []     # already inside My library

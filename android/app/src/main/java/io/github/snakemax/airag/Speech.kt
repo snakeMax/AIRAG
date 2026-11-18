@@ -25,7 +25,8 @@ class Speech(private val activity: MainActivity, private val web: WebView) {
     fun speechAvailable(): Boolean = SpeechRecognizer.isRecognitionAvailable(activity)
 
     @JavascriptInterface
-    fun startSpeech(lang: String) {
+    fun startSpeech(key: String, lang: String) {
+        if (!NativeKey.ok(key)) return
         activity.runOnUiThread {
             if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 pendingLang = lang

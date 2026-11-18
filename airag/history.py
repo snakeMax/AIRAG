@@ -3,9 +3,30 @@ from __future__ import annotations
 
 import json
 import re
-from typing import List, Optional
+import threading
+from typing import Callable, List, Optional, Union
 
-from .paths import HISTORY_DIR
+from .paths import HISTORY_DIR, atomic_write_text
+
+# one lock per record (from a fixed pool, so it never grows): a change made by one feature (a follow-up, a
+# rewrite, an explainer, "locate more sources") can't overwrite a change another feature made at the same time
+_LOCKS = [threading.RLock() for _ in range(64)]
+_PINS_LOCK = threading.Lock()
+
+
+def _lock(rid: str) -> threading.RLock:
+    return _LOCKS[hash(rid) % len(_LOCKS)]
+
+
+def _limit(limit: Optional[int]) -> int:
+    """The reader's History limit from Settings (never the built-in default when they chose a bigger one)."""
+    if limit is not None:
+        return int(limit)
+    try:
+        from . import config
+        return int(config.load()["app"].get("history_limit", 300))
+    except Exception:
+        return 300
 
 _ID = re.compile(r"^[\w\-]+$", re.UNICODE)
 PINS = HISTORY_DIR.parent / "pins.json"     # pinned searches: shown first on Home, never pruned
@@ -21,19 +42,43 @@ def pins() -> List[str]:
 def set_pin(rid: str, pinned: bool) -> bool:
     if not _ID.match(rid or "") or not (HISTORY_DIR / f"{rid}.json").exists():
         raise KeyError(rid)
-    cur = [x for x in pins() if x != rid]
-    if pinned:
-        cur.insert(0, rid)
-    PINS.parent.mkdir(parents=True, exist_ok=True)
-    PINS.write_text(json.dumps(cur), encoding="utf-8")
+    with _PINS_LOCK:
+        cur = [x for x in pins() if x != rid]
+        if pinned:
+            cur.insert(0, rid)
+        atomic_write_text(PINS, json.dumps(cur))
     return pinned
 
 
-def save(record: dict, limit: int = 300) -> None:
-    HISTORY_DIR.mkdir(parents=True, exist_ok=True)
-    (HISTORY_DIR / f"{record['id']}.json").write_text(json.dumps(record, ensure_ascii=False, separators=(",", ":")),
-                                                       encoding="utf-8")
-    prune(limit)
+def _write(record: dict) -> None:
+    if not _ID.match(str(record.get("id") or "")):
+        raise ValueError("bad id")
+    data = {k: v for k, v in record.items() if k != "pinned"}     # pinned lives in pins.json only
+    atomic_write_text(HISTORY_DIR / f"{record['id']}.json", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+
+
+def save(record: dict, limit: Optional[int] = None) -> None:
+    """Saves a whole record (a new search, or one that replaces the old one on purpose)."""
+    with _lock(record["id"]):
+        _write(record)
+    prune(_limit(limit))
+
+
+def update(rid: str, change: Union[dict, Callable[[dict], None]], limit: Optional[int] = None) -> Optional[dict]:
+    """Changes only some fields of a saved record, on the copy that's on disk right now (so changes other
+    features made in the meantime are kept). `change` is a dict of fields, or a function that edits the record.
+    Returns the saved record, or None if it no longer exists (e.g. deleted while an explainer was being made)."""
+    with _lock(rid):
+        cur = get(rid)
+        if cur is None:
+            return None
+        if callable(change):
+            change(cur)
+        else:
+            cur.update(change)
+        _write(cur)
+    prune(_limit(limit))
+    return cur
 
 
 def prune(limit: int) -> int:

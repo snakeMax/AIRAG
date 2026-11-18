@@ -379,6 +379,7 @@ INTERACTIVE_SYSTEM = """You build small, self-contained interactive explainers (
 Requirements:
 - Output ONE complete HTML document and nothing else (no Markdown fences, no explanations).
 - Everything inline: CSS in <style>, JavaScript in <script>. No external files, fonts, libraries, images, network requests, storage, cookies, alerts or popups. It runs in a locked-down sandbox.
+- Keep it light: animate with requestAnimationFrame or setInterval, never with long blocking loops; every loop must end quickly (a loop that keeps the page busy for 2 seconds is stopped). Always use braces { } around loop bodies.
 - Use <canvas> or inline SVG for graphics. {size} Make sure the code runs without errors.
 - Controls the reader can play with (sliders, buttons, toggles, draggable items, play/pause), with live numbers and labels.
 - A title, a one-line "how to use" hint, and a short "What this shows" note that ties back to the article.

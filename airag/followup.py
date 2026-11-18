@@ -131,10 +131,9 @@ async def answer(settings: dict, rid: str, question: str, mode: str = "ask", sel
                  "Continue: either one more TOOL line or the final answer."
     entry = {"q": question or MODES[mode], "mode": mode, "selection": selection[:500], "a": answer_text,
              "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "tools": used}
-    rec = history.get(rid) or rec
-    rec.setdefault("thread", []).append(entry)
-    rec["thread"] = rec["thread"][-40:]
-    history.save(rec, int(settings["app"].get("history_limit", 300)))
+    def add(r: dict) -> None:
+        r["thread"] = (r.get("thread") or [])[-39:] + [entry]
+    history.update(rid, add)
     yield {"type": "done", "entry": entry}
 
 
@@ -156,16 +155,21 @@ async def calculate(settings: dict, text: str) -> dict:
 
 
 async def add_to_article(settings: dict, rid: str, index: int) -> dict:
-    rec = history.get(rid)
-    if not rec or rec.get("outcome") != "article":
-        raise ValueError("Article not found")
-    thread = rec.get("thread") or []
-    if not 0 <= index < len(thread):
-        raise ValueError("No such answer")
-    t = thread[index]
-    rec["article"] = (rec.get("article") or "").rstrip() + f"\n\n## {t['q'][:120]}\n\n{t['a']}\n"
-    t["added"] = True
-    history.save(rec, int(settings["app"].get("history_limit", 300)))
+    problem = []
+
+    def add(rec: dict) -> None:
+        thread = rec.get("thread") or []
+        if rec.get("outcome") != "article":
+            problem.append("Article not found")
+        elif not 0 <= index < len(thread):
+            problem.append("No such answer")
+        elif not thread[index].get("added"):       # pressing twice doesn't add it twice
+            t = thread[index]
+            rec["article"] = (rec.get("article") or "").rstrip() + f"\n\n## {t['q'][:120]}\n\n{t['a']}\n"
+            t["added"] = True
+    rec = history.update(rid, add)
+    if rec is None or problem:
+        raise ValueError(problem[0] if problem else "Article not found")
     return {"article": rec["article"]}
 
 

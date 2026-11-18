@@ -552,7 +552,7 @@
  "h.usage.monthly_budget": "Shown as a bar above. 0 = no budget.",
  "f.usage.tell_model": "Tell the AI when the budget is nearly used",
  "h.usage.tell_model": "When 70% is used, the AI is asked to search less and write shorter answers.",
- "f.usage.stop_at_budget": "Stop new searches when the budget is used up",
+ "f.usage.stop_at_budget": "Stop new AI work when the budget is used up",
  "usage.overBudget": "Monthly budget used up",
  "act.search": "Researching \"{q}\"",
  "act.explainer": "Building explainer: \"{q}\"",
@@ -847,5 +847,7 @@
  "open.unreadable": "That file couldn't be read.",
  "open.reread": "Updated from your changes to the saved .md file",
  "open.from": "Opened from {name}",
- "open.noAI": "Opened from a file, without the AI"
+ "open.noAI": "Opened from a file, without the AI",
+ "h.usage.stop_at_budget": "Searches, follow-ups, rewrites, explainers, summaries, translations and image analysis. Work that's already running finishes.",
+ "inter.navBlocked": "The explainer tried to open a web page, so it was stopped. Explainers stay offline."
 }

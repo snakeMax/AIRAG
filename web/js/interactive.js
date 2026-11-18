@@ -13,9 +13,21 @@ function show(html) {
   frame.setAttribute("sandbox", "allow-scripts");
   frame.setAttribute("referrerpolicy", "no-referrer");
   frame.className = "inter-frame";
+  frame.setAttribute("allow", "");            // no camera, microphone, location, clipboard, fullscreen...
+  frame.setAttribute("credentialless", "");   // (where supported) no cookies or storage at all
   frame.srcdoc = html;
-  // some browsers leave a freshly loaded sandboxed frame blank until it repaints
-  frame.addEventListener("load", () => { frame.style.display = "none"; void frame.offsetHeight; frame.style.display = ""; }, { once: true });
+  let loads = 0;
+  frame.addEventListener("load", () => {
+    loads += 1;
+    if (loads === 1) {   // some browsers leave a freshly loaded sandboxed frame blank until it repaints
+      frame.style.display = "none"; void frame.offsetHeight; frame.style.display = "";
+      return;
+    }
+    // a second load means the explainer took itself to another page: explainers stay offline, so stop it
+    frame.remove();
+    const body = $("#interBody");
+    if (body) body.innerHTML = `<div class="inter-wait"><div class="status-line err">${h(t("inter.navBlocked"))}</div></div>`;
+  });
   $("#interBody")?.replaceChildren(frame);
 }
 

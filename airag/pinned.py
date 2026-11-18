@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
 from typing import List, Optional
 
@@ -16,6 +17,9 @@ from . import paths
 DIR = paths.HISTORY_DIR.parent / "pinned"
 INDEX = DIR / "index.json"
 MAX_TEXT = 120_000
+
+
+_lock = threading.RLock()       # pin/unpin from two places at once can't lose a pin
 
 
 def _id(url: str) -> str:
@@ -31,10 +35,7 @@ def _load() -> List[dict]:
 
 
 def _save(items: List[dict]) -> None:
-    DIR.mkdir(parents=True, exist_ok=True)
-    tmp = INDEX.with_suffix(".tmp")
-    tmp.write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
-    tmp.replace(INDEX)
+    paths.atomic_write_text(INDEX, json.dumps(items, ensure_ascii=False, indent=1))
 
 
 def listing() -> List[dict]:
@@ -50,24 +51,25 @@ def add(url: str, title: str, text: str, meta: Optional[dict] = None) -> dict:
         raise ValueError("Only web pages can be pinned")
     meta = meta or {}
     pid = _id(url)
-    DIR.mkdir(parents=True, exist_ok=True)
-    (DIR / f"{pid}.md").write_text(text[:MAX_TEXT], encoding="utf-8")
+    paths.atomic_write_text(DIR / f"{pid}.md", text[:MAX_TEXT])
     item = {"id": pid, "url": url, "title": (title or url)[:300], "domain": str(meta.get("domain") or "")[:120],
             "summary": str(meta.get("summary") or "")[:600], "query": str(meta.get("query") or "")[:300],
             "trust": meta.get("trust"), "published": meta.get("published") or meta.get("date"),
             "site_name": meta.get("site_name"), "pinned_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    items = [x for x in _load() if x["id"] != pid]
-    items.insert(0, item)
-    _save(items)
+    with _lock:
+        items = [x for x in _load() if x["id"] != pid]
+        items.insert(0, item)
+        _save(items)
     return item
 
 
 def remove(pid: str) -> bool:
-    items = _load()
-    left = [x for x in items if x["id"] != pid and x["url"] != pid]
-    if len(left) == len(items):
-        return False
-    _save(left)
+    with _lock:
+        items = _load()
+        left = [x for x in items if x["id"] != pid and x["url"] != pid]
+        if len(left) == len(items):
+            return False
+        _save(left)
     for x in items:
         if x not in left:
             try:

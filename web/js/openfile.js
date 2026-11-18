@@ -24,7 +24,7 @@ export function initOpenFile() {
   // Android: a file opened with (or shared to) AIRAG waits in the app until the page asks for it
   const takeFile = async () => {
     let raw = "";
-    try { raw = window.AIRAGShare?.takeFile?.() || ""; } catch { return; }
+    try { raw = window.AIRAGShare?.takeFile?.((window.__airagKey || "")) || ""; } catch { return; }
     if (!raw) return;
     let f;
     try { f = JSON.parse(raw); } catch { return; }

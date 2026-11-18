@@ -116,6 +116,14 @@ Small simulations or games that explain the topic, built by the AI for articles 
 - **Opening:** builds the explainer, or opens it if it's already built.
 - **In the background:** building keeps going when you close the window. The button shows a spinner while it builds, and clicking it again shows the one being built. *Cancel* stops it.
 
+### How explainers are kept safe
+Explainers are small programs written by the AI, so they run locked away from everything else:
+- **Sandboxed:** an explainer can't see AIRAG's page, your settings, keys, history or files, and can't use cookies, storage, pop-ups, alerts, downloads, the camera or the microphone.
+- **Offline:** it can't load anything from the internet or AIRAG. If one tries to open a web page, it's stopped and a note says so.
+- **Can't freeze the app:** a part that keeps running for more than 2 seconds is stopped (the explainer shows a short note), and on phones a crash of the page is recovered instead of closing the app.
+- **Phone:** AIRAG's own phone features (speech, read aloud, volume, shared files) only answer AIRAG's own page, never an explainer.
+- **Files from elsewhere:** explainers aren't loaded from opened files outside your My library.
+
 ### Data charts
 When the article or its sources give related numbers (prices or stock values over time, figures for different groups or years), the explainer can be an interactive line or bar chart of that data. Each point shows its source number. Only numbers from the sources are plotted.
 

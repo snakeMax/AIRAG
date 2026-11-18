@@ -6,6 +6,11 @@
 - **Open with AIRAG**: Markdown and text files, saved articles (.airag.json) and exported web pages open as an article without the AI, with their sources. Windows: AIRAG is in the *Open with* list (never the default app); Android: open files from a file manager or share them to AIRAG; everywhere: *Open a file* in the Saved tab
 - **Exported web pages** carry a data copy of the article, so AIRAG opens them again exactly
 - **Saved articles you edit** (e.g. in Obsidian) are read from your edited .md when reopened
+- **Safer explainers**: the no-network rules now apply before any of the AI's code runs; auto-redirects, outside links, frames and prefetches are removed; an explainer that tries to open a web page is stopped; loops that run longer than 2 seconds are stopped instead of freezing the app; on Android, frames inside the page can no longer open the browser, AIRAG's phone features (microphone, read aloud, volume, shared files) only answer AIRAG's own page, and a crashed page is recovered instead of closing the app
+- **Data safety**: settings, History, pins and My library files are written so a crash can't leave them half-written; a damaged settings file is replaced by the last good copy instead of the defaults; features working on the same article at once (follow-ups, rewrites, explainers, translations, Locate more sources) no longer overwrite each other's changes; opened files no longer use the built-in History limit instead of yours
+- **Budget stop covers all AI work** (follow-ups, rewrites, explainers, summaries, translations, image analysis), not only searches; work already running finishes
+- **Fewer resources**: pressing a button twice no longer starts the same job twice; at most 30 tasks can wait; streamed text uses much less memory; a few small leaks fixed (PC-link connections, notification and lock-out lists, summary cache)
+- **Adding files to My library** skips files that are already there and never overwrites a different file with the same name
 - **Reopened saved articles go back in History**, so the toolbar works on them (Settings → Library to turn off)
 
 ## [0.4.0] - 2026-11-18

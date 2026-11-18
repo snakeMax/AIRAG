@@ -79,18 +79,23 @@ async def rewrite(settings: dict, rid: str, selection: str, instructions: str,
 
 
 def apply(settings: dict, rid: str, old: str, new: str, instructions: str = "") -> str:
-    rec = history.get(rid)
-    if not rec or rec.get("outcome") != "article":
-        raise ValueError("Article not found")
-    md = rec.get("article") or ""
-    if old not in md:
-        raise ValueError("The article changed since the rewrite was made. Select the text and rewrite it again.")
-    rec.setdefault("edits", []).append({"old": old, "new": new})
-    rec["edits"] = rec["edits"][-20:]
-    rec["article"] = md.replace(old, new.strip(), 1)
-    # keep it in the answers thread, so the reader can see what changed and ask to elaborate on it
-    rec.setdefault("thread", []).append({"q": instructions.strip() or "Rewrite", "mode": "rewrite", "selection": old[:500],
-                                         "a": new.strip(), "added": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
-    rec["thread"] = rec["thread"][-40:]
-    history.save(rec, int(settings["app"].get("history_limit", 300)))
+    problem = []
+
+    def change(rec: dict) -> None:
+        md = rec.get("article") or ""
+        if rec.get("outcome") != "article":
+            problem.append("Article not found")
+            return
+        if old not in md:
+            problem.append("The article changed since the rewrite was made. Select the text and rewrite it again.")
+            return
+        rec["edits"] = (rec.get("edits") or [])[-19:] + [{"old": old, "new": new}]
+        rec["article"] = md.replace(old, new.strip(), 1)
+        # keep it in the answers thread, so the reader can see what changed and ask to elaborate on it
+        rec["thread"] = (rec.get("thread") or [])[-39:] + [{
+            "q": instructions.strip() or "Rewrite", "mode": "rewrite", "selection": old[:500], "a": new.strip(),
+            "added": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}]
+    rec = history.update(rid, change)
+    if rec is None or problem:
+        raise ValueError(problem[0] if problem else "Article not found")
     return rec["article"]

@@ -85,6 +85,9 @@ def _jobs_changed() -> None:
         if j["id"] in _notified or j["status"] == "cancelled":
             continue
         _notified.add(j["id"])
+        if len(_notified) > 500:         # only recent jobs matter; don't grow for ever in a long-running app
+            for old in list(_notified)[:250]:
+                _notified.discard(old)
         explainer = j["kind"] == "explainer"
         hashpart = f"#/view/{j['ref']}" + ("?explainer" if explainer else "")
         b.jobDone(j["query"][:80], j["status"] + ("|explainer" if explainer else ""), hashpart,

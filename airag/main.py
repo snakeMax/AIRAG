@@ -633,8 +633,7 @@ async def mylibrary_save(req: SaveReq):
         path = await asyncio.to_thread(mylibrary.save_article, rec, s, req.rich)
     except (ValueError, OSError) as e:
         raise _err(e)
-    rec["saved_path"] = str(path)
-    history.save(rec, int(s["app"].get("history_limit", 300)))
+    history.update(req.id, {"saved_path": str(path)})
     _reindex_soon()
     return {"path": str(path)}
 
@@ -859,8 +858,7 @@ async def research(req: ResearchReq):
     from . import runs, usage
     settings = config.load()
     if usage.over_budget(settings):
-        raise HTTPException(402, "Your monthly AI budget is used up. Raise it or turn off "
-                                 "'Stop new searches when the budget is used up' in Settings -> Usage.")
+        raise HTTPException(402, usage.BUDGET_MESSAGE)
     holder: dict = {}
 
     async def emit(ev: dict) -> None:
@@ -881,8 +879,11 @@ async def research(req: ResearchReq):
     while not r.extend and r.id in runs.RUNS:          # same question twice in the same second
         r.id += "-2"
         r.run_id = r.id
-    holder["run"] = runs.start(r.run_id, r.query, req.mode, go, kind="more" if r.extend else "search",
-                               ref=r.id if r.extend else "")
+    try:
+        holder["run"] = runs.start(r.run_id, r.query, req.mode, go, kind="more" if r.extend else "search",
+                                   ref=r.id if r.extend else "")
+    except runs.TooManyJobs as e:
+        raise HTTPException(429, str(e))
     return _follow(holder["run"])
 
 
@@ -1217,7 +1218,8 @@ async def interactive_start(req: InteractiveReq):
     if running and not running.finished:
         return {"job": running.id, "running": True}
     if rec.get("interactive_html") and not req.force:
-        return {"html": rec["interactive_html"], "interactive": rec.get("interactive")}
+        from .interactive import safe
+        return {"html": safe(rec["interactive_html"]), "interactive": rec.get("interactive")}
     settings = config.load()
 
     async def go(emit) -> None:
@@ -1229,7 +1231,10 @@ async def interactive_start(req: InteractiveReq):
             await emit({"type": "error", "message": str(e)})
             return
         await emit({"type": "done", "id": req.id, "html": res["html"], "interactive": res.get("interactive")})
-    run = runs.start(f"x-{req.id}", rec.get("query", ""), "explainer", go, kind="explainer", ref=req.id)
+    try:
+        run = runs.start(f"x-{req.id}", rec.get("query", ""), "explainer", go, kind="explainer", ref=req.id)
+    except runs.TooManyJobs as e:
+        raise HTTPException(429, str(e))
     return {"job": run.id, "running": False}
 
 

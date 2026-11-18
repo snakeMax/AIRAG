@@ -105,7 +105,7 @@ def save_article(rec: dict, settings: dict, rich: bool = False) -> Path:
         while target.exists():
             target = d / f"{base} ({n}).md"
             n += 1
-    target.write_text(article_markdown(rec), encoding="utf-8")
+    paths.atomic_write_text(target, article_markdown(rec))
     keep = {k: rec.get(k) for k in ("id", "query", "mode", "created", "model", "search", "plan", "title", "article",
                                     "article_sources", "related", "language", "dates", "outcome", "elapsed")}
     keep["sources"] = rec.get("article_sources") or []
@@ -116,7 +116,7 @@ def save_article(rec: dict, settings: dict, rich: bool = False) -> Path:
         keep["interactive_html"] = rec.get("interactive_html") or ""
     else:
         keep["images"], keep["interactive"] = [], None
-    target.with_name(target.stem + SAVED_SUFFIX).write_text(json.dumps(keep, ensure_ascii=False), encoding="utf-8")
+    paths.atomic_write_text(target.with_name(target.stem + SAVED_SUFFIX), json.dumps(keep, ensure_ascii=False))
     return target
 
 
@@ -171,7 +171,7 @@ def _reread_markdown(rec: dict, json_file: Path, md_file: Path) -> bool:
         rec["sources"] = rec["article_sources"]
     keep = {k: v for k, v in rec.items() if k not in ("saved_file", "saved_path", "edited_outside")}
     try:
-        json_file.write_text(json.dumps(keep, ensure_ascii=False), encoding="utf-8")
+        paths.atomic_write_text(json_file, json.dumps(keep, ensure_ascii=False))
     except OSError:
         pass
     return True
@@ -182,12 +182,12 @@ def _back_to_history(rec: dict) -> None:
     from . import history
     try:
         cur = history.get(rec["id"])
-        if cur and not rec.get("edited_outside"):
+        if cur:
+            if rec.get("edited_outside"):       # keep the answers thread and anything else History knows
+                history.update(rec["id"], {k: rec[k] for k in ("article", "title", "article_sources", "sources") if k in rec})
             return
         entry = {k: v for k, v in rec.items() if k not in ("saved_file", "edited_outside")}
         entry.update({"outcome": "article", "status": "done"})
-        if cur:                      # keep the answers thread and anything else History knows
-            entry = {**cur, **{k: entry[k] for k in ("article", "title", "article_sources", "sources") if k in entry}}
         history.save(entry)
     except Exception:
         pass
@@ -217,7 +217,7 @@ def save_summary(settings: dict, title: str, query: str, summary: str, sources: 
     d.mkdir(parents=True, exist_ok=True)
     day = (when or dt.date.today().isoformat())[:10]
     target = d / f"{day} {_safe_name(title or query or 'Summary')} (summary).md"
-    target.write_text(summary_markdown(title, query, summary, sources, when), encoding="utf-8")
+    paths.atomic_write_text(target, summary_markdown(title, query, summary, sources, when))
     return target
 
 
@@ -258,21 +258,57 @@ def save_source(page, settings: dict, query: str = "") -> Path:
     return target
 
 
+_import_lock = __import__("threading").Lock()
+
+
+def _same_file(a: Path, b: Path) -> bool:
+    import hashlib
+    try:
+        if a.stat().st_size != b.stat().st_size:
+            return False
+        h = []
+        for p in (a, b):
+            d = hashlib.sha256()
+            with open(p, "rb") as f:
+                for chunk in iter(lambda: f.read(1 << 20), b""):
+                    d.update(chunk)
+            h.append(d.digest())
+        return h[0] == h[1]
+    except OSError:
+        return False
+
+
 def import_files(files: List[str], settings: dict, move: bool = False) -> List[str]:
-    """Copy (or move) files into My library. Returns the new paths."""
-    d = ensure(settings)
+    """Copy (or move) files into My library. Returns the new paths.
+    Never overwrites: a different file with the same name gets " (2)" etc.; an identical file that's already there
+    is skipped (no duplicates); a file that's already inside My library isn't copied onto itself."""
+    d = ensure(settings).resolve()
     out = []
-    for f in files:
-        src = Path(f)
-        if not src.is_file():
-            continue
-        dest = d / src.name
-        n = 2
-        while dest.exists():
-            dest = d / f"{src.stem} ({n}){src.suffix}"
-            n += 1
-        (shutil.move if move else shutil.copy2)(str(src), str(dest))
-        out.append(str(dest))
+    with _import_lock:                       # two imports at once can't pick the same new name
+        for f in files:
+            src = Path(f)
+            if not src.is_file():
+                continue
+            if d in src.resolve().parents:
+                continue
+            dest = d / src.name
+            n = 2
+            duplicate = False
+            while dest.exists():
+                if _same_file(src, dest):
+                    duplicate = True
+                    break
+                dest = d / f"{src.stem} ({n}){src.suffix}"
+                n += 1
+            if duplicate:
+                if move:
+                    try:
+                        src.unlink()        # the same file is already in My library
+                    except OSError:
+                        pass
+                continue
+            (shutil.move if move else shutil.copy2)(str(src), str(dest))
+            out.append(str(dest))
     return out
 
 

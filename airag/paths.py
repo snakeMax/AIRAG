@@ -106,3 +106,32 @@ def dir_size(path: Path) -> int:
     except OSError:
         pass
     return total
+
+
+def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
+    """Writes a file so it's never left half-written: a crash or power cut keeps either the old or the new
+    file, never a broken one. Each writer uses its own temporary name, so two writers can't clash."""
+    import tempfile
+    import time
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix="." + path.name + ".", suffix=".tmp", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding=encoding, newline="") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        for attempt in range(6):            # Windows: a reader can hold the old file open for a moment
+            try:
+                os.replace(tmp, path)
+                return
+            except PermissionError:
+                if attempt == 5:
+                    raise
+                time.sleep(0.05 * (attempt + 1))
+    finally:
+        if os.path.exists(tmp):
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass

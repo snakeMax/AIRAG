@@ -17,6 +17,7 @@ log = logging.getLogger("airag.runs")
 
 MAX_PARALLEL = 1          # default jobs at a time per kind: keeps the AI provider's rate limits and the phone's battery happy
 LIMITS = {"search": 1, "explainer": 1}
+MAX_WAITING = 30          # running + waiting jobs at most, so a stuck button can't queue up paid work
 KEEP_FINISHED = 600       # seconds a finished search stays here (after that it's only in history)
 
 
@@ -34,7 +35,13 @@ class Run:
         self.finished_at: Optional[float] = None
 
     async def emit(self, ev: dict) -> None:
-        self.events.append(ev)
+        last = self.events[-1] if self.events else None
+        if (ev.get("type") == "token" and last is not None and last.get("type") == "token" and len(ev) == 2
+                and len(last) == 2 and len(last.get("text", "")) < 4000):
+            # streamed text: stored as one growing piece (the page only appends it), sent live word by word
+            self.events[-1] = {"type": "token", "text": last["text"] + ev.get("text", "")}
+        else:
+            self.events.append(ev)
         for q in list(self.listeners):
             q.put_nowait(ev)
 
@@ -55,6 +62,10 @@ class Run:
         if self.status == "error":
             out["message"] = next((e.get("message", "") for e in reversed(self.events) if e.get("type") == "error"), "")
         return out
+
+
+class TooManyJobs(RuntimeError):
+    pass
 
 
 RUNS: Dict[str, Run] = {}
@@ -115,6 +126,9 @@ def _schedule() -> None:
 async def _execute(run: Run) -> None:
     status = "done"
     try:
+        from . import usage
+        usage.check_budget()                # checked when the job starts (not while it waits in the queue)...
+        usage.let_running_work_finish()     # ...then it may finish even if it crosses the budget
         await run.factory(run.emit)
         if any(e.get("type") == "error" for e in run.events[-1:]):
             status = "error"
@@ -137,10 +151,14 @@ def start(rid: str, query: str, mode: str, factory: Callable, kind: str = "searc
     _loop = asyncio.get_running_loop()
     _cleanup()
     old = RUNS.get(rid)
+    if old and not old.finished:      # pressed twice: the job is already running or waiting, don't do it twice
+        return old
     if old and old.finished:          # same id again (e.g. rebuilding an explainer): replace the old job
         RUNS.pop(rid)
         if rid in _order:
             _order.remove(rid)
+    if sum(1 for r in RUNS.values() if not r.finished) >= MAX_WAITING:
+        raise TooManyJobs("There are already many tasks waiting. Let some finish (or cancel them) first.")
     run = Run(rid, query, mode, factory, kind, ref)
     RUNS[rid] = run
     _order.append(rid)

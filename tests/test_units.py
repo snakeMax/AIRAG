@@ -57,3 +57,29 @@ def test_interactive_html_is_locked_down():
     from airag.interactive import clean_html
     html = clean_html("```html\n<html><head><title>x</title></head><body>hi</body></html>\n```")
     assert "Content-Security-Policy" in html and html.startswith("<html")
+
+
+def test_damaged_settings_fall_back_to_last_good_copy():
+    from airag import config
+    config.save({"app": {"history_limit": 777}})
+    config.save({"app": {"history_limit": 778}})          # the copy with 777 becomes the backup
+    config.SETTINGS_PATH.write_text('{"app": {"history_lim', encoding="utf-8")    # half-written file
+    assert config.load()["app"]["history_limit"] == 777
+    assert list(config.SETTINGS_PATH.parent.glob("settings.damaged-*.json"))   # the damaged file is kept aside
+    config.save({"app": {"history_limit": 300}})
+
+
+def test_history_updates_dont_overwrite_each_other():
+    import threading
+    from airag import history
+    history.save({"id": "race1", "query": "q", "outcome": "article", "article": "A", "thread": []})
+    def add(i):
+        history.update("race1", lambda r: r.__setitem__("thread", r["thread"] + [i]))
+    ts = [threading.Thread(target=add, args=(i,)) for i in range(20)]
+    [t.start() for t in ts]
+    [t.join() for t in ts]
+    assert sorted(history.get("race1")["thread"]) == list(range(20))
+    history.set_pin("race1", True)
+    history.update("race1", {"article": "B"})
+    history.set_pin("race1", False)
+    assert not history.get("race1").get("pinned")       # the pinned flag isn't written into the record

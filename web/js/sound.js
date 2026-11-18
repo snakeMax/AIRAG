@@ -35,4 +35,4 @@ export function play(name, opts = {}) {
 
 // The phone's media volume (0-100), used as the master volume on Android.
 export function mediaVolume() { try { return Native.getMediaVolume(); } catch { return null; } }
-export function setMediaVolume(v) { try { Native.setMediaVolume(Math.round(v)); } catch { /* old app */ } }
+export function setMediaVolume(v) { try { Native.setMediaVolume((window.__airagKey || ""), Math.round(v)); } catch { /* old app */ } }

@@ -73,3 +73,32 @@ def test_price_matching():
     assert usage.per_million("openrouter", "anthropic/claude-sonnet-5.5") == (3.0, 15.0)
     assert usage.per_million("anthropic", "claude-sonnet-5-5") == (3.0, 15.0)
     usage._prices.clear()
+
+
+def test_budget_stop_covers_every_ai_call_but_lets_running_work_finish():
+    import asyncio
+    import contextvars
+    from airag import config, usage
+    config.save({"usage": {"monthly_budget": 1.0, "stop_at_budget": True}})
+    usage.add("openai", "gpt-4o", 1, 1, False)
+    real = usage.summary
+    usage.summary = lambda s: {**real(s), "spent": 2.0, "budget": 1.0}
+    try:
+        try:
+            usage.check_budget()
+            raise AssertionError("should have stopped")
+        except usage.BudgetUsedUp:
+            pass
+
+        def running_job():
+            usage.let_running_work_finish()
+            usage.check_budget()            # a job that already started may finish
+        contextvars.copy_context().run(running_job)
+        try:
+            usage.check_budget()            # ...but that doesn't leak to other work
+            raise AssertionError("should have stopped")
+        except usage.BudgetUsedUp:
+            pass
+    finally:
+        usage.summary = real
+        config.save({"usage": {"stop_at_budget": False}})
