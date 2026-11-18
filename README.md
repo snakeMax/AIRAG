@@ -29,6 +29,7 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 - **Interactive explainers**: for articles where it helps (physics, statistics, how things work...), AIRAG can generate a small simulation you can play with. It runs sandboxed, with no network access.
 - **Library ("Retrieve & Get")**: add your own folders (Obsidian vaults, PDFs, Word documents, notes) and tick *My library* to include them in searches. Indexed locally.
 - **My library and saving**: save articles as Markdown with their sources (optionally with pictures and the interactive explainer), save light text copies of source pages, and reopen saved articles without the AI.
+- **Background searches**: searches keep going when you leave the page, queue up behind each other, and can be cancelled from the page or from History.
 - **Search again, date ranges and translation**: rerun a search building on what it found before, limit results to a period of time, and translate articles or results with AI.
 - **Android app**, and **Share with my phone** to use your PC's Ollama models from the phone over your home Wi-Fi.
 - **Check & repair** and a **log viewer** in Settings for when something goes wrong.
@@ -45,7 +46,7 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
 
 ### 0.3.0
-The Android app, My library with saving and reopening articles, Search again, date ranges, translation with AI, sharing your PC's Ollama with your phone, a microphone button, an update popup, backups, hardware info and Check & repair. Settings got Defaults and System tabs. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
+The Android app, My library with saving and reopening articles, background searches with a queue and Cancel, Search again, date ranges, translation with AI, sharing your PC's Ollama with your phone, a microphone button, an update popup, backups, hardware info and Check & repair. Settings got Defaults and System tabs. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
 Fixes: summaries now use your search language, DuckDuckGo failures retry, the interactive explainer no longer opens blank, phone screens no longer overflow, and the app no longer shows old screens after updating.
 
 ### 0.2.0 (17 Nov 2026)

@@ -521,5 +521,12 @@
  "lic.name": "The AIRAG name and logo aren't covered: give modified versions your own name and logo.",
  "lic.full": "Full license text",
  "about.testBuild": "Test build (pre-release, based on {v} \u00b7 {c})",
- "upd.testUpToDate": "This is a test build (pre-release). Latest release: {v}"
+ "upd.testUpToDate": "This is a test build (pre-release). Latest release: {v}",
+ "run.cancel": "Cancel search",
+ "run.cancelTip": "Stop this search. Leaving the page doesn't stop it; it keeps going in the background.",
+ "run.cancelled": "Search cancelled",
+ "run.cancelConfirm": "Cancel this search?",
+ "run.queued": "Waiting for {n} earlier search(es) to finish\u2026",
+ "run.queuedShort": "Queued ({n} ahead)",
+ "run.inProgress": "In progress"
 }

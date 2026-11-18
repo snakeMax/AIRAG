@@ -32,12 +32,37 @@ export async function loadSaved() {
 }
 export function closeDrawer() { $("#drawer").hidden = true; if ($("#sheet").hidden) $("#scrim").hidden = true; }
 
+// searches still running or waiting, shown above the finished ones
+async function activeRuns() {
+  return (await api("/api/research/active").catch(() => ({ items: [] }))).items || [];
+}
+
+const activeLabel = a => a.status === "queued" ? t("run.queuedShort", { n: a.position }) : t("run.inProgress");
+
+function activeHtml(list) {
+  return list.map(a => `
+      <a class="h-item h-active" href="#/run/${encodeURIComponent(a.id)}"><span class="spinner sm"></span>
+        <div style="min-width:0"><div class="h-q">${h(a.query)}</div><div class="h-d">${h(activeLabel(a))}</div></div>
+        <button class="icon-btn" data-cancel="${h(a.id)}" title="${h(t("run.cancel"))}">${icon("x")}</button>
+        <button class="icon-btn" data-cancel="${h(a.id)}" data-remove="1" title="${h(t("history.delete"))}">${icon("trash")}</button></a>`).join("");
+}
+
+function wireCancel(el, after) {
+  $$("[data-cancel]", el).forEach(b => (b.onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(t("run.cancelConfirm"))) return;
+    await api(`/api/research/${encodeURIComponent(b.dataset.cancel)}/cancel`, { method: "POST" }).catch(() => {});
+    setTimeout(after, 300);
+  }));
+}
+
 export async function loadHistory() {
   const el = $("#historyList");
   try {
-    const { items } = await api("/api/history");
-    if (!items.length) { el.innerHTML = `<div class="h-empty">${h(t("history.empty"))}</div>`; return; }
-    el.innerHTML = items.map(it => `
+    const [{ items }, active] = await Promise.all([api("/api/history"), activeRuns()]);
+    if (!items.length && !active.length) { el.innerHTML = `<div class="h-empty">${h(t("history.empty"))}</div>`; return; }
+    el.innerHTML = activeHtml(active) + items.map(it => `
       <a class="h-item" href="#/view/${encodeURIComponent(it.id)}">${icon(outcomeIcon(it.outcome))}
         <div style="min-width:0"><div class="h-q">${h(it.title || it.query)}</div>
         <div class="h-d">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}${it.title && it.title !== it.query ? ` · "${h(it.query)}"` : ""}</div></div>
@@ -49,6 +74,7 @@ export async function loadHistory() {
       loadHistory();
       refreshRecent();
     }));
+    wireCancel(el, () => { loadHistory(); refreshRecent(); });
     $$(".h-item", el).forEach(a => a.addEventListener("click", closeDrawer));
   } catch (e) { el.innerHTML = `<div class="h-empty">${h(e.message)}</div>`; }
 }
@@ -56,13 +82,18 @@ export async function loadHistory() {
 export async function refreshRecent() {
   const el = $("#recent");
   try {
-    const { items } = await api("/api/history");
+    const [{ items }, active] = await Promise.all([api("/api/history"), activeRuns()]);
     const saved = `<button type="button" class="link-btn" id="openSaved">${icon("book")}${h(t("saved.title"))}</button>`;
-    if (!items.length) { el.innerHTML = `<div class="recent-head">${saved}</div>`; $("#openSaved").onclick = () => openDrawer("saved"); return; }
-    el.innerHTML = `<div class="recent-head"><h3>${h(t("home.recent"))}</h3>${saved}</div><div class="recent-grid">${items.slice(0, 6).map(it => `
+    const running = active.length ? `<div class="recent-grid" style="margin-bottom:10px">${active.map(a => `
+      <button class="recent-item running" data-run="${h(a.id)}"><span class="spinner sm"></span>
+        <div><div class="ri-t">${h(a.query)}</div><div class="ri-k">${h(activeLabel(a))}</div></div></button>`).join("")}</div>` : "";
+    if (active.length) setTimeout(refreshRecent, 5000);   // keep the status fresh while something runs
+    if (!items.length && !active.length) { el.innerHTML = `<div class="recent-head">${saved}</div>`; $("#openSaved").onclick = () => openDrawer("saved"); return; }
+    el.innerHTML = `<div class="recent-head"><h3>${h(t("home.recent"))}</h3>${saved}</div>${running}<div class="recent-grid">${items.slice(0, 6).map(it => `
       <button class="recent-item" data-id="${h(it.id)}">${icon(outcomeIcon(it.outcome))}
         <div><div class="ri-t">${h(it.title || it.query)}</div><div class="ri-k">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}</div></div></button>`).join("")}</div>`;
-    $$(".recent-item", el).forEach(b => (b.onclick = () => (location.hash = `#/view/${encodeURIComponent(b.dataset.id)}`)));
+    $$(".recent-item[data-id]", el).forEach(b => (b.onclick = () => (location.hash = `#/view/${encodeURIComponent(b.dataset.id)}`)));
+    $$(".recent-item[data-run]", el).forEach(b => (b.onclick = () => (location.hash = `#/run/${encodeURIComponent(b.dataset.run)}`)));
     $("#openSaved").onclick = () => openDrawer("saved");
   } catch { /* server not ready */ }
 }

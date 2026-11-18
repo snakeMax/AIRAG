@@ -104,8 +104,9 @@ export async function api(path, opts = {}) {
 }
 
 // POST that returns newline-delimited JSON events.
-export async function apiStream(path, body, onEvent, signal) {
-  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
+export async function apiStream(path, body, onEvent, signal, method = "POST") {
+  const res = await fetch(path, method === "GET" ? { signal }
+    : { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
     try { msg = (await res.json()).detail || msg; } catch { /* ignore */ }

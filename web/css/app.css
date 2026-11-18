@@ -514,3 +514,9 @@ html, body { overflow-x: hidden; }
 .license li { margin: 3px 0; }
 .license summary { cursor: pointer; font-weight: 600; margin: 4px 0 8px; }
 .license pre { max-height: 260px; }
+.cancel-chip { border: 0; cursor: pointer; font: inherit; font-size: 13px; color: var(--bad); }
+.cancel-chip svg { width: 14px; height: 14px; }
+.h-active { background: var(--accent-soft); }
+.h-item .icon-btn + .icon-btn { margin-left: -6px; }
+.recent-item.running { border-style: dashed; }
+.spinner.sm { width: 16px; height: 16px; border-width: 2px; flex: none; }

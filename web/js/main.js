@@ -2,7 +2,7 @@
 import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
 import { initI18n, t, applyI18n } from "./i18n.js";
 import { loadLocal, setAppearance, onAppearanceChange, effectiveTheme } from "./theme.js";
-import { RUN, startResearch, openRecord, openSaved, setRunHooks } from "./run.js";
+import { RUN, startResearch, openRecord, openSaved, attachRun, setRunHooks } from "./run.js";
 import { openSettings, setSettingsHooks } from "./settings.js";
 import { openSetup, needsSetup, setSetupHooks } from "./setup.js";
 import { showDisclaimer, checkUpdates } from "./banners.js";
@@ -52,6 +52,7 @@ function route() {
     }
   }
   if (hash.startsWith("#/view/")) { openRecord(decodeURIComponent(hash.slice(7))); return; }
+  if (hash.startsWith("#/run/")) { attachRun(decodeURIComponent(hash.slice(6))); return; }
   if (hash.startsWith("#/saved/")) { openSaved(decodeURIComponent(hash.slice(8))); return; }
   if (hash.startsWith("#/settings")) { showHome(); openSettings(hash.split("/")[2] || "general"); history.replaceState(null, "", "#/"); return; }
   showHome();

@@ -3,6 +3,7 @@
     python -m tests.mock          # runs AIRAG on http://localhost:8799 with fake data
 """
 from __future__ import annotations
+import os
 
 import asyncio
 import json
@@ -55,7 +56,7 @@ class MockLLM(LLMProvider):
     fields = [{"key": "model", "label": "Model", "type": "model", "default": "demo"}]
 
     async def complete(self, system, user, max_tokens=2048, json_mode=False):
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(float(os.environ.get('AIRAG_MOCK_DELAY', '0.05')))
         first = user.split("\n")[0].lower()
         if "planning module" in system:
             return json.dumps({"intent": "How many times per second hummingbird wings beat", "answer_type": "number",

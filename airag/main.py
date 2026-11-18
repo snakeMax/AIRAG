@@ -799,11 +799,55 @@ class ResearchReq(BaseModel):
 
 @app.post("/api/research")
 async def research(req: ResearchReq):
+    """Starts a search (or queues it behind a running one) and streams its progress.
+    Closing the stream doesn't stop the search: /api/research/{id}/stream picks it up again."""
+    from . import runs
     settings = config.load()
-    prompts_mod.use(settings)
-    return _ndjson(lambda emit: Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang,
-                                                    req.from_id, req.date_from, req.date_to, req.merge_id,
-                                                    req.extras).run())
+    holder: dict = {}
+
+    async def emit(ev: dict) -> None:
+        await holder["run"].emit(ev)
+    r = Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang, req.from_id,
+                 req.date_from, req.date_to, req.merge_id, req.extras)
+
+    async def go(_emit) -> None:
+        prompts_mod.use(settings)    # the task may start later (queued), so set the prompt settings here
+        await r.run()
+    while r.id in runs.RUNS:          # same question twice in the same second
+        r.id += "-2"
+    holder["run"] = runs.start(r.id, r.query, req.mode, go)
+    return _follow(holder["run"])
+
+
+def _follow(run) -> StreamingResponse:
+    from . import runs
+
+    async def stream():
+        async for ev in runs.follow(run):
+            yield json.dumps(ev, ensure_ascii=False) + "\n"
+    return StreamingResponse(stream(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/research/active")
+def research_active():
+    from . import runs
+    return {"items": runs.active()}
+
+
+@app.get("/api/research/{rid}/stream")
+def research_stream(rid: str):
+    from . import runs
+    run = runs.RUNS.get(rid)
+    if not run:
+        raise HTTPException(404, "That search isn't running any more")
+    return _follow(run)
+
+
+@app.post("/api/research/{rid}/cancel")
+def research_cancel(rid: str):
+    from . import runs
+    return {"cancelled": runs.cancel(rid)}
 
 
 class TranslateReq(BaseModel):

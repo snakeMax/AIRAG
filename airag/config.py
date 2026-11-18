@@ -230,6 +230,8 @@ def load(with_env: bool = True) -> dict:
     raw = load_raw()
     if "defaults" not in raw and raw.get("app", {}).get("include_library"):
         raw["defaults"] = {"library": True}   # 0.2 kept the My library tickbox in "app"
+    if raw.get("research", {}).get("article_max_tokens") == 4096:
+        raw["research"]["article_max_tokens"] = 8192   # old default, too low for reasoning models
     s = _coerce(deep_merge(defaults(), raw))
     if with_env:
         for path, f in _secret_fields():

@@ -20,11 +20,52 @@ function newRun(query, mode, library, dates = emptyRange(), extras = true) {
 }
 
 // live run
+// While a search runs, the address is #/run/<id>: leaving and coming back (or reopening the app) reconnects to it.
+function rememberRun(R) {
+  if (R.id && !R.finished && RUN.current === R) history.replaceState(null, "", `#/run/${encodeURIComponent(R.id)}`);
+}
+
+/** Reconnect to a search that is still running (or queued) on the server. */
+export async function attachRun(id) {
+  RUN.ctrl?.abort();
+  if (RUN.current?.id === id && !RUN.current.finished && RUN.current.ctrl && !RUN.current.ctrl.signal.aborted) { hooks.showView("run"); return; }
+  const ctrl = new AbortController();
+  RUN.ctrl = ctrl;
+  const R = newRun("", "auto", false);
+  R.id = id;
+  R.ctrl = ctrl;
+  RUN.current = R;
+  hooks.showView("run");
+  let shell = false;
+  try {
+    await apiStream(`/api/research/${encodeURIComponent(id)}/stream`, null, ev => {
+      if (RUN.current !== R) return false;
+      if (!shell && (ev.type === "start" || ev.type === "queued" || ev.type === "accepted")) {
+        const q = ev.query || (RUN.active || []).find(a => a.id === id)?.query || "";
+        if (q) { R.query = q; $("#topSearch input").value = q; document.title = `${q} - AIRAG`; }
+        renderShell(R);
+        shell = true;
+      }
+      onEvent(R, ev);
+    }, ctrl.signal, "GET");
+    if (RUN.current === R && !R.finished) finish(R);
+  } catch (e) {
+    if (e.name === "AbortError" || RUN.current !== R) return;
+    // not running any more: show the finished search from history
+    location.hash = `#/view/${encodeURIComponent(id)}`;
+  }
+}
+
+export async function cancelRun(id) {
+  await api(`/api/research/${encodeURIComponent(id)}/cancel`, { method: "POST" }).catch(() => {});
+}
+
 export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
   const R = newRun(query, mode, library, dates, extras);
+  R.ctrl = ctrl;
   RUN.current = R;
   hooks.showView("run");
   scrollTo(0, 0);
@@ -46,9 +87,24 @@ export async function startResearch(query, mode, library, fromId = null, dates =
 
 function onEvent(R, ev) {
   switch (ev.type) {
+    case "accepted": R.id = ev.id; rememberRun(R); break;
+    case "queued":
+      R.id = ev.id;
+      rememberRun(R);
+      setSub(t("run.queued", { n: ev.position }));
+      break;
     case "start":
       Object.assign(R, { id: ev.id, model: ev.model, search: ev.search, created: ev.created || R.created });
+      rememberRun(R);
       setSub(`${ev.model} · ${ev.search}`);
+      break;
+    case "cancelled":
+      R.error = t("run.cancelled");
+      R.cancelled = true;
+      R.steps.filter(s => s.status === "running").forEach(s => upsertStep(R, { ...s, status: "warn" }));
+      renderError(R);
+      finish(R);
+      hooks.refreshRecent();
       break;
     case "step": upsertStep(R, ev); break;
     case "plan": R.plan = ev.plan; setSub(t("run.lookingFor", { x: ev.plan.intent })); break;
@@ -125,6 +181,7 @@ function finish(R) {
   if (R.finished) return;
   R.finished = true;
   $(".again-chip")?.removeAttribute("hidden");
+  $(".cancel-chip")?.setAttribute("hidden", "");
   updateSaveButton(R);
   const ph = $("#phIcon");
   if (ph) { ph.className = "ph-icon " + (R.error ? "err" : "ok"); ph.innerHTML = icon(R.error ? "warn" : "check"); }
@@ -151,6 +208,7 @@ function renderShell(R, done = false) {
       <div class="progress-body"><ol class="steps" id="steps"></ol></div>
     </div>
     <div class="run-filters">${chipHtml("runDates", R.dates)}
+      <button type="button" class="check-chip cancel-chip" data-act="cancel" ${done ? "hidden" : ""} title="${h(t("run.cancelTip"))}">${icon("x")}<span>${h(t("run.cancel"))}</span></button>
       <button type="button" class="check-chip again-chip" data-act="again" ${done ? "" : "hidden"} title="${h(t("run.againTip"))}">${icon("refresh")}<span>${h(t("run.again"))}</span></button></div>
     <div id="output">${done ? "" : `<div class="skel" style="padding:8px 4px"><div style="width:70%"></div><div style="width:92%"></div><div style="width:84%"></div><div style="width:60%"></div></div>`}</div>`;
   $("#runSide").innerHTML = `<div class="sticky"><div class="side-card"><div class="side-title">${h(t("src.title"))} <span class="count" id="srcCount">0</span></div>
@@ -238,6 +296,7 @@ $("#runMain").addEventListener("click", e => {
   const act = b.dataset.act;
   if (act === "article") hooks.go(R.query, "article", R.library, R.id);   // reuse this search's sources
   else if (act === "results") hooks.go(R.query, "results", R.library);
+  else if (act === "cancel") { b.disabled = true; if (R.id) cancelRun(R.id); }
   else if (act === "retry" || act === "again") hooks.go(R.query, R.mode || "auto", R.library, null, R.dates, R.id, R.extras);
   else if (act === "search") hooks.go(b.dataset.q, "auto", R.library);
   else if (act === "settings") hooks.openSettings(b.dataset.tab);
@@ -501,6 +560,14 @@ function renderSuggestions(R) {
 }
 
 function renderError(R) {
+  if (R.cancelled) {
+    $("#output").innerHTML = `<div class="empty"><div class="empty-icon">${icon("x")}</div><h2>${h(t("run.cancelled"))}</h2>
+      <div class="row"><button class="btn primary" data-act="again">${icon("refresh")}${h(t("run.again"))}</button></div></div>`;
+    const ph = $("#phIcon");
+    if (ph) { ph.className = "ph-icon err"; ph.innerHTML = icon("x"); }
+    setSub(t("run.cancelled"));
+    return;
+  }
   const msg = R.error || "Unknown error";
   const cfg = /api key|model|ollama|reach|provider|401|403|404|settings/i.test(msg);
   $("#output").innerHTML = `

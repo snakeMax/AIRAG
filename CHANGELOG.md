@@ -6,6 +6,7 @@ First release with the Android app (same version, same release as the Windows in
 
 - **Android app**: the full AIRAG on your phone, with a layout that fits phone screens, Obsidian vaults and any folder as library sources, light defaults to save battery and data, and updates from GitHub Releases (asks for the "install apps" permission when needed)
 - **Share with my phone**: use the Ollama models on your PC from the phone app over your home Wi-Fi, protected by a pairing code
+- **Searches keep running in the background**: leave the page and come back, or start another search and it waits its turn. A *Cancel search* button stops one, and running or queued searches show at the top of History with cancel and delete buttons (on Android, fully closing the app can still stop a search until 0.4.0)
 - **My library**: your own folder (any drive) for saved articles and files; always searched with *My library* ticked; add files by copying or moving them
 - **Save** articles as Markdown with their sources (optionally with pictures and the interactive explainer), **Save page** on every source for a light text copy, and a **Saved articles** list that opens them without the AI
 - **Search again** on any search, also using the sources it found before (the old search stays in history); failed searches are kept so they can be retried

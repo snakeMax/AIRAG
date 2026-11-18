@@ -125,3 +125,10 @@ def test_backup_round_trip_leaves_out_keys(tmp_path):
     r = backup.import_file(f)
     assert r["history"] == 1 and config.load()["defaults"]["mode"] == "results"
     assert config.load()["llm"]["providers"]["anthropic"]["api_key"] == "my-real-key-1234567890"   # kept
+
+
+def test_old_article_limit_default_is_upgraded():
+    config.save({"research": {"article_max_tokens": 4096}})
+    assert config.load()["research"]["article_max_tokens"] == 8192
+    config.save({"research": {"article_max_tokens": 3000}})          # a value the user chose stays
+    assert config.load()["research"]["article_max_tokens"] == 3000
