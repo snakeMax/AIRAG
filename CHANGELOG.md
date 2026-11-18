@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.0] - unreleased
+## [0.3.0] - 2026-11-18
 
 First release with the Android app (same version, same release as the Windows installer).
 
