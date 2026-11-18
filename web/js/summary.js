@@ -9,6 +9,25 @@ const render = md => { allowLinks([]); try { return renderAll(md); } finally { a
 const cache = new Map();
 let ctrl = null;
 
+/** A summary already made in this session, if any (used by Export web page). */
+export const cachedSummary = key => cache.get(key) || "";
+
+/** Makes a summary without showing the sheet; returns the Markdown text. */
+export async function makeSummary({ kind, query, payload, key }, signal) {
+  if (cache.get(key)) return cache.get(key);
+  let text = "";
+  await apiStream("/api/summarize", { kind, query, payload, ui_lang: uiLang() }, ev => {
+    if (ev.type === "token") text += ev.text;
+    else if (ev.type === "error") throw new Error(ev.message);
+  }, signal);
+  text = stripThink(text);
+  cache.set(key, text);
+  return text;
+}
+
+/** Summary Markdown as HTML (no links). */
+export const summaryHtml = md => render(stripThink(md));
+
 export function closeSummary() {
   ctrl?.abort();
   $("#sheet").hidden = true;

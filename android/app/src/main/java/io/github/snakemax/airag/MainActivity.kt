@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         speech?.onPermission(granted)
     }
     private var speech: Speech? = null
+    private var audioBridge: AudioBridge? = null
     val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) JobService.refresh(this)   // the search already running gets its notification now
     }
@@ -105,6 +106,7 @@ class MainActivity : AppCompatActivity() {
             webChromeClient = WebChromeClient()
         }
         speech = Speech(this, web).also { web.addJavascriptInterface(it, "AIRAGNative") }
+        audioBridge = AudioBridge(this, web).also { web.addJavascriptInterface(it, "AIRAGAudio") }
         val bar = ProgressBar(this).apply { isIndeterminate = true }
         splashText = TextView(this).apply {
             text = getString(R.string.starting)
@@ -180,6 +182,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         Bridge.detach(this)
         speech?.destroy()
+        audioBridge?.destroy()
         if (::web.isInitialized) web.destroy()
         super.onDestroy()
     }

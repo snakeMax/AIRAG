@@ -20,4 +20,6 @@
     <string name="done_search">Finished. Tap to see the result.</string>
     <string name="done_explainer">The interactive explainer is ready. Tap to open it.</string>
     <string name="done_failed">Didn\'t finish. Tap to see what happened.</string>
+    <string name="failed_title">Stopped: %1$s</string>
+    <string name="done_failed_why">Didn\'t finish: %1$s. Tap to see what happened or try again.</string>
 </resources>

@@ -3,10 +3,15 @@
 // Browsers: the Web Speech API where the browser has it. Hidden when neither exists.
 import { $, $$, icon, toast } from "./util.js";
 import { t, uiLang } from "./i18n.js";
+import { play } from "./sound.js";
 
 const Native = window.AIRAGNative;
 const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition;
 let active = null;   // { input, button, rec? }
+let autoSearch = true;
+
+/** Settings -> Defaults: start the search as soon as speaking ends. */
+export function setAutoSearch(on) { autoSearch = on !== false; }
 
 // The desktop window (Edge WebView2) has the Web Speech object but no working recognition service.
 export function speechAvailable(desktopWindow = false) {
@@ -30,7 +35,7 @@ function stop() {
 }
 
 function finish() {
-  if (active) setState(active.button, false);
+  if (active) { setState(active.button, false); play("mic_stop"); }
   active = null;
 }
 
@@ -38,7 +43,12 @@ function onResult(text, final) {
   if (!active || !text) return;
   active.input.value = text;
   active.input.dispatchEvent(new Event("input", { bubbles: true }));
-  if (final) active.input.focus();
+  if (!final) return;
+  active.input.focus();
+  if (autoSearch) {
+    const form = active.input.closest("form");
+    setTimeout(() => form?.requestSubmit(), 250);   // after the final words are in the box
+  }
 }
 
 window.airagSpeech = ev => {   // called by the Android app
@@ -52,6 +62,7 @@ function start(input, button) {
   if (active) { const same = active.button === button; stop(); if (same) return; }
   active = { input, button };
   setState(button, true);
+  play("mic_start");
   if (Native) {
     Native.startSpeech(lang());
     return;

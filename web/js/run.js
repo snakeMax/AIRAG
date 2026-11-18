@@ -7,6 +7,8 @@ import { t, has, uiLang } from "./i18n.js";
 import { openSummary } from "./summary.js";
 import { openInteractive } from "./interactive.js";
 import { jobFor, pokeJobs } from "./activity.js";
+import { ttsAvailable, speak, pause as ttsPause, resume as ttsResume, stop as ttsStop, paused as ttsPaused } from "./tts.js";
+import { exportHtml } from "./export.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -106,7 +108,6 @@ function onEvent(R, ev) {
     case "cancelled":
       R.error = t("run.cancelled");
       R.cancelled = true;
-      R.steps.filter(s => s.status === "running").forEach(s => upsertStep(R, { ...s, status: "warn" }));
       renderError(R);
       finish(R);
       hooks.refreshRecent();
@@ -306,7 +307,19 @@ $("#runMain").addEventListener("click", e => {
   else if (act === "retry" || act === "again") hooks.go(R.query, R.mode || "auto", R.library, null, R.dates, R.id, R.extras);
   else if (act === "search") hooks.go(b.dataset.q, "auto", R.library);
   else if (act === "settings") hooks.openSettings(b.dataset.tab);
-  else if (act === "copy") navigator.clipboard.writeText(articleMarkdown(R)).then(() => toast(t("art.copied")));
+  else if (act === "copy") copyText(articleMarkdown(R)).then(ok => toast(t(ok ? "art.copied" : "art.copyFailed")));
+  else if (act === "listen") {
+    if (ttsPaused()) ttsResume();
+    else if ($("#ttsBtn")?.textContent.includes(t("tts.pause"))) ttsPause();
+    else {
+      const { title, body } = parseArticle(R.md);
+      const plain = stripThink(`${title}\n\n${body}`).replace(/\[\d+(?:,\s*\d+)*\]/g, "").replace(/[#*_>`|]/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+      speak(plain, R.lang || uiLang(), setListenButton);
+    }
+  }
+  else if (act === "listen-stop") ttsStop();
+  else if (act === "pin" && R.id) togglePin(R);
+  else if (act === "export-html") exportHtml(R, $("article.article"));
   else if (act === "save") openSavePop(b, R);
   else if (act === "tr-original") {
     restoreTranslation(R, b.dataset.kind);
@@ -406,7 +419,7 @@ function renderArticle(R) {
       <div class="a-kicker"><span class="pill">${h(t("art.kicker"))}</span><span>${h(t("art.compiled", { n }))}</span></div>
       <h1 class="a-title" id="aTitle">${h(R.query)}</h1>
       <p class="a-dek" id="aDek"></p>
-      <div class="a-byline"><span class="avatar">A</span><div><div class="by-name">${h(t("art.by"))}</div><div class="muted">${h(fmtDate(R.created, uiLang()))} · ${h(R.model)}</div></div>
+      <div class="a-byline"><span class="avatar">A</span><div><div class="by-name">${h(t("art.by"))}</div><div class="muted">${h(fmtDate(R.created, uiLang()))} · ${h(R.model)}<span id="aStats"></span></div></div>
         <div class="a-actions">
           <button class="btn sm" data-act="sum-article">${icon("sparkle")}${h(t("sum.button"))}</button>
           <button class="btn sm has-tip" data-act="interactive" id="interBtn" aria-disabled="true"><span class="lbl row" style="gap:7px">${icon("play")}${h(t("inter.button"))}</span><span class="tip-text" id="interTip">${h(t("inter.checking"))}</span></button>
@@ -414,6 +427,10 @@ function renderArticle(R) {
           <button class="btn sm" data-act="save" id="saveBtn" disabled title="${h(t("save.tip"))}">${icon("download")}${h(t("save.button"))}</button>
           <button class="btn sm ghost" data-act="copy">${icon("copy")}${h(t("art.copy"))}</button>
           <button class="btn sm ghost" data-act="translate-article" id="trArtBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>
+          ${ttsAvailable() ? `<button class="btn sm ghost" data-act="listen" id="ttsBtn" title="${h(t("tts.tip"))}">${icon("speak")}${h(t("tts.listen"))}</button>
+            <button class="btn sm ghost" data-act="listen-stop" id="ttsStop" hidden title="${h(t("tts.stop"))}">${icon("stop")}</button>` : ""}
+          <button class="btn sm ghost" data-act="pin" id="pinBtn" ${R.savedFile ? "hidden" : ""} title="${h(t("pin.tip"))}">${icon("pin")}<span>${h(t(R.pinned ? "pin.unpin" : "pin.pin"))}</span></button>
+          <button class="btn sm ghost" data-act="export-html" title="${h(t("exp.tip"))}">${icon("html")}${h(t("exp.button"))}</button>
         </div></div>
       ${hero ? `<figure class="a-hero" data-img><img src="${h(hero.src)}" alt="${h(hero.title)}" referrerpolicy="no-referrer" ${imgOnErr}>
         <figcaption>${h(hero.title)}${hero.title ? " · " : ""}<a href="${h(safeUrl(hero.page_url))}" target="_blank" rel="noopener noreferrer">${h(hero.credit)}</a></figcaption></figure>` : ""}
@@ -498,6 +515,7 @@ function renderArticleBody(R, final = false) {
   allowLinks([...R.articleSources, ...Object.values(R.sources)].map(x => x.url));
   body.innerHTML = render(md) + (final ? "" : '<span class="cursor"></span>');
   allowLinks(null);
+  if (final) showStats(md);
   const max = R.articleSources.length;
   $$(".cite", body).forEach(c => { if (+c.dataset.n > max || +c.dataset.n < 1) c.classList.add("missing"); });
 }
@@ -527,6 +545,35 @@ function flashSource(n) {
   el.scrollIntoView({ behavior: "smooth", block: "center" });
   el.classList.add("flash");
   setTimeout(() => el.classList.remove("flash"), 1400);
+}
+
+// reading time and word count under the title
+function showStats(md) {
+  const el = $("#aStats");
+  if (!el) return;
+  const text = stripThink(md).replace(/\[\d+(?:,\s*\d+)*\]/g, " ").replace(/[#*_>`\-|[\]()]/g, " ");
+  const cjk = (text.match(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g) || []).length;
+  const words = cjk > 200 ? cjk : (text.match(/\S+/g) || []).length;
+  const minutes = Math.max(1, Math.round(words / (cjk > 200 ? 450 : 230)));
+  el.textContent = " · " + t("art.stats", { min: minutes, words: words.toLocaleString(uiLang()) });
+}
+
+function setListenButton(state) {
+  const b = $("#ttsBtn"), st = $("#ttsStop");
+  if (!b) return;
+  const playing = state === "playing", paused = state === "paused";
+  b.innerHTML = `${icon(playing ? "pause" : "speak")}${h(t(playing ? "tts.pause" : paused ? "tts.resume" : "tts.listen"))}`;
+  st.hidden = !(playing || paused);
+}
+
+async function togglePin(R) {
+  const r = await api(`/api/history/${encodeURIComponent(R.id)}/pin`, { method: "POST", body: { pinned: !R.pinned } }).catch(e => { toast(e.message, 3500); return null; });
+  if (!r) return;
+  R.pinned = r.pinned;
+  const b = $("#pinBtn span");
+  if (b) b.textContent = t(R.pinned ? "pin.unpin" : "pin.pin");
+  toast(t(R.pinned ? "pin.pinned" : "pin.unpinned"));
+  hooks.refreshRecent();
 }
 
 function articleMarkdown(R) {
@@ -577,6 +624,8 @@ function renderSuggestions(R) {
 }
 
 function renderError(R) {
+  // nothing runs any more: stop every step spinner (it starts again with Try again)
+  (R.steps || []).filter(st => st.status === "running").forEach(st => upsertStep(R, { ...st, status: "warn" }));
   if (R.cancelled) {
     $("#output").innerHTML = `<div class="empty"><div class="empty-icon">${icon("x")}</div><h2>${h(t("run.cancelled"))}</h2>
       <div class="row"><button class="btn primary" data-act="again">${icon("refresh")}${h(t("run.again"))}</button></div></div>`;
@@ -599,6 +648,21 @@ function renderError(R) {
   if (ph) { ph.className = "ph-icon err"; ph.innerHTML = icon("warn"); }
   setSub(t("run.stopped"));
 }
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* not allowed here */ }
+  const ta = Object.assign(document.createElement("textarea"), { value: text });
+  ta.style.cssText = "position:fixed;opacity:0";
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch { /* */ }
+  ta.remove();
+  return ok;
+}
+
+// stop reading aloud when leaving the article
+window.addEventListener("hashchange", () => ttsStop());
 
 // saved runs
 export async function openRecord(id, explainer = false) {
@@ -644,6 +708,7 @@ function showRecord(rec) {
     images: rec.images || [], md: rec.article || "", articleSources: rec.article_sources || [], related: rec.related || [],
     results: rec.results || null, suggestions: rec.suggestions || null, elapsed: rec.elapsed, interactive: rec.interactive || null,
     savedPath: rec.saved_path || null, savedFile: rec.saved_file || null, interactiveHtml: rec.interactive_html || "",
+    pinned: !!rec.pinned,
   });
   (rec.sources || []).forEach(s => (R.sources[s.id] = s));
   RUN.current = R;

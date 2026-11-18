@@ -6,6 +6,15 @@
 - **OpenRouter**: new AI provider. One key for hundreds of models; the default `openrouter/auto` picks the best model for each request
 - **Keeps working in the background**: on Android, a notification with a Cancel button keeps searches and explainers running after the app is closed, and a second notification opens the result when it's done (asks once to allow background running). On the PC, closing the window while something runs hides it until the work is done
 - **Activity bar and dot**: a slim bar under the top bar shows what's running in the background (tap to open, ✕ to cancel), and a dot on the History button shows something is running or finished
+- **Sound effects**: soft sounds when the microphone starts and stops, when a search or explainer finishes, and when something fails. Settings → Appearance → Customize audio: per-sound volume (plays a preview when you let go of the slider), your own clips (MP3, OGG, WAV, M4A and more), a master volume that on the phone is the phone's media volume, and Reset to defaults (only applied when you press Save)
+- **Read aloud**: a Listen button on articles reads them with your device's voices (female or male, or pick a voice; adjustable speed), with pause and stop
+- **Search when you stop speaking**: after using the microphone the search starts by itself (Settings → Defaults to turn off)
+- **Export web page**: packs the article into one HTML file that opens in any browser, offline, without AIRAG (to send to someone). Choose whether to add a short summary, the interactive explainer and the pictures; parts that don't exist yet are made first
+- **Pin articles** to the top of the home page; pinned articles are never removed from history automatically
+- **Reading time and word count** under the article title; **Copy as Markdown** (article with its sources)
+- **Library**: only library files that are relevant enough to the question are listed and used (adjustable in Settings → Library)
+- **Notifications**: AIRAG's own icon in the status bar; expand the notification to see everything running or queued; a separate notification (with the reason) when a search or explainer fails
+- **Fixed**: the search spinner kept spinning after a search engine stopped answering and the Try again button showed
 - **Explainers build in the background**: closing the explainer window doesn't stop it; the Interactive button shows a spinner, and clicking it again shows the one being built. Cancel button while building
 
 ## [0.3.0] - 2026-11-18

@@ -273,24 +273,26 @@ object Bridge {
     // ------------------------------------------------------------ background jobs
     /** Python: number of running/queued jobs changed. Keeps the app alive with a notification while count > 0. */
     @JvmStatic
-    fun jobsChanged(count: Int, title: String) {
+    fun jobsChanged(count: Int, title: String, lines: String) {
         val ctx = appContext ?: return
-        JobService.update(ctx, count, title)
+        JobService.update(ctx, count, title, lines)
         if (count > 0) activity()?.let { a -> a.runOnUiThread { askBackgroundPermissions(a) } }
     }
 
     /** Python: a job finished. Shown as a notification that opens the result (hash = page inside the app). */
     @JvmStatic
-    fun jobDone(title: String, status: String, hash: String) {
+    fun jobDone(title: String, status: String, hash: String, reason: String) {
         val ctx = appContext ?: return
         val a = activity()
-        if (a != null && a.isInForeground) return   // the user is looking at the app: the page shows it
-        val text = ctx.getString(when (status) {
-            "done|explainer" -> R.string.done_explainer
-            "done" -> R.string.done_search
-            else -> R.string.done_failed
-        })
-        JobService.done(ctx, title, text, hash)
+        val failed = !status.startsWith("done")
+        // the user is looking at the app: the page shows it (failures are still notified, they're easy to miss)
+        if (a != null && a.isInForeground && !failed) return
+        val text = when (status) {
+            "done|explainer" -> ctx.getString(R.string.done_explainer)
+            "done" -> ctx.getString(R.string.done_search)
+            else -> if (reason.isNotBlank()) ctx.getString(R.string.done_failed_why, reason) else ctx.getString(R.string.done_failed)
+        }
+        JobService.done(ctx, title, text, hash, failed)
     }
 
     /** Once: notifications (Android 13+) and, with an explanation, an exemption from battery optimization. */

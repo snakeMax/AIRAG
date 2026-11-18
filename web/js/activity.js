@@ -3,9 +3,11 @@
 // Other modules listen for the "airag:jobs" event ({detail: {items, recent}}) instead of polling.
 import { $, h, icon, api } from "./util.js";
 import { t } from "./i18n.js";
+import { play } from "./sound.js";
 
 export const JOBS = { items: [], recent: [] };
 let timer = 0, lastSeen = readSeen();
+let known = null;   // finished jobs already seen (no sound for those)
 
 function readSeen() {
   try { return Number(localStorage.getItem("airag.jobsSeen")) || Date.now() / 1000; } catch { return Date.now() / 1000; }
@@ -32,11 +34,22 @@ async function poll() {
     const before = JSON.stringify(JOBS.items.map(j => [j.id, j.status]));
     JOBS.items = r.items || [];
     JOBS.recent = r.recent || [];
+    chime();
     draw();
     if (before !== JSON.stringify(JOBS.items.map(j => [j.id, j.status])))
       window.dispatchEvent(new CustomEvent("airag:jobs", { detail: JOBS }));
   } catch { /* server restarting */ }
   timer = setTimeout(poll, JOBS.items.length ? 2500 : 20000);
+}
+
+// a sound when a search or explainer finishes (or fails) while the app is open
+function chime() {
+  const fresh = JOBS.recent.filter(j => !known?.has(j.id));
+  if (known) {
+    const j = fresh.find(x => x.status !== "cancelled");
+    if (j) play(j.status === "error" ? "task_failed" : j.kind === "explainer" ? "explainer_done" : "search_done");
+  }
+  known = new Set(JOBS.recent.map(j => j.id));
 }
 
 const what = j => j.kind === "explainer" ? t("act.explainer", { q: j.query }) : t("act.search", { q: j.query });

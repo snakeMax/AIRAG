@@ -20,7 +20,7 @@ MASK = "••••"
 DEFAULT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 
-SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage")
+SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage", "audio", "speech")
 
 GENERAL_SCHEMA: dict = {
     "app": [
@@ -54,6 +54,20 @@ GENERAL_SCHEMA: dict = {
         {"key": "dates", "label": "Time range", "type": "select", "default": "any", "options": ["any", "week", "month", "year"]},
         {"key": "translate_to", "label": "Translate into", "type": "hidden", "default": ""},
         {"key": "save_rich", "label": "Save articles with pictures and the explainer", "type": "bool", "default": False},
+        {"key": "speech_autosearch", "label": "Search as soon as you stop speaking", "type": "bool", "default": True,
+         "help": "After speaking into the microphone, the search starts by itself. Off: check or edit the text first."},
+    ],
+    # sound effects (Settings -> Appearance -> Customize audio); edited by its own panel
+    "audio": [
+        {"key": "enabled", "label": "Sound effects", "type": "hidden", "default": True},
+        {"key": "master", "label": "Master volume", "type": "hidden", "default": 80},
+        {"key": "sounds", "label": "", "type": "hidden", "default": {
+            n: {"vol": 70, "file": ""} for n in ("mic_start", "mic_stop", "search_done", "explainer_done", "task_failed")}},
+    ],
+    # read aloud (text to speech)
+    "speech": [
+        {"key": "voice", "label": "Voice", "type": "hidden", "default": "female"},
+        {"key": "rate", "label": "Speed", "type": "hidden", "default": 1.0},
     ],
     # token and cost tracking (Settings -> Usage)
     "usage": [
@@ -73,6 +87,8 @@ GENERAL_SCHEMA: dict = {
          "help": "Comma separated."},
         {"key": "max_file_mb", "label": "Skip files larger than (MB)", "type": "number", "default": 25, "min": 1, "max": 500, "step": 1},
         {"key": "max_results", "label": "Library files read per search", "type": "number", "default": 6, "min": 1, "max": 30, "step": 1},
+        {"key": "min_relevance", "label": "Minimum relevance to use a library file (1-10)", "type": "number", "default": 4, "min": 1, "max": 10, "step": 1,
+         "help": "Library files the AI rates below this for the question are left out and not listed."},
         {"key": "trust", "label": "Default reliability of your own files (0-10)", "type": "number", "default": 6, "min": 0, "max": 10, "step": 1,
          "help": "The AI still judges each file. Personal notes are useful but not independently verified."},
     ],
@@ -173,6 +189,8 @@ def _base_defaults() -> dict:
         "research": field_defaults(GENERAL_SCHEMA["research"]),
         "defaults": field_defaults(GENERAL_SCHEMA["defaults"]),
         "usage": field_defaults(GENERAL_SCHEMA["usage"]),
+        "audio": field_defaults(GENERAL_SCHEMA["audio"]),
+        "speech": field_defaults(GENERAL_SCHEMA["speech"]),
     }
 
 

@@ -130,6 +130,7 @@ class Research:
         self.img_search = get_image_search(settings)
         self.sources: Dict[str, dict] = {}
         self.order: List[str] = []
+        self._last_id = 0
         self.tried: List[str] = []
         self.plan: dict = {}
         self.terms: List[str] = []
@@ -149,10 +150,17 @@ class Research:
         self.steps[sid] = {"id": sid, "label": label, "status": status, "detail": detail}
         await self.emit({"type": "step", **self.steps[sid]})
 
+    def next_id(self) -> int:
+        """Source numbers stay unique even when irrelevant library files are dropped from the list."""
+        self._last_id += 1
+        return self._last_id
+
     def pub(self, s: dict) -> dict:
         return {k: s.get(k) for k in PUBLIC_KEYS if k in s}
 
     async def emit_source(self, s: dict) -> None:
+        if s.get("_quiet"):      # a library file still being checked: only shown once it's relevant
+            return
         await self.emit({"type": "source", "source": self.pub(s)})
 
     def assessed(self) -> List[dict]:
@@ -222,7 +230,7 @@ class Research:
             if src.get("relevance") is None or not src.get("url") or src["url"] in self.sources:
                 continue
             s = {k: v for k, v in src.items() if k not in ("excerpt", "n")}
-            s.update({"id": len(self.order) + 1, "round": 0, "query": "previous search"})
+            s.update({"id": self.next_id(), "round": 0, "query": "previous search"})
             self.sources[s["url"]] = s
             self.order.append(s["url"])
             self.check_dates(s)
@@ -317,7 +325,7 @@ class Research:
         await self.step("plan", "Understanding the question", "done", self.plan.get("intent", ""))
         for src in p["sources"]:
             s = {k: v for k, v in src.items() if k != "excerpt"}
-            s["id"] = len(self.order) + 1
+            s["id"] = self.next_id()
             self.sources[s["url"]] = s
             self.order.append(s["url"])
         await self.emit({"type": "sources", "items": [self.pub(self.sources[u]) for u in self.order]})
@@ -415,20 +423,28 @@ class Research:
             if url in self.sources or not allowed_file(h["path"], self.s):
                 continue
             root_name = Path(h["root"]).name or h["root"]
-            src = {"id": len(self.order) + 1, "url": url, "domain": "library", "title": h["title"],
+            src = {"id": self.next_id(), "url": url, "domain": "library", "title": h["title"],
                    "snippet": h["excerpt"][:240], "query": "library", "round": 0, "rank": len(fresh), "status": "found",
                    "prior": int(lib.get("trust", 6)), "prior_label": f"Your library ({root_name})",
                    "local": True, "path": h["path"], "file_id": h["file_id"], "_text": h["excerpt"],
-                   "site_name": root_name}
+                   "site_name": root_name, "_quiet": True}
             self.sources[url] = src
             self.order.append(url)
             fresh.append(src)
         if fresh:
-            await self.emit({"type": "sources", "items": [self.pub(x) for x in fresh]})
             await asyncio.gather(*(self.read_one(x) for x in fresh))
-        useful = sum(1 for x in fresh if (x.get("relevance") or 0) >= 4 and x.get("findings"))
+        # Only library files that are relevant enough to this question are listed and used
+        min_rel = int(lib.get("min_relevance", 4))
+        useful = [x for x in fresh if (x.get("relevance") or 0) >= min_rel and x.get("findings")]
+        for x in fresh:
+            x.pop("_quiet", None)
+            if x not in useful:
+                self.order.remove(x["url"])          # stays in self.sources so it isn't added again
+        if useful:
+            await self.emit({"type": "sources", "items": [self.pub(x) for x in useful]})
+        useful = len(useful)
         await self.step("library", "Searched your library", "done",
-                        f"{len(fresh)} matching files · {useful} relevant" if fresh else "No matching files")
+                        f"{len(fresh)} matching files checked · {useful} relevant" if fresh else "No matching files")
 
     async def queries_for_round(self, rnd: int) -> List[str]:
         if rnd == 1:
@@ -508,7 +524,7 @@ class Research:
                 if self._skipped(dom):
                     continue
                 prior, prior_label = domain_prior(dom)
-                src = {"id": len(self.order) + 1, "url": url, "domain": dom, "title": item.title, "snippet": item.snippet,
+                src = {"id": self.next_id(), "url": url, "domain": dom, "title": item.title, "snippet": item.snippet,
                        "query": q, "round": rnd, "rank": i, "status": "found", "prior": prior, "prior_label": prior_label}
                 self.sources[url] = src
                 self.order.append(url)

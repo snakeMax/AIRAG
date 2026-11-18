@@ -35,7 +35,8 @@ class JobService : Service() {
             }
             ACTION_STOP -> { stop(); return START_NOT_STICKY }
         }
-        val n = progress(this, intent?.getStringExtra(EXTRA_TITLE) ?: "", intent?.getIntExtra(EXTRA_COUNT, 1) ?: 1)
+        val n = progress(this, intent?.getStringExtra(EXTRA_TITLE) ?: "", intent?.getIntExtra(EXTRA_COUNT, 1) ?: 1,
+            intent?.getStringExtra(EXTRA_LINES) ?: "")
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
         ServiceCompat.startForeground(this, ID_PROGRESS, n, type)
         running = true
@@ -74,10 +75,12 @@ class JobService : Service() {
         const val ACTION_STOP = "io.github.snakemax.airag.STOP_JOBS"
         const val EXTRA_TITLE = "title"
         const val EXTRA_COUNT = "count"
+        const val EXTRA_LINES = "lines"
         const val EXTRA_HASH = "hash"
         @Volatile var running = false
         private var lastTitle = ""
         private var lastCount = 0
+        private var lastLines = ""
         private var doneId = 100
 
         fun channels(ctx: Context) {
@@ -100,7 +103,7 @@ class JobService : Service() {
             return PendingIntent.getActivity(ctx, req, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 
-        fun progress(ctx: Context, title: String, count: Int): Notification {
+        fun progress(ctx: Context, title: String, count: Int, lines: String): Notification {
             channels(ctx)
             val cancel = PendingIntent.getService(ctx, 1, Intent(ctx, JobService::class.java).setAction(ACTION_CANCEL),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -118,23 +121,34 @@ class JobService : Service() {
                 .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .setContentIntent(openApp(ctx, "", 2))
                 .addAction(0, ctx.getString(R.string.job_cancel), cancel)
+                .apply {
+                    // expanded: one line per running or queued job
+                    val all = lines.split("\n").filter { it.isNotBlank() }
+                    if (all.size > 1) {
+                        val style = NotificationCompat.InboxStyle().setBigContentTitle(title)
+                        all.forEach { style.addLine(it) }
+                        setStyle(style)
+                    }
+                }
                 .build()
         }
 
         /** Python reports what's running: count 0 stops the service. */
-        fun update(ctx: Context, count: Int, title: String) {
+        fun update(ctx: Context, count: Int, title: String, lines: String = lastLines) {
             val app = ctx.applicationContext
             lastTitle = title
             lastCount = count
+            lastLines = lines
             if (count <= 0) {
                 if (running) app.startService(Intent(app, JobService::class.java).setAction(ACTION_STOP))
                 return
             }
             if (running) {   // already in the foreground: just refresh the notification
-                try { app.getSystemService(NotificationManager::class.java).notify(ID_PROGRESS, progress(app, title, count)) } catch (_: SecurityException) { }
+                try { app.getSystemService(NotificationManager::class.java).notify(ID_PROGRESS, progress(app, title, count, lines)) } catch (_: SecurityException) { }
                 return
             }
             val i = Intent(app, JobService::class.java).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_COUNT, count)
+                .putExtra(EXTRA_LINES, lines)
             try { ContextCompat.startForegroundService(app, i) } catch (_: Exception) { /* not allowed right now: the job still runs while the app is open */ }
         }
 
@@ -143,13 +157,14 @@ class JobService : Service() {
             if (running && lastCount > 0) update(ctx, lastCount, lastTitle)
         }
 
-        fun done(ctx: Context, title: String, text: String, hash: String) {
+        fun done(ctx: Context, title: String, text: String, hash: String, failed: Boolean = false) {
             val app = ctx.applicationContext
             channels(app)
             val n = NotificationCompat.Builder(app, CHANNEL_DONE)
                 .setSmallIcon(R.drawable.ic_stat_airag)
-                .setContentTitle(title)
+                .setContentTitle(if (failed) app.getString(R.string.failed_title, title) else title)
                 .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
                 .setAutoCancel(true)
                 .setContentIntent(openApp(app, hash, 1000 + doneId))
                 .build()

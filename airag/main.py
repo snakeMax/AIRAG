@@ -825,6 +825,37 @@ async def research(req: ResearchReq):
     return _follow(holder["run"])
 
 
+class SoundReq(BaseModel):
+    data: str
+    ext: str
+
+
+@app.get("/api/sounds/{name}")
+def sound_file(name: str):
+    from . import sounds
+    f = sounds.custom_file(name) or sounds.default_file(name)
+    if not f:
+        raise HTTPException(404, "No such sound")
+    return FileResponse(f, media_type=sounds.TYPES.get(f.suffix[1:].lower(), "audio/wav"),
+                        headers={"Cache-Control": "no-cache"})
+
+
+@app.post("/api/sounds/{name}")
+def sound_upload(name: str, req: SoundReq):
+    from . import sounds
+    try:
+        return {"file": sounds.save(name, req.data, req.ext)}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/api/sounds/{name}")
+def sound_remove(name: str):
+    from . import sounds
+    sounds.remove(name)
+    return {"ok": True}
+
+
 @app.get("/api/usage")
 async def usage_summary():
     from . import usage
@@ -973,6 +1004,58 @@ async def interactive_route(req: InteractiveReq):
 @app.get("/api/history")
 def history_list():
     return {"items": history.listing()}
+
+
+class ExportReq(BaseModel):
+    id: str
+    title: str = ""
+    body_html: str
+    explainer: bool = True
+    explainer_html: str = ""     # only for articles opened from My library (not in history)
+    summary_html: str = ""       # optional short summary shown at the top
+    pictures: bool = True
+    lang: str = "en"
+
+
+@app.post("/api/export/html")
+async def export_html_route(req: ExportReq):
+    """Packs the article (+ explainer) into one standalone HTML file in My library/Exports."""
+    from . import export_html
+    rec = history.get(req.id) or {"outcome": "article", "interactive_html": req.explainer_html[:2_000_000]}
+    if rec.get("outcome") != "article":
+        raise HTTPException(404, "Article not found")
+    if len(req.body_html) > 3_000_000:
+        raise HTTPException(413, "Article too large to export")
+    p = await asyncio.to_thread(export_html.export, rec, config.load(), req.body_html, req.title,
+                                req.explainer, req.lang, req.summary_html, req.pictures)
+    return {"path": str(p), "name": p.name, "size": p.stat().st_size}
+
+
+class ExportOpenReq(BaseModel):
+    name: str
+    reveal: bool = False
+
+
+@app.post("/api/export/open")
+def export_open(req: ExportOpenReq):
+    from . import export_html
+    p = export_html.find(config.load(), req.name)
+    if not p:
+        raise HTTPException(404, "Export not found")
+    _open_path(p, reveal=req.reveal)
+    return {"ok": True}
+
+
+class PinReq(BaseModel):
+    pinned: bool = True
+
+
+@app.post("/api/history/{rid}/pin")
+def history_pin(rid: str, req: PinReq):
+    try:
+        return {"pinned": history.set_pin(rid, req.pinned)}
+    except KeyError:
+        raise HTTPException(404, "Not found")
 
 
 @app.get("/api/history/{rid}")

@@ -65,23 +65,30 @@ _notified: set = set()
 
 def _jobs_changed() -> None:
     """Runs on every job start/finish: keeps the foreground service (and its notification) in step,
-    and posts a notification for each job that finished."""
+    and posts a notification for each job that finished or failed."""
     from . import runs
     items = runs.active()
     running = [j for j in items if j["status"] == "running"] or items
+
+    def line(j: dict) -> str:
+        what = "Explainer" if j["kind"] == "explainer" else "Search"
+        state = "running" if j["status"] == "running" else f"queued ({j['position']} ahead)"
+        return f"{what} {state}: {j['query'][:60]}"
     title = ""
     if running:
         j = running[0]
         title = ("Building explainer: " if j["kind"] == "explainer" else "Researching: ") + j["query"][:80]
     b = _bridge()
-    b.jobsChanged(len(items), title)
+    # the expanded notification lists every job, running or waiting
+    b.jobsChanged(len(items), title, "\n".join(line(j) for j in items[:8]))
     for j in runs.recent():
         if j["id"] in _notified or j["status"] == "cancelled":
             continue
         _notified.add(j["id"])
         explainer = j["kind"] == "explainer"
         hashpart = f"#/view/{j['ref']}" + ("?explainer" if explainer else "")
-        b.jobDone(j["query"][:80], j["status"] + ("|explainer" if explainer else ""), hashpart)
+        b.jobDone(j["query"][:80], j["status"] + ("|explainer" if explainer else ""), hashpart,
+                  (j.get("message") or "")[:200])
 
 
 def cancel_all() -> None:

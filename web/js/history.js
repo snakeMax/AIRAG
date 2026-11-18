@@ -90,9 +90,12 @@ export async function refreshRecent() {
       <button class="recent-item running" data-href="${h(jobHref(a))}"><span class="spinner sm"></span>
         <div><div class="ri-t">${h(a.query)}</div><div class="ri-k">${h(activeLabel(a))}</div></div></button>`).join("")}</div>` : "";
     if (!items.length && !active.length) { el.innerHTML = `<div class="recent-head">${saved}</div>`; $("#openSaved").onclick = () => openDrawer("saved"); return; }
-    el.innerHTML = `<div class="recent-head"><h3>${h(t("home.recent"))}</h3>${saved}</div>${running}<div class="recent-grid">${items.slice(0, 6).map(it => `
-      <button class="recent-item" data-id="${h(it.id)}">${icon(outcomeIcon(it.outcome))}
-        <div><div class="ri-t">${h(it.title || it.query)}</div><div class="ri-k">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}</div></div></button>`).join("")}</div>`;
+    const card = it => `
+      <button class="recent-item${it.pinned ? " pinned" : ""}" data-id="${h(it.id)}">${icon(it.pinned ? "pin" : outcomeIcon(it.outcome))}
+        <div><div class="ri-t">${h(it.title || it.query)}</div><div class="ri-k">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}</div></div></button>`;
+    const pinned = items.filter(it => it.pinned), recent = items.filter(it => !it.pinned).slice(0, 6);
+    el.innerHTML = (pinned.length ? `<div class="recent-head"><h3>${h(t("pin.title"))}</h3></div><div class="recent-grid" style="margin-bottom:14px">${pinned.map(card).join("")}</div>` : "")
+      + `<div class="recent-head"><h3>${h(t("home.recent"))}</h3>${saved}</div>${running}<div class="recent-grid">${recent.map(card).join("")}</div>`;
     $$(".recent-item[data-id]", el).forEach(b => (b.onclick = () => (location.hash = `#/view/${encodeURIComponent(b.dataset.id)}`)));
     $$(".recent-item[data-href]", el).forEach(b => (b.onclick = () => (location.hash = b.dataset.href)));
     $("#openSaved").onclick = () => openDrawer("saved");

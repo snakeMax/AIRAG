@@ -1,0 +1,47 @@
+/* Styles packed into "Export as web page" files (standalone, no AIRAG needed). */
+:root { --bg: #f7f7f8; --surface: #fff; --text: #18181b; --text-2: #52525b; --text-3: #8b8b94; --border: #e4e4e7; --accent: #27272a; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #111113; --surface: #18181b; --text: #ececee; --text-2: #b4b4bb; --text-3: #8b8b94; --border: #2c2c31; --accent: #e4e4e7; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.7 Georgia, "Iowan Old Style", "Times New Roman", serif; }
+.x-page { max-width: 760px; margin: 0 auto; padding: 36px 22px 60px; }
+h1, h2, h3, h4, .a-kicker, .a-byline, figcaption, .x-foot, .a-sources, .a-related, .pill { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+h1 { font-size: 2.1em; line-height: 1.2; margin: .3em 0 .2em; letter-spacing: -.02em; }
+h2 { font-size: 1.35em; margin: 1.8em 0 .5em; }
+h3 { font-size: 1.12em; margin: 1.4em 0 .4em; }
+p, li { color: var(--text); }
+a { color: inherit; text-decoration-color: var(--text-3); text-underline-offset: 3px; }
+.a-kicker { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--text-3); }
+.pill { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; }
+.a-dek { font-size: 1.15em; color: var(--text-2); margin: 0 0 1em; }
+.a-byline { display: flex; gap: 12px; align-items: center; font-size: 13.5px; color: var(--text-3); margin: 14px 0 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.a-byline .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--bg); font-weight: 700; }
+.a-byline .by-name { color: var(--text); font-weight: 600; }
+.a-actions, .cursor, .tr-note { display: none !important; }
+figure { margin: 1.4em 0; }
+figure img, .a-hero img { width: 100%; height: auto; border-radius: 12px; display: block; }
+figcaption { font-size: 12.5px; color: var(--text-3); margin-top: 6px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.gallery-grid figure { margin: 0; }
+.gallery-grid img { aspect-ratio: 4 / 3; object-fit: cover; }
+.cite { font-family: system-ui, sans-serif; font-size: .7em; vertical-align: super; color: var(--text-3); margin-left: 1px; }
+blockquote { margin: 1.2em 0; padding: .2em 1em; border-left: 3px solid var(--border); color: var(--text-2); }
+code { font-family: ui-monospace, Consolas, monospace; font-size: .88em; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+pre { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; overflow-x: auto; }
+pre code { border: 0; padding: 0; }
+table { border-collapse: collapse; width: 100%; font-size: .92em; margin: 1em 0; display: block; overflow-x: auto; }
+th, td { border-bottom: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; }
+.a-sources, .a-related { font-size: 14px; margin-top: 2.4em; padding-top: 1em; border-top: 1px solid var(--border); }
+.a-sources ol { padding-left: 1.4em; }
+.a-sources li { margin: .5em 0; color: var(--text-2); }
+.a-sources img, .fav { width: 14px; height: 14px; vertical-align: -2px; border-radius: 3px; display: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px; font-size: 13px; }
+.x-explainer { margin-top: 2.4em; }
+.x-explainer iframe { width: 100%; height: 640px; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
+.x-foot { margin-top: 3em; font-size: 12.5px; color: var(--text-3); border-top: 1px solid var(--border); padding-top: 12px; }
+@media (max-width: 600px) { body { font-size: 16px; } .x-page { padding: 22px 16px 40px; } h1 { font-size: 1.7em; } .x-explainer iframe { height: 560px; } }
+@media print { .x-explainer { display: none; } body { background: #fff; } }
+.x-summary { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px 18px 8px; margin: 0 0 1.6em; font-size: .95em; }
+.x-summary h2 { font-size: 1em; margin: 12px 0 4px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }

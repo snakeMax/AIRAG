@@ -50,8 +50,11 @@ class Run:
         return self.status in ("done", "error", "cancelled")
 
     def public(self, position: int = 0) -> dict:
-        return {"id": self.id, "query": self.query, "mode": self.mode, "status": self.status, "kind": self.kind,
-                "ref": self.ref, "created": self.created, "finished": self.finished_at, "position": position}
+        out = {"id": self.id, "query": self.query, "mode": self.mode, "status": self.status, "kind": self.kind,
+               "ref": self.ref, "created": self.created, "finished": self.finished_at, "position": position}
+        if self.status == "error":
+            out["message"] = next((e.get("message", "") for e in reversed(self.events) if e.get("type") == "error"), "")
+        return out
 
 
 RUNS: Dict[str, Run] = {}

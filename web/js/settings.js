@@ -5,6 +5,8 @@ import { $, $$, h, icon, api, toast, pollJob, progressBar, fmtBytes, fmtAgo } fr
 import { t, has, uiLang, uiLanguages } from "./i18n.js";
 import { PALETTES, ACCENTS, getAppearance, setAppearance } from "./theme.js";
 import { showUpdatePopup } from "./banners.js";
+import { SOUNDS, play, soundUrl, onPhone, mediaVolume, setMediaVolume, setAudio } from "./sound.js";
+import { ttsAvailable, loadVoices, speak as ttsSpeak, stop as ttsStop, setSpeech } from "./tts.js";
 
 const S = { schema: null, settings: null, info: null, dlg: null, onSaved: null };
 const android = () => S.info?.platform === "android";
@@ -77,7 +79,7 @@ export async function openSettings(tab = "general") {
         <div class="dlg-body">
           <section data-pane="general">${generalPane(sc, st)}</section>
           <section data-pane="defaults" hidden>${defaultsPane(sc, st)}</section>
-          <section data-pane="appearance" hidden>${appearancePane()}</section>
+          <section data-pane="appearance" hidden>${appearancePane()}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
           <section data-pane="model" hidden>${modelPane(sc, st)}</section>
           <section data-pane="search" hidden>${searchPane(sc, st)}</section>
           <section data-pane="library" hidden>${libraryPane(sc, st)}</section>
@@ -108,6 +110,8 @@ export async function openSettings(tab = "general") {
   $$(".dlg-tabs button", dlg).forEach(b => (b.onclick = () => showTab(b.dataset.tab)));
   wireGeneral(dlg);
   wireAppearance(dlg);
+  wireAudio(dlg);
+  wireReadAloud(dlg);
   wireModel(dlg);
   wireSearch(dlg);
   wireLibrary(dlg);
@@ -132,7 +136,11 @@ function collect() {
 async function save() {
   const before = S.settings.app.language;
   try {
-    S.settings = await api("/api/settings", { method: "POST", body: collect() });
+    const out = collect();
+    await saveAudio(out);
+    S.settings = await api("/api/settings", { method: "POST", body: out });
+    S.saved = true;
+    setAudio(S.settings.audio);
     S.dlg.close();
     toast(t("set.saved"));
     S.onSaved?.(S.settings, before !== S.settings.app.language);
@@ -349,6 +357,159 @@ function appearancePane() {
       ${Object.entries(ACCENTS).map(([k, c]) => `<button type="button" class="swatch ${a.accent === k ? "on" : ""}" data-acc="${k}" title="${h(t("acc." + k))}" style="background:${c || "linear-gradient(135deg,#27272a 50%,#e4e4e7 50%)"}"></button>`).join("")}
       <label class="swatch swatch-custom ${custom ? "on" : ""}" title="${h(t("app.accentCustom"))}"><input type="color" id="accCustom" value="${custom ? a.accent : "#2563eb"}"></label>
       <button type="button" class="btn sm ghost" id="appReset">${h(t("app.reset"))}</button></div></div>`;
+}
+
+// customize audio: one row per sound (volume + own clip), master volume, reset.
+// Nothing here takes effect until Save; Cancel leaves everything as it was (the phone volume is put back too).
+const AUDIO_EXT = ".mp3,.ogg,.wav,.m4a,.aac,.opus,.flac,.webm,audio/*";
+const AUDIO_DEFAULT_VOL = 70, AUDIO_DEFAULT_MASTER = 80;
+
+function audioPane(audio) {
+  const phone = onPhone();
+  const master = phone ? (mediaVolume() ?? 50) : (audio.master ?? AUDIO_DEFAULT_MASTER);
+  return `<h3 style="margin-top:22px">${h(t("aud.title"))}</h3><p>${h(t("aud.intro"))}</p>
+    <div class="field"><label class="switch"><input type="checkbox" id="audEnabled" ${audio.enabled !== false ? "checked" : ""}> ${h(t("aud.enabled"))}</label></div>
+    <div class="field aud-row"><label>${icon("volume")} ${h(t(phone ? "aud.masterPhone" : "aud.master"))} <b id="audMasterV">${master}%</b></label>
+      <input type="range" min="0" max="100" step="1" id="audMaster" value="${master}">
+      <div class="help">${h(t(phone ? "aud.masterPhoneHelp" : "aud.masterHelp"))}</div></div>
+    ${SOUNDS.map(n => {
+      const s = audio.sounds?.[n] || {};
+      return `<div class="field aud-row" data-sound="${n}"><label>${h(t("aud." + n))} <b class="aud-v">${s.vol ?? AUDIO_DEFAULT_VOL}%</b></label>
+        <div class="aud-ctl"><button type="button" class="icon-btn sm" data-aud-play title="${h(t("aud.play"))}">${icon("play")}</button>
+          <input type="range" min="0" max="100" step="1" data-aud-vol value="${s.vol ?? AUDIO_DEFAULT_VOL}"></div>
+        <div class="aud-file"><span class="aud-name">${h(s.file ? t("aud.custom", { f: s.file }) : t("aud.builtIn"))}</span>
+          <label class="btn sm ghost">${icon("upload")}${h(t("aud.choose"))}<input type="file" accept="${AUDIO_EXT}" data-aud-file hidden></label>
+          <button type="button" class="btn sm ghost" data-aud-clear ${s.file ? "" : "hidden"}>${h(t("aud.useBuiltIn"))}</button></div></div>`;
+    }).join("")}
+    <div class="row"><button type="button" class="btn sm ghost" id="audReset">${icon("refresh")}${h(t("aud.reset"))}</button>
+      <span class="help">${h(t("aud.resetHelp"))}</span></div>`;
+}
+
+function wireAudio(dlg) {
+  const phone = onPhone();
+  const startVolume = phone ? mediaVolume() : null;
+  // per sound: {src: data URL, ext, name} for a new clip, "builtin" to go back to the built-in one
+  S.pendingSounds = {};
+  S.saved = false;
+  dlg.addEventListener("close", () => {
+    if (!S.saved && phone && startVolume != null) setMediaVolume(startVolume);   // Cancel: phone volume back
+  }, { once: true });
+  const draft = () => {
+    const audio = structuredClone(S.settings.audio);
+    audio.enabled = $("#audEnabled", dlg).checked;
+    audio.master = Number($("#audMaster", dlg).value);
+    $$("[data-sound]", dlg).forEach(row => {
+      const n = row.dataset.sound;
+      audio.sounds[n] = { ...(audio.sounds[n] || {}), vol: Number($("[data-aud-vol]", row).value) };
+      if (S.pendingSounds[n] === "builtin") audio.sounds[n].file = "";
+    });
+    return audio;
+  };
+  const preview = n => {
+    const p = S.pendingSounds[n];
+    const audio = draft();
+    play(n, { force: true, audio, src: p && p !== "builtin" ? p.src : p === "builtin" ? soundUrl(n, { sounds: {} }) : undefined });
+  };
+  $("#audMaster", dlg).oninput = e => { $("#audMasterV", dlg).textContent = e.target.value + "%"; };
+  $("#audMaster", dlg).onchange = e => {   // released: apply (phone) and play an example
+    if (phone) setMediaVolume(Number(e.target.value));
+    preview("search_done");
+  };
+  $$("[data-sound]", dlg).forEach(row => {
+    const n = row.dataset.sound, vol = $("[data-aud-vol]", row);
+    vol.oninput = () => { $(".aud-v", row).textContent = vol.value + "%"; };
+    vol.onchange = () => preview(n);
+    $("[data-aud-play]", row).onclick = () => preview(n);
+    $("[data-aud-file]", row).onchange = e => {
+      const f = e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      if (f.size > 3 * 1024 * 1024) { toast(t("aud.tooBig"), 4000); return; }
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      const r = new FileReader();
+      r.onload = () => {
+        S.pendingSounds[n] = { src: r.result, ext, name: f.name };
+        $(".aud-name", row).textContent = t("aud.newClip", { f: f.name });
+        $("[data-aud-clear]", row).hidden = false;
+        preview(n);
+      };
+      r.readAsDataURL(f);
+    };
+    $("[data-aud-clear]", row).onclick = () => {
+      S.pendingSounds[n] = "builtin";
+      $(".aud-name", row).textContent = t("aud.builtIn");
+      $("[data-aud-clear]", row).hidden = true;
+    };
+  });
+  $("#audReset", dlg).onclick = () => {
+    $("#audEnabled", dlg).checked = true;
+    $("#audMaster", dlg).value = phone ? $("#audMaster", dlg).value : AUDIO_DEFAULT_MASTER;
+    $("#audMasterV", dlg).textContent = $("#audMaster", dlg).value + "%";
+    $$("[data-sound]", dlg).forEach(row => {
+      $("[data-aud-vol]", row).value = AUDIO_DEFAULT_VOL;
+      $(".aud-v", row).textContent = AUDIO_DEFAULT_VOL + "%";
+      S.pendingSounds[row.dataset.sound] = "builtin";
+      $(".aud-name", row).textContent = t("aud.builtIn");
+      $("[data-aud-clear]", row).hidden = true;
+    });
+    toast(t("aud.resetDone"), 3500);
+  };
+  S.audioDraft = draft;
+}
+
+// read aloud: voice (female / male / a specific installed voice) and speed
+function readAloudPane(sp = {}) {
+  if (!ttsAvailable()) return "";
+  const rate = Number(sp.rate) || 1;
+  return `<h3 style="margin-top:22px">${h(t("tts.title"))}</h3><p>${h(t("tts.intro"))}</p>
+    <div class="field"><label for="ttsVoice">${h(t("tts.voice"))}</label>
+      <select id="ttsVoice" data-path="speech.voice"><option value="female" ${sp.voice === "female" || !sp.voice ? "selected" : ""}>${h(t("tts.female"))}</option>
+        <option value="male" ${sp.voice === "male" ? "selected" : ""}>${h(t("tts.male"))}</option>
+        ${sp.voice && sp.voice !== "female" && sp.voice !== "male" ? `<option value="${h(sp.voice)}" selected>${h(sp.voice)}</option>` : ""}</select>
+      <div class="help">${h(t("tts.voiceHelp"))}</div></div>
+    <div class="field aud-row"><label>${h(t("tts.rate"))} <b id="ttsRateV">${rate.toFixed(1)}×</b></label>
+      <div class="aud-ctl"><input type="range" min="0.5" max="2" step="0.1" id="ttsRate" data-path="speech.rate" data-type="number" value="${rate}">
+      <button type="button" class="btn sm ghost" id="ttsTest">${icon("speak")}${h(t("tts.test"))}</button></div></div>`;
+}
+
+function wireReadAloud(dlg) {
+  const sel = $("#ttsVoice", dlg);
+  if (!sel) return;
+  loadVoices().then(list => {
+    const keep = sel.value;
+    const base = uiLang().slice(0, 2);
+    const mine = list.filter(v => (v.lang || "").toLowerCase().startsWith(base)), other = list.filter(v => !mine.includes(v));
+    const opt = v => `<option value="${h(v.id)}">${h(v.name)}${v.gender ? ` (${t("tts." + v.gender)})` : ""} · ${h(v.lang)}</option>`;
+    sel.innerHTML = `<option value="female">${h(t("tts.female"))}</option><option value="male">${h(t("tts.male"))}</option>`
+      + (mine.length ? `<optgroup label="${h(t("tts.yourLang"))}">${mine.map(opt).join("")}</optgroup>` : "")
+      + (other.length ? `<optgroup label="${h(t("tts.otherLangs"))}">${other.map(opt).join("")}</optgroup>` : "");
+    sel.value = [...sel.options].some(o => o.value === keep) ? keep : "female";
+  });
+  $("#ttsRate", dlg).oninput = e => { $("#ttsRateV", dlg).textContent = Number(e.target.value).toFixed(1) + "×"; };
+  $("#ttsTest", dlg).onclick = () => {
+    const before = structuredClone(S.settings.speech || {});
+    setSpeech({ voice: sel.value, rate: Number($("#ttsRate", dlg).value) });
+    ttsSpeak(t("tts.sample"), uiLang(), st => { if (st === "ended" || st === "error") setSpeech(before); });
+  };
+  dlg.addEventListener("close", () => { ttsStop(); setSpeech(S.settings.speech); }, { once: true });
+}
+
+/** On Save: upload new clips / remove replaced ones, then store the audio settings with the rest. */
+async function saveAudio(out) {
+  if (!S.audioDraft) return;
+  const audio = S.audioDraft();
+  for (const [n, p] of Object.entries(S.pendingSounds || {})) {
+    if (p === "builtin") {
+      await api(`/api/sounds/${n}`, { method: "DELETE" });
+      audio.sounds[n].file = "";
+    } else {
+      const r = await api(`/api/sounds/${n}`, { method: "POST", body: { data: p.src, ext: p.ext } });
+      audio.sounds[n].file = r.file;
+    }
+  }
+  if (onPhone()) audio.master = S.settings.audio.master ?? AUDIO_DEFAULT_MASTER;   // the phone's own volume is the master there
+  out.audio = audio;
+  S.pendingSounds = {};
 }
 
 function wireAppearance(dlg) {

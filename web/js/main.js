@@ -9,7 +9,9 @@ import { showDisclaimer, checkUpdates } from "./banners.js";
 import { openDrawer, closeDrawer, refreshRecent } from "./history.js";
 import { closeSummary } from "./summary.js";
 import { chipHtml, openDatePicker, emptyRange, hasRange } from "./dates.js";
-import { initSpeech } from "./speech.js";
+import { initSpeech, setAutoSearch } from "./speech.js";
+import { setAudio } from "./sound.js";
+import { setSpeech } from "./tts.js";
 import { initActivity, markSeen } from "./activity.js";
 
 const state = {
@@ -160,6 +162,13 @@ function wire() {
   addEventListener("airag:library", refreshStatus);
 }
 
+function applyAudio(s) {
+  if (!s) return;
+  setAudio(s.audio);
+  setSpeech(s.speech);
+  setAutoSearch(s.defaults?.speech_autosearch);
+}
+
 // start-up
 async function boot() {
   loadLocal();
@@ -173,6 +182,7 @@ async function boot() {
     api("/api/settings", { method: "POST", body: { app: { appearance, theme_hint: theme } } }).catch(() => {});
   });
   applyDefaults(state.settings?.defaults);
+  applyAudio(state.settings);
   hydrateIcons();
   wire();
   initSpeech(info?.mode === "desktop");
@@ -182,6 +192,7 @@ async function boot() {
     state.settings = s;
     if (langChanged) { location.reload(); return; }
     applyDefaults(s.defaults);
+    applyAudio(s);
     renderModes();
     renderHomeDates();
     refreshStatus();

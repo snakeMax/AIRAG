@@ -543,3 +543,12 @@ html, body { overflow-x: hidden; }
 @keyframes dotPulse { 50% { opacity: .55; } }
 #interBtn.busy { border-style: dashed; }
 .inter-wait .muted.sm { font-size: 12px; margin-top: 6px; }
+.aud-row .aud-ctl { display: flex; align-items: center; gap: 8px; }
+.aud-row .aud-ctl input[type=range], #audMaster { flex: 1; width: 100%; accent-color: var(--accent); }
+.aud-row .aud-file { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: 12.5px; color: var(--text-3); }
+.aud-row .aud-file .aud-name { flex: 1; min-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aud-row label b { font-weight: 550; color: var(--text-3); margin-left: 4px; }
+.recent-item.pinned { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.exp-opt { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; }
+.exp-opt > span { display: flex; flex-direction: column; gap: 2px; }
+.exp-opt .help { margin: 0; }
