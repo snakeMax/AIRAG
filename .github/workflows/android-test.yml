@@ -37,7 +37,9 @@ jobs:
             echo "No signing key secret; building with the debug key."
           fi
       - name: Mark as a test build
-        run: echo "{\"channel\": \"test\", \"commit\": \"${GITHUB_SHA::7}\"}" > airag/build_info.json
+        run: |
+          printf '{"channel": "test", "commit": "%s"}\n' "${GITHUB_SHA::7}" > airag/build_info.json
+          cat airag/build_info.json
       - name: Build APK
         env:
           AIRAG_BUILD_PYTHON: ${{ steps.py.outputs.python-path }}
