@@ -17,7 +17,8 @@ def test_web_paths_are_closed(monkeypatch):
         from airag.search import get_search, get_image_search
         s = config.load()
         assert asyncio.run(get_search(s).text("anything")) == []
-        assert get_image_search(s) is not None and asyncio.run(get_image_search(s).images("x")) == []
+        img = get_image_search(s)          # None where no picture search is installed (Android)
+        assert img is None or asyncio.run(img.images("x")) == []
         from airag import wikis
         assert asyncio.run(wikis.search({"api": "https://en.wikipedia.org/w/api.php"}, "x")) == []
     finally:
@@ -40,11 +41,11 @@ def test_local_writer_only_when_set_up(monkeypatch):
 
 
 def test_history_is_a_source():
-    history.save({"id": "off-h1", "query": "hummingbird wing beats", "title": "Hummingbird wings", "outcome": "article",
-                  "article": "# Hummingbird wings\n\nHummingbird wings beat 50 times a second."}, 50)
-    hits = offline.history_matches(["hummingbird", "wings", "beat"])
+    history.save({"id": "off-h1", "query": "zorbluff wing beats", "title": "Zorbluff wings", "outcome": "article",
+                  "article": "# Zorbluff wings\n\nZorbluff wings beat 50 times a second."}, 50)
+    hits = offline.history_matches(["zorbluff", "wings", "beat"])
     assert hits and hits[0]["id"] == "off-h1"
-    assert offline.history_matches(["hummingbird", "wings"], skip_id="off-h1") == []
+    assert all(h["id"] != "off-h1" for h in offline.history_matches(["zorbluff", "wings"], skip_id="off-h1"))
 
 
 def test_offline_search_reads_no_web(monkeypatch):

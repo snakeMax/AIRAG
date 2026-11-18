@@ -174,9 +174,14 @@ def parse_html(text: str, name: str = "") -> dict:
         rec["images"] = _clean_images(imgs)
         return rec
     # older exports and other web pages: take the readable text
-    import trafilatura
     md = None
-    for fmt in ("markdown", "txt"):
+    try:
+        import trafilatura
+    except ImportError:                   # Android has no trafilatura: plain readable text
+        trafilatura = None
+        from . import filereaders
+        md = filereaders.read(name if name.lower().endswith((".html", ".htm")) else "page.html", text.encode("utf-8")).text
+    for fmt in ("markdown", "txt") if trafilatura else ():
         try:
             md = trafilatura.extract(text, output_format=fmt, include_links=True, include_tables=True)
         except Exception:
