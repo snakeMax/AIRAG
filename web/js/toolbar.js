@@ -54,7 +54,7 @@ export function initToolbar(x) {
   document.addEventListener("pointerdown", e => {
     if (e.target.closest("#rtSel, #rtCalc, .rt-dock, .rt-panel, .rt-fab, dialog")) return;
     hideSel();
-    if (e.target.closest("#aBody, .results")) {
+    if (e.target.closest("#aTitle, #aDek, #aBody, .results")) {
       // Android clears the highlight on every tap, so only forget the text if no new selection follows
       setTimeout(() => { if (getSelection()?.isCollapsed) clearCtx(); }, 450);
     }
@@ -112,7 +112,8 @@ function openAsk(focus = true) {
 function setCtx(text, range) {
   S.ctx = { text, range: range ? range.cloneRange() : null };
   try { if (S.ctx.range && window.Highlight) CSS.highlights.set("rt-ctx", new Highlight(S.ctx.range)); } catch { /* old browser */ }
-  $("#rtCtxText").textContent = "“" + (text.length > 140 ? text.slice(0, 140) + "…" : text) + "”";
+  const one = text.replace(/\s+/g, " ");
+  $("#rtCtxText").textContent = "“" + (one.length > 140 ? one.slice(0, 140) + "…" : one) + "”";
   $("#rtCtx").hidden = false;
   $("#rtAskInput").placeholder = t("rt.askAboutPh");
 }
@@ -129,7 +130,7 @@ function clearCtx() {
 function selText() {
   const sel = getSelection();
   const node = sel?.anchorNode?.parentElement;
-  const live = sel && !sel.isCollapsed && node?.closest("#aBody, .results, .rt-answer") ? sel.toString().trim() : "";
+  const live = sel && !sel.isCollapsed && node?.closest("#aTitle, #aDek, #aBody, .results, .rt-answer") ? sel.toString().trim() : "";
   return live || S.ctx?.text || "";
 }
 
@@ -156,7 +157,7 @@ function onSelection() {
     if (!S.R || !sel || sel.isCollapsed) return;
     const node = sel.anchorNode?.parentElement;
     const inCalc = node?.closest("#rtCalc");
-    if (!node?.closest("#aBody, .results, .rt-answer") && !inCalc) return;
+    if (!node?.closest("#aTitle, #aDek, #aBody, .results, .rt-answer") && !inCalc) return;
     const text = sel.toString().trim();
     if (text.length < 2) return;
     const range = sel.getRangeAt(0);

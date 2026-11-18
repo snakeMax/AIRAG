@@ -151,7 +151,7 @@ Select a formula or sum. The AI turns it into plain maths and the calculator sol
 Copies all sources as **APA**, **MLA** or **BibTeX**, or downloads them (a .bib file for BibTeX).
 
 ### Selected text: Ask about this, Fact-check, Rewrite, Calculate, Copy with source, Voice
-Selecting text in an article shows a small menu (below the selection on phones, so it doesn't cover the phone's own Copy bar).
+Selecting text in an article (title and subheading included) shows a small menu (below the selection on phones, so it doesn't cover the phone's own Copy bar).
 - **The selected text is remembered:** phones drop a selection on the next tap, so AIRAG keeps the text marked and shows it above the question box ("About …"). Every toolbar action uses it until you press ✕ next to it, select something else, or tap elsewhere in the article.
 - **Copy with source:** copies the quote with its sources in your citation style.
 - **Calculate:** only appears when the selection looks like maths.
