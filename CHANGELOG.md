@@ -17,6 +17,16 @@
 - **Locate more sources**: a button on articles that searches for new sources and adds a "What more sources add" section, without rewriting the article
 - **Pin sources**: pin any web source to keep it until you unpin it. Pinned sources are listed on the home page and open as the saved page or an AI-written version (Settings → Defaults), and searches reuse them when they match the question (no download)
 - **Choose which buttons are shown**: Settings → Appearance → Buttons shown (all on by default)
+- **Wikis**: Wikipedia (in your answer language) is searched next to the search engine and trusted by default; add any MediaWiki wiki (Fandom, PsychonautWiki, the Minecraft wiki...) in Settings → Search, with an "Ask AI to describe it" button
+- **YouTube videos can be sources**: their title, description and (when YouTube allows) captions are read, shown with a video preview card. YouTube is no longer blocked by default
+- **Marginalia**: a free independent search engine as an option in Settings → Search
+- **Blocked and favourite sites**: both accept sites (all subdomains) or paths (that directory and below); favourites start with a higher trust score
+- **Locate more sources on results pages** adds the new sources to the results (articles get a new section instead)
+- **Settings → Tools**: one place to show or hide every tool button
+- **Hover previews** (desktop): hovering a link in an article or a result shows the page's title, site, trust and summary
+- **Conflicting sources**: the article goes with the clearly more trustworthy source and says why, or presents both when they're equally trustworthy
+- **Explainers** look up code examples for similar simulations first (can be turned off in Research)
+- **README**: a settings guide explaining every setting and button, with recommended setups
 - **Fixed**: sound effects didn't play (wrong file address, and the phone app only allowed sound right after a tap); a sound's play button now turns into stop while it plays
 - **Fixed**: the search spinner kept spinning after a search engine stopped answering and the Try again button showed
 - **Explainers build in the background**: closing the explainer window doesn't stop it; the Interactive button shows a spinner, and clicking it again shows the one being built. Cancel button while building

@@ -41,6 +41,34 @@ def clean_html(text: str) -> str:
     return t
 
 
+async def code_examples(settings: dict, idea: str, pages: int = 2) -> str:
+    """Looks up a couple of code examples for similar browser simulations (code blocks only, small).
+    Any failure just means no examples."""
+    import re
+    from .fetch import _fetch_http
+    from .search import get_search
+    try:
+        hits = await get_search(settings).text(f"{idea[:120]} javascript canvas simulation example code", n=5)
+    except Exception:
+        return ""
+    out = []
+    for hit in hits[:4]:
+        if len(out) >= pages:
+            break
+        try:
+            page = await _fetch_http(hit.url, settings["fetch"])
+        except Exception:
+            continue
+        if not page.ok:
+            continue
+        # _fetch_http keeps readable text only; code shows up as indented / symbol-heavy lines
+        lines = [ln for ln in page.text.splitlines() if re.search(r"[;{}()=]|=>|function |const |let ", ln)]
+        code = "\n".join(lines)[:2500]
+        if len(code) > 300:
+            out.append(f"From {hit.url}:\n{code}")
+    return "\n\n".join(out)
+
+
 async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool = False) -> dict:
     rec = history.get(rid)
     if not rec or rec.get("outcome") != "article":
@@ -58,7 +86,11 @@ async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool
         raise ValueError(f"An interactive explainer wouldn't help with this article. {info.get('reason', '')}".strip())
     lang = languages.answer_language(settings, ui_lang, rec["query"])
     level = str(settings.get("prompts", {}).get("explainer_level") or "medium")
-    raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang, level),
+    examples = ""
+    if settings.get("research", {}).get("explainer_examples", True) and info.get("idea"):
+        examples = await code_examples(settings, info["idea"])
+    raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang, level,
+                                                  examples),
                              max_tokens=prompts.explainer_level(level)[1])
     html = clean_html(raw)
     rec["interactive_html"] = html

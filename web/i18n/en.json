@@ -705,5 +705,7 @@
  "f.fetch.youtube": "Read YouTube videos",
  "h.fetch.youtube": "Reads a video's title, description and, when YouTube allows it, its captions, so it can be used as a source.",
  "f.fetch.youtube_retries": "YouTube retries",
- "h.fetch.youtube_retries": "How many times to try again when YouTube doesn't answer."
+ "h.fetch.youtube_retries": "How many times to try again when YouTube doesn't answer.",
+ "f.research.explainer_examples": "Explainers: look up code examples first",
+ "h.research.explainer_examples": "Before building an interactive explainer, a quick web search finds code for similar simulations to learn from."
 }

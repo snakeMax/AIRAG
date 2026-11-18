@@ -607,23 +607,39 @@ function articleMarkdown(R) {
 
 // citation tooltips
 const tip = $("#tip");
+// Hover previews (desktop): [n] citations, and links to pages AIRAG read (title, site, trust, summary)
+const hoverable = matchMedia("(hover: hover) and (pointer: fine)").matches;
+function sourceForLink(url) {
+  const R = RUN.current;
+  if (!R || !url) return null;
+  const clean = u => String(u).replace(/#.*$/, "").replace(/\/$/, "");
+  const all = [...(R.articleSources || []), ...Object.values(R.sources || {})];
+  return all.find(x => x.url && clean(x.url) === clean(url)) || null;
+}
 document.addEventListener("mouseover", e => {
   const c = e.target.closest(".cite");
-  if (!c || !RUN.current) return;
-  const s = RUN.current.articleSources.find(x => x.n === +c.dataset.n);
+  const a = !c && hoverable ? e.target.closest("#aBody a[href^='http'], .a-sources a[href^='http'], .result a.r-title") : null;
+  if ((!c && !a) || !RUN.current) return;
+  let s = c ? RUN.current.articleSources.find(x => x.n === +c.dataset.n) : sourceForLink(a.href);
+  if (!s && a) {   // a link to a page AIRAG didn't read: just say where it goes
+    let host = "";
+    try { host = new URL(a.href).hostname.replace(/^www\./, ""); } catch { return; }
+    s = { title: a.textContent.trim() || a.href, domain: host, url: a.href };
+  }
   if (!s) return;
+  const el = c || a;
   tip.innerHTML = `<div class="tt-head">${s.local ? icon("folder") : `<img class="fav" src="${favicon(s.domain)}" alt="">`}<span>${h(s.title || s.url)}</span></div>
-    <div class="tt-meta"><span>${h(srcDomain(s))}</span>${s.source_type ? `<span>${h(s.source_type)}</span>` : ""}${trustBadge(s)}</div>
+    <div class="tt-meta"><span>${h(srcDomain(s))}</span>${s.source_type ? `<span>${h(s.source_type)}</span>` : ""}${s.trust != null || s.prior_label ? trustBadge(s) : ""}</div>
     ${s.summary ? `<p>${h(s.summary)}</p>` : ""}`;
   tip.hidden = false;
-  const r = c.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
   const x = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), innerWidth - tw - 8);
   let y = r.top - th - 10;
   if (y < 70) y = r.bottom + 10;
   tip.style.left = x + "px";
   tip.style.top = y + "px";
 });
-document.addEventListener("mouseout", e => { if (e.target.closest(".cite")) tip.hidden = true; });
+document.addEventListener("mouseout", e => { if (e.target.closest(".cite, #aBody a, .a-sources a, .result a.r-title")) tip.hidden = true; });
 addEventListener("scroll", () => { tip.hidden = true; }, { passive: true });
 document.addEventListener("click", e => {
   const c = e.target.closest(".cite");

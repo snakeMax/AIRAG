@@ -149,6 +149,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "user_agent", "label": "User agent", "type": "text", "default": DEFAULT_UA},
     ],
     "research": [
+        {"key": "explainer_examples", "label": "Explainers: look up code examples first", "type": "bool", "default": True,
+         "help": "Before building an interactive explainer, a quick web search finds code for similar simulations to learn from."},
         {"key": "use_pinned", "label": "Use pinned sources in searches", "type": "bool", "default": True,
          "help": "Pinned pages that match the question are read from their saved copy (no download) and can be cited."},
         {"key": "max_rounds", "label": "Max search rounds", "type": "number", "default": 3, "min": 1, "max": 6, "step": 1,
