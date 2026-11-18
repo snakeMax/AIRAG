@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.0] - unreleased
+## [0.4.0] - 2026-11-18
 
 - **Usage tab**: tokens and cost per AI model this month, with a monthly budget bar (default $5). Exact token counts from Anthropic, OpenAI-compatible APIs and Ollama (estimated otherwise); prices from OpenRouter's public list, updated daily, with built-in prices as a fallback. Optional: tell the AI when 70% of the budget is used, and stop new searches when it's used up
 - **OpenRouter**: new AI provider. One key for hundreds of models; the default `openrouter/auto` picks the best model for each request

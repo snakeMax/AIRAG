@@ -56,6 +56,10 @@ Everything works out of the box. **[SETTINGS.md](SETTINGS.md)** explains every s
 
 Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
 
+### 0.4.0 (18 Nov 2026)
+A research toolbar on every article: ask follow-up questions (typed or spoken) with answers in a side panel, compare, timeline, fact-check, rewrite a paragraph with a side-by-side preview, calculate formulas exactly, and cite sources as APA, MLA or BibTeX. Select any text for quick actions, and the AI can use tools like a calculator and web search while it answers. Analyze pictures and screenshots with vision models (share them to AIRAG on Android). A Usage tab with budget, dollars or tokens, and Quality-or-saving modes. Searches and explainers keep running in the background with notifications, plus sound effects, read aloud, pinned articles and sources, exporting to a web page, Wikipedia and your own wikis, YouTube videos as sources, and explainers that can chart the data in an article.
+Fixes: sound effects play on all devices, the search spinner stops when a search engine stops answering, and selected text is kept on phones.
+
 ### 0.3.0 (18 Nov 2026)
 The Android app, My library with saving and reopening articles, background searches with a queue and Cancel, Search again, date ranges, translation with AI, sharing your PC's Ollama with your phone, a microphone button, an update popup, backups, hardware info and Check & repair. Settings got Defaults and System tabs. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
 Fixes: summaries now use your search language, DuckDuckGo failures retry, the interactive explainer no longer opens blank, phone screens no longer overflow, and the app no longer shows old screens after updating.
