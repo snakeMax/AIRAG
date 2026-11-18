@@ -270,7 +270,7 @@ def _busy_guard(what: str) -> None:
     History) wait until running tasks have finished or been cancelled."""
     if config.guarded() and runs.active():
         raise HTTPException(409, f"{what} would disturb the task that is running, so it waits. Try again when it has "
-                                 "finished, or cancel it first. (Settings → General → Guarded execution)")
+                                 "finished, or cancel it first. (Settings → System → Guarded execution)")
 
 
 @app.post("/api/settings")

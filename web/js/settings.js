@@ -198,6 +198,7 @@ function systemPane(sc, st) {
     <h4>${h(t("gen.storage"))}</h4>
     <div class="list-box" id="storageBox"><div class="list-empty">${h(t("common.loading"))}</div></div>
     <h4>${h(t("sys.maintenance"))}</h4>
+    ${field(sc.app.find(f => f.key === "guarded_execution"), "app", "app.guarded_execution", st.app.guarded_execution)}
     <div class="list-box">
       <div class="list-row"><div class="grow"><div class="lr-t">${h(t("sys.cache"))}</div><div class="lr-s">${h(t("sys.cacheHelp"))}</div></div>
         <button type="button" class="btn sm" id="clearCache">${icon("refresh")}${h(t("sys.clearCache"))}</button></div>
