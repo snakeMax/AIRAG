@@ -13,10 +13,19 @@ First release with the Android app (same version, same release as the Windows in
 - **Date range filter** before and after searching, with past week/month/year shortcuts; pages outside the range are left out
 - **Translate with AI** for articles and results, with *Show original*
 - **Check & repair** in Settings: checks program files, settings, the library index and saved searches, fixes them, or reinstalls the current version
-- **Log viewer** in Settings → About (keys and codes hidden), and the local port is shown there
+- **Settings reorganized** with tooltips on every tab, a new **Defaults** tab (search mode, My library, pictures & explainer, time range, translation language, saving with pictures) and a new **System** tab (this device's hardware, updates, check & repair, storage, cache, backups and logs)
+- **Update popup** when a new version is out (Update now / Later / Skip this version)
+- **Microphone button** to speak your search (Android and browsers)
+- **Hardware info** for your PC (processor, memory, graphics card and its memory) and phone; Ollama suggestions use your graphics memory
+- **Backups**: export and import settings and history (API keys only if you choose)
+- **Pictures & explainer** switch by the search bar: turn it off to save tokens; models that can see images pick the article pictures
+- **Interactive explainer detail**: simple, medium or detailed
+- **License** in plain words in Settings → About
+- **Log viewer** (keys and codes hidden) and the local port in Settings
 - Security: text from web pages and files that tries to instruct the AI is removed and flagged, data sent to the AI is fenced with random markers, secrets are redacted, links in AI text only point to real sources, the local API only accepts AIRAG's own page, and the library never reads AIRAG's own folders or likely secret files
 - AIRAG now knows today's date and time, and prefers recent pages for news and "latest" questions
-- Fewer AI calls and tokens per search (duplicate and off-topic pages are skipped)
+- Fewer AI calls and tokens per search (copies of the same article are read once, off-topic pages get a short read)
+- Longer default article limit (8192 tokens), so long articles from reasoning models aren't cut off
 
 Bug fixes:
 - Summaries are written in the language of your question, not of the page
@@ -24,6 +33,8 @@ Bug fixes:
 - The interactive explainer no longer opens blank in some browsers
 - On narrow screens the top bar, tooltips and the page width no longer overflow
 - The *My library* tickbox is always visible
+- After an update the app no longer keeps showing the previous version's screens
+- The phone app uses your own time zone, and dates follow your device's format
 
 ## [0.2.0] - 2026-11-17
 

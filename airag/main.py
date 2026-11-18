@@ -108,7 +108,8 @@ def ping():
 
 @app.get("/api/app/info")
 def app_info():
-    return {"version": __version__, "repo": __repo__, "mode": appctl.mode, "frozen": paths.FROZEN,
+    from . import build_info
+    return {"version": __version__, "build": build_info(), "repo": __repo__, "mode": appctl.mode, "frozen": paths.FROZEN,
             "portable": paths.is_portable(), "platform": paths.PLATFORM, "port": appctl.port, "can_self_update": updater.can_self_update(),
             "config_dir": str(paths.CONFIG_DIR), "local_dir": str(paths.LOCAL_DIR),
             "languages": languages.public_list(), "can_restart": appctl.mode in ("desktop", "browser")}

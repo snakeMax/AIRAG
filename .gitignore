@@ -35,3 +35,6 @@ Thumbs.db
 /android/app/build/
 /android/local.properties
 /android/.idea/
+
+# written by the Android test-build workflow
+/airag/build_info.json

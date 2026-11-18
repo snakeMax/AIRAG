@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/icon-512.png" width="120" alt="AIRAG"></p>
 
 <h1 align="center">AIRAG</h1>
-<p align="center"><b>AI Research Article Generation</b><br>A search engine that reads the pages for you, and writes the article when nobody else has.</p>
+<p align="center"><b>AI Research Article Generation</b><br>An open-source agentic research harness for intelligence gathering: it searches the web and your own files, weighs every source, and turns scattered information into one cited, readable article, with local models through Ollama or the AI services you already use, without burning through your tokens.</p>
 <p align="center"><sub>Built with the assistance of Claude Code.</sub></p>
 
 > **Quick install (Windows 10/11)**
@@ -45,8 +45,8 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
 
 ### 0.3.0
-The Android app, My library with saving and reopening articles, Search again, date ranges, translation, sharing your PC's Ollama with your phone, and Check & repair. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
-Fixes: summaries now use your search language, DuckDuckGo failures retry, the interactive explainer no longer opens blank, and phone screens no longer overflow.
+The Android app, My library with saving and reopening articles, Search again, date ranges, translation with AI, sharing your PC's Ollama with your phone, a microphone button, an update popup, backups, hardware info and Check & repair. Settings got Defaults and System tabs. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
+Fixes: summaries now use your search language, DuckDuckGo failures retry, the interactive explainer no longer opens blank, phone screens no longer overflow, and the app no longer shows old screens after updating.
 
 ### 0.2.0 (17 Nov 2026)
 First public release: Windows installer, research agent with results/articles/suggestions, summaries, interactive explainers, local library, Ollama and cloud AI support, 9 languages, themes and automatic updates.

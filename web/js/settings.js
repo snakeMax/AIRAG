@@ -217,7 +217,7 @@ async function refreshSystem() {
     ...(d.gpus || []).map(g => row(t("sys.gpu"), g.name + (g.vram_gb ? ` · ${g.vram_gb} GB ${t("sys.vram")}` : ""))),
     dev.storage_total_gb ? row(t("sys.storage"), `${t("sys.free", { n: dev.storage_free_gb })} / ${dev.storage_total_gb} GB`) : "",
     ...(d.disks || []).map(k => row(t("sys.disk"), `${t("sys.free", { n: k.free_gb })} / ${k.total_gb} GB · ${k.path}`)),
-    row(t("sys.app"), `AIRAG ${d.app_version} · Python ${d.python}`),
+    row(t("sys.app"), `AIRAG ${versionLabel(d.app_version, d.build)} · Python ${d.python}`),
   ].join("");
 }
 
@@ -233,7 +233,10 @@ function wireSystem(dlg) {
       el.textContent = t("banner.update", { v: u.latest });
       showUpdatePopup(u);
     } else if (u.error) { el.className = "status-line err"; el.textContent = u.error; }
-    else { el.className = "status-line ok"; el.textContent = t("gen.upToDate", { v: u.current }); }
+    else {
+      el.className = "status-line ok";
+      el.textContent = u.channel === "test" ? t("upd.testUpToDate", { v: u.latest || u.current }) : t("gen.upToDate", { v: u.current });
+    }
   };
   $("#clearCache", dlg).onclick = async () => {
     const r = await api("/api/app/clear-cache", { method: "POST" }).catch(e => ({ error: e.message }));
@@ -669,11 +672,17 @@ async function refreshBrowser(job) {
 
 
 // about
+// "0.2.0", "Test build (based on 0.2.0 · abc1234)" or "0.2.0 (source)"
+function versionLabel(v, build) {
+  if (build?.channel === "test") return t("about.testBuild", { v, c: build.commit || "?" });
+  return v + (build?.channel === "source" ? " (source)" : "");
+}
+
 function aboutPane() {
   const i = S.info;
   return `<h3>AIRAG ${h(i.version)}</h3><p>${h(t("app.tagline"))}</p>
     <div class="list-box">
-      <div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.version"))}</div><div class="lr-s">${h(i.version)}${i.frozen ? "" : " (source)"}${i.portable ? " · portable" : ""}</div></div></div>
+      <div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.version"))}</div><div class="lr-s">${h(versionLabel(i.version, i.build))}${i.portable ? " · portable" : ""}</div></div></div>
       ${i.port ? `<div class="list-row"><div class="grow"><div class="lr-t">${h(t("about.port"))}</div><div class="lr-s mono">${h(i.port)}</div></div></div>` : ""}
       <div class="list-row"><div class="grow"><div class="lr-t">GitHub</div><div class="lr-s">github.com/${h(i.repo)}</div></div>
         <a class="btn sm" href="https://github.com/${h(i.repo)}" target="_blank" rel="noopener">${icon("ext")}${h(t("about.open"))}</a></div>

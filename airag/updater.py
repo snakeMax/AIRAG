@@ -81,7 +81,8 @@ async def check(force: bool = False) -> dict:
         cached = _read_cache()
         if cached:
             return cached
-    info = {"current": __version__, "latest": None, "newer": False, "checked": time.time(),
+    from . import build_info
+    info = {"current": __version__, "channel": build_info()["channel"], "latest": None, "newer": False, "checked": time.time(),
             "can_self_update": can_self_update(), "repo": __repo__}
     try:
         rel = await _release()

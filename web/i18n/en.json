@@ -519,5 +519,7 @@
  "lic.must": "Copies and changed versions must keep the copyright notice and this license text.",
  "lic.not": "You can't remove the copyright notice or claim you wrote the original, and it comes without any warranty.",
  "lic.name": "The AIRAG name and logo aren't covered: give modified versions your own name and logo.",
- "lic.full": "Full license text"
+ "lic.full": "Full license text",
+ "about.testBuild": "Test build (pre-release, based on {v} \u00b7 {c})",
+ "upd.testUpToDate": "This is a test build (pre-release). Latest release: {v}"
 }

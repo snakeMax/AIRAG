@@ -116,7 +116,8 @@ def info(refresh: bool = False) -> dict:
     if _cache and not refresh:
         return _cache
     from .ollama_manager import total_ram_gb
-    out = {"app_version": __version__, "platform": paths.PLATFORM, "python": platform.python_version(),
+    from . import build_info
+    out = {"app_version": __version__, "build": build_info(), "platform": paths.PLATFORM, "python": platform.python_version(),
            "os": f"{platform.system()} {platform.release()}".strip(), "machine": platform.machine(),
            "cpu": _cpu_name(), "cores": os.cpu_count() or 0, "ram_gb": total_ram_gb(), "gpus": _gpus(),
            "disks": [d for d in (_disk(paths.CONFIG_DIR), _disk(paths.LOCAL_DIR)) if d]}
