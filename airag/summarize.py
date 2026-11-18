@@ -41,6 +41,13 @@ async def summarize(settings: dict, kind: str, query: str, payload: dict, ui_lan
                 raise ValueError(f"Couldn't read the page: {page.error}")
             what = f"web page ({page.title or url})"
             text = select_passages(page.text, terms, 12000)
+    elif kind == "pinned":
+        from . import pinned
+        item = pinned.get(str(payload.get("id", "")))
+        if not item:
+            raise ValueError("That source isn't pinned any more")
+        what = f"web page the reader pinned ({item['title']})"
+        text = select_passages(item["text"], terms or tokenize(item.get("query") or item["title"]), 14000)
     else:
         what, text = "text", str(payload.get("text", ""))[:20000]
     text, _ = guard.clean(text, settings)

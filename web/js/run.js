@@ -9,6 +9,7 @@ import { openInteractive } from "./interactive.js";
 import { jobFor, pokeJobs } from "./activity.js";
 import { ttsAvailable, speak, pause as ttsPause, resume as ttsResume, stop as ttsStop, paused as ttsPaused } from "./tts.js";
 import { exportHtml } from "./export.js";
+import { pinButton, togglePinSource } from "./pins.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -67,12 +68,13 @@ export async function cancelRun(id) {
 // the explainer button follows background explainer jobs
 window.addEventListener("airag:jobs", () => { if (RUN.current?.finished) updateInteractiveButton(RUN.current); });
 
-export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true) {
+export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true, extendId = null) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
   const R = newRun(query, mode, library, dates, extras);
   R.ctrl = ctrl;
+  R.extend = extendId;
   RUN.current = R;
   hooks.showView("run");
   scrollTo(0, 0);
@@ -81,7 +83,7 @@ export async function startResearch(query, mode, library, fromId = null, dates =
   renderShell(R);
   try {
     await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId,
-      date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId, extras }, ev => {
+      date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId, extras, extend_id: extendId }, ev => {
       if (RUN.current !== R) return false;
       onEvent(R, ev);
     }, ctrl.signal);
@@ -130,6 +132,13 @@ function onEvent(R, ev) {
       R.id = ev.id;
       R.elapsed = ev.elapsed;
       finish(R);
+      if (ev.extended !== undefined) {   // "Locate more sources": show the updated article
+        toast(ev.extended ? t("more.added", { n: ev.extended }) : t("more.none"), 4500);
+        history.replaceState(null, "", `#/view/${encodeURIComponent(ev.id)}`);
+        RUN.current = null;
+        openRecord(ev.id);
+        break;
+      }
       if (ev.id) history.replaceState(null, "", `#/view/${encodeURIComponent(ev.id)}`);
       hooks.refreshRecent();
       break;
@@ -292,7 +301,7 @@ function sourceActions(s) {
   const lib = s.local ? `<button class="link-btn" data-act="lib-open" data-fid="${s.file_id}">${icon("ext")}${h(t("lib.open"))}</button>
     <button class="link-btn" data-act="lib-reveal" data-fid="${s.file_id}">${icon("folder")}${h(t("lib.reveal"))}</button>` : "";
   const save = s.local ? "" : `<button class="link-btn" data-act="save-source" data-sid="${s.id}" title="${h(t("save.sourceTip"))}">${icon("download")}${h(t("save.source"))}</button>`;
-  return `<button class="link-btn" data-act="sum-source" data-sid="${s.id}">${icon("sparkle")}${h(t("sum.button"))}</button>${save}${lib}`;
+  return `<button class="link-btn" data-act="sum-source" data-sid="${s.id}">${icon("sparkle")}${h(t("sum.button"))}</button>${save}${pinButton(s)}${lib}`;
 }
 
 // clicks inside the output area
@@ -319,6 +328,7 @@ $("#runMain").addEventListener("click", e => {
   }
   else if (act === "listen-stop") ttsStop();
   else if (act === "pin" && R.id) togglePin(R);
+  else if (act === "more-sources" && R.id && R.finished) startResearch(R.query, "article", R.library, null, R.dates, null, false, R.id);
   else if (act === "export-html") exportHtml(R, $("article.article"));
   else if (act === "save") openSavePop(b, R);
   else if (act === "tr-original") {
@@ -344,6 +354,9 @@ $("#runMain").addEventListener("click", e => {
   } else if (act === "sum-source") {
     const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
     if (s) openSummary({ kind: "source", query: R.query, payload: { url: s.url }, label: s.title || s.url, key: `s:${s.url}` });
+  } else if (act === "pin-source") {
+    const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
+    if (s) togglePinSource(s, R.query, b);
   } else if (act === "save-source") {
     const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
     if (!s) return;
@@ -424,6 +437,7 @@ function renderArticle(R) {
           <button class="btn sm" data-act="sum-article">${icon("sparkle")}${h(t("sum.button"))}</button>
           <button class="btn sm has-tip" data-act="interactive" id="interBtn" aria-disabled="true"><span class="lbl row" style="gap:7px">${icon("play")}${h(t("inter.button"))}</span><span class="tip-text" id="interTip">${h(t("inter.checking"))}</span></button>
           <button class="btn sm ghost" data-act="results">${icon("list")}${h(t("art.results"))}</button>
+          <button class="btn sm ghost" data-act="more-sources" ${R.savedFile ? "hidden" : ""} title="${h(t("more.tip"))}">${icon("search")}${h(t("more.button"))}</button>
           <button class="btn sm" data-act="save" id="saveBtn" disabled title="${h(t("save.tip"))}">${icon("download")}${h(t("save.button"))}</button>
           <button class="btn sm ghost" data-act="copy">${icon("copy")}${h(t("art.copy"))}</button>
           <button class="btn sm ghost" data-act="translate-article" id="trArtBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>

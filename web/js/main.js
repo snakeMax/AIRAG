@@ -12,7 +12,9 @@ import { chipHtml, openDatePicker, emptyRange, hasRange } from "./dates.js";
 import { initSpeech, setAutoSearch } from "./speech.js";
 import { setAudio } from "./sound.js";
 import { setSpeech } from "./tts.js";
+import { applyButtons } from "./buttons.js";
 import { initActivity, markSeen } from "./activity.js";
+import { loadPins, openPinned, setPinHooks } from "./pins.js";
 
 const state = {
   mode: "auto",
@@ -60,6 +62,7 @@ function route() {
     openRecord(decodeURIComponent(id), extra === "explainer");
     return;
   }
+  if (hash.startsWith("#/pinned/")) { openPinned(decodeURIComponent(hash.slice(9))); return; }
   if (hash.startsWith("#/run/")) { attachRun(decodeURIComponent(hash.slice(6))); return; }
   if (hash.startsWith("#/saved/")) { openSaved(decodeURIComponent(hash.slice(8))); return; }
   if (hash.startsWith("#/settings")) { showHome(); openSettings(hash.split("/")[2] || "general"); history.replaceState(null, "", "#/"); return; }
@@ -167,6 +170,7 @@ function applyAudio(s) {
   setAudio(s.audio);
   setSpeech(s.speech);
   setAutoSearch(s.defaults?.speech_autosearch);
+  applyButtons(s.buttons);
 }
 
 // start-up
@@ -187,6 +191,8 @@ async function boot() {
   wire();
   initSpeech(info?.mode === "desktop");
   initActivity();
+  setPinHooks({ showView, defaultView: () => state.settings?.defaults?.pinned_view });
+  loadPins();
   setRunHooks({ go, openSettings, showView, refreshRecent, defaults: () => state.settings?.defaults });
   setSettingsHooks({ onSaved: (s, langChanged) => {
     state.settings = s;

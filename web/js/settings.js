@@ -79,7 +79,7 @@ export async function openSettings(tab = "general") {
         <div class="dlg-body">
           <section data-pane="general">${generalPane(sc, st)}</section>
           <section data-pane="defaults" hidden>${defaultsPane(sc, st)}</section>
-          <section data-pane="appearance" hidden>${appearancePane()}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
+          <section data-pane="appearance" hidden>${appearancePane()}${buttonsPane(sc, st)}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
           <section data-pane="model" hidden>${modelPane(sc, st)}</section>
           <section data-pane="search" hidden>${searchPane(sc, st)}</section>
           <section data-pane="library" hidden>${libraryPane(sc, st)}</section>
@@ -405,11 +405,28 @@ function wireAudio(dlg) {
     });
     return audio;
   };
+  let playing = null;   // { el, btn }
+  const stopPreview = () => {
+    if (!playing) return;
+    try { playing.el.pause(); } catch { /* */ }
+    if (playing.btn) playing.btn.innerHTML = icon("play");
+    playing = null;
+  };
+  // plays a sound with the volumes set on this page; its play button turns into stop while it plays
   const preview = n => {
+    stopPreview();
     const p = S.pendingSounds[n];
     const audio = draft();
-    play(n, { force: true, audio, src: p && p !== "builtin" ? p.src : p === "builtin" ? soundUrl(n, { sounds: {} }) : undefined });
+    const el = play(n, { force: true, audio, src: p && p !== "builtin" ? p.src : p === "builtin" ? soundUrl(n, audio, true) : undefined });
+    if (!el) { toast(t("aud.muted"), 2500); return; }
+    const btn = $(`[data-sound="${n}"] [data-aud-play]`, dlg);
+    playing = { el, btn };
+    if (btn) btn.innerHTML = icon("stop");
+    const done = () => { if (playing?.el === el) stopPreview(); };
+    el.addEventListener("ended", done);
+    el.addEventListener("error", () => { done(); toast(t("aud.cantPlay"), 3500); });
   };
+  dlg.addEventListener("close", stopPreview, { once: true });
   $("#audMaster", dlg).oninput = e => { $("#audMasterV", dlg).textContent = e.target.value + "%"; };
   $("#audMaster", dlg).onchange = e => {   // released: apply (phone) and play an example
     if (phone) setMediaVolume(Number(e.target.value));
@@ -419,7 +436,7 @@ function wireAudio(dlg) {
     const n = row.dataset.sound, vol = $("[data-aud-vol]", row);
     vol.oninput = () => { $(".aud-v", row).textContent = vol.value + "%"; };
     vol.onchange = () => preview(n);
-    $("[data-aud-play]", row).onclick = () => preview(n);
+    $("[data-aud-play]", row).onclick = () => (playing?.btn === $("[data-aud-play]", row) ? stopPreview() : preview(n));
     $("[data-aud-file]", row).onchange = e => {
       const f = e.target.files[0];
       e.target.value = "";
@@ -455,6 +472,13 @@ function wireAudio(dlg) {
     toast(t("aud.resetDone"), 3500);
   };
   S.audioDraft = draft;
+}
+
+// which tool buttons are shown
+function buttonsPane(sc, st) {
+  if (!sc.buttons) return "";
+  return `<h3 style="margin-top:22px">${h(t("btns.title"))}</h3><p>${h(t("btns.intro"))}</p>
+    <div class="btn-grid">${fields(sc.buttons, "buttons", "buttons", st.buttons)}</div>`;
 }
 
 // read aloud: voice (female / male / a specific installed voice) and speed

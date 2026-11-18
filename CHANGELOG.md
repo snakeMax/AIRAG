@@ -14,6 +14,10 @@
 - **Reading time and word count** under the article title; **Copy as Markdown** (article with its sources)
 - **Library**: only library files that are relevant enough to the question are listed and used (adjustable in Settings → Library)
 - **Notifications**: AIRAG's own icon in the status bar; expand the notification to see everything running or queued; a separate notification (with the reason) when a search or explainer fails
+- **Locate more sources**: a button on articles that searches for new sources and adds a "What more sources add" section, without rewriting the article
+- **Pin sources**: pin any web source to keep it until you unpin it. Pinned sources are listed on the home page and open as the saved page or an AI-written version (Settings → Defaults), and searches reuse them when they match the question (no download)
+- **Choose which buttons are shown**: Settings → Appearance → Buttons shown (all on by default)
+- **Fixed**: sound effects didn't play (wrong file address, and the phone app only allowed sound right after a tap); a sound's play button now turns into stop while it plays
 - **Fixed**: the search spinner kept spinning after a search engine stopped answering and the Try again button showed
 - **Explainers build in the background**: closing the explainer window doesn't stop it; the Interactive button shows a spinner, and clicking it again shows the one being built. Cancel button while building
 

@@ -35,7 +35,7 @@ Emit = Callable[[dict], Awaitable[None]]
 PUBLIC_KEYS = ("id", "n", "url", "domain", "title", "snippet", "query", "round", "status", "relevance", "coverage",
                "trust", "trust_reason", "source_type", "summary", "findings", "prior", "prior_label", "published",
                "author", "site_name", "og_image", "error", "via", "date", "local", "path", "file_id", "suspicious",
-               "out_of_range")
+               "out_of_range", "pinned")
 
 
 def domain_of(url: str) -> str:
@@ -100,7 +100,14 @@ def _slug(text: str) -> str:
 class Research:
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
                  include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None,
-                 date_from: str = "", date_to: str = "", merge_id: Optional[str] = None, extras: bool = True):
+                 date_from: str = "", date_to: str = "", merge_id: Optional[str] = None, extras: bool = True,
+                 extend_id: Optional[str] = None):
+        self.extend = history.get(extend_id) if extend_id else None   # "Locate more sources" for this article
+        if self.extend and (self.extend.get("outcome") != "article" or not self.extend.get("plan")):
+            raise ValueError("More sources can only be added to a finished article.")
+        if self.extend:
+            from_id = merge_id = None
+            query = self.extend["query"]
         self.prev = history.get(from_id) if from_id else None   # reuse the sources of an earlier search
         self.merge = history.get(merge_id) if merge_id and not from_id else None   # search again, keep old sources
         if self.prev and self.prev.get("query"):
@@ -138,7 +145,8 @@ class Research:
         self.read_count = 0
         self.warnings: List[str] = []
         now = dt.datetime.now()
-        self.id = now.strftime("%Y%m%d-%H%M%S-") + _slug(self.query)
+        self.id = self.extend["id"] if self.extend else now.strftime("%Y%m%d-%H%M%S-") + _slug(self.query)
+        self.run_id = self.id      # the background job's id (differs when extending an article)
         self.created = now.astimezone().isoformat(timespec="seconds")
         self.skip = [d.strip().lower() for d in str(self.r.get("skip_domains", "")).split(",") if d.strip()]
         self._sem_llm = asyncio.Semaphore(max(1, int(self.r["llm_concurrency"])))
@@ -199,10 +207,12 @@ class Research:
     # main flow
     async def run(self) -> dict:
         t0 = time.time()
-        await self.emit({"type": "start", "id": self.id, "query": self.query, "mode": self.mode,
+        await self.emit({"type": "start", "id": self.run_id, "query": self.query, "mode": self.mode,
                          "model": self.llm.describe(), "search": self.search.label if self.use_web else "Library only",
                          "created": self.created, "library": self.use_library,
                          "dates": list(self.dates) if self.dates else None})
+        if self.extend:
+            return await self.run_extend(t0)
         if self.prev and self.prev.get("plan") and self.prev.get("sources"):
             return await self.run_from_previous(t0)
         try:
@@ -247,6 +257,8 @@ class Research:
                                 "New sources found now are compared with these")
         if self.use_library:
             await self.library_round()
+        if self.r.get("use_pinned", True):
+            await self.pinned_round()
 
         img_task = None
         if (self.extras and self.use_web and int(self.r.get("max_images", 0)) > 0 and self.img_search
@@ -347,6 +359,71 @@ class Research:
             record.update(await self.suggest())
         return await self.finish(record, t0)
 
+    async def run_extend(self, t0: float) -> dict:
+        """"Locate more sources": search for sources the article doesn't have yet, read them, and add a section
+        with what they contribute. The article itself is kept as it is (same history entry, updated)."""
+        rec = self.extend
+        self.mode = "article"
+        self.extras = False
+        if not self.dates and rec.get("dates"):
+            self.dates = tuple(rec["dates"])
+        self.plan = rec["plan"]
+        self.terms = list(dict.fromkeys(tokenize(self.query) + tokenize(" ".join(self.plan.get("key_terms") or []))))
+        self.tried = list(rec.get("tried") or [])
+        self.use_library = bool(rec.get("library"))
+        await self.emit({"type": "plan", "plan": self.plan})
+        await self.step("plan", "Understanding the question", "done", self.plan.get("intent", ""))
+        known = set()
+        for src in rec.get("sources") or []:       # already known: not searched or read again
+            if src.get("url"):
+                s = {k: v for k, v in src.items() if k not in ("excerpt", "n")}
+                s["id"] = self.next_id()
+                s["_old"] = True
+                self.sources[s["url"]] = s
+                self.order.append(s["url"])
+                known.add(s["url"])
+        await self.emit({"type": "sources", "items": [self.pub(self.sources[u]) for u in self.order]})
+        await self.step("reuse", f"The article already uses {len(rec.get('article_sources') or [])} sources", "done",
+                        "Looking for new ones")
+        before = len(self.useful_sources())
+        for rnd in range(3, 3 + max(1, int(self.r["max_rounds"]))):     # new angles only (rounds 1-2 were done)
+            queries = await self.queries_for_round(rnd)
+            if not queries:
+                break
+            fresh = await self.search_round(rnd, queries)
+            await self.read_round(rnd, fresh)
+            if len(self.useful_sources()) - before >= 4:
+                break
+        new = sorted([s for s in self.useful_sources() if not s.get("_old")], key=self.score, reverse=True)[:6]
+        old_art = list(rec.get("article_sources") or [])
+        record = dict(rec)
+        record["tried"] = self.tried
+        if new:
+            first = max([int(x.get("n") or 0) for x in old_art] + [0]) + 1
+            for i, s in enumerate(new):
+                s["n"] = first + i
+            await self.step("write", "Adding what the new sources say", "running", f"{len(new)} new sources")
+            md = ""
+            async for piece in self.llm.stream(*prompts.addendum(self.query, rec.get("article") or "", new, self.lang),
+                                               max_tokens=1600):
+                md += piece
+            md = re.sub(r"<think>.*?</think>", "", md, flags=re.S).strip()
+            record["article"] = (rec.get("article") or "").rstrip() + "\n\n" + md + "\n"
+            record["article_sources"] = old_art + [self.pub(s) for s in new]
+            await self.step("write", "Added what the new sources say", "done", f"{len(new)} new sources")
+        else:
+            await self.step("write", "No new useful sources found", "warn", "The article stays as it was")
+        record["sources"] = [self.pub(self.sources[u]) for u in self.order]
+        record["steps"] = list(rec.get("steps") or []) + [st for st in self.steps.values() if st["id"] not in ("plan",)]
+        record["more_sources"] = int(rec.get("more_sources") or 0) + len(new)
+        try:
+            history.save(record, int(self.s["app"].get("history_limit", 300)))
+        except OSError as e:
+            self.warnings.append(f"Couldn't save history: {e}")
+        await self.emit({"type": "done", "id": self.id, "elapsed": round(time.time() - t0, 1), "outcome": "article",
+                         "extended": len(new)})
+        return record
+
     async def reopen(self, s: dict) -> None:
         """Get an assessed source's text back for the article writer (no new AI assessment)."""
         try:
@@ -445,6 +522,33 @@ class Research:
         useful = len(useful)
         await self.step("library", "Searched your library", "done",
                         f"{len(fresh)} matching files checked · {useful} relevant" if fresh else "No matching files")
+
+    async def pinned_round(self) -> None:
+        """Pinned sources that match the question are read from their saved copy first."""
+        from . import pinned
+        try:
+            hits = await asyncio.to_thread(pinned.matching, self.terms)
+        except Exception:
+            return
+        fresh = []
+        for h in hits:
+            if h["url"] in self.sources:
+                continue
+            src = {"id": self.next_id(), "url": h["url"], "domain": h.get("domain") or domain_of(h["url"]),
+                   "title": h.get("title") or h["url"], "snippet": (h.get("summary") or "")[:240], "query": "pinned",
+                   "round": 0, "rank": len(fresh), "status": "found", "prior": 8, "prior_label": "Pinned by you",
+                   "pinned": True, "_text": h.get("text", ""), "published": h.get("published"),
+                   "site_name": h.get("site_name")}
+            self.sources[h["url"]] = src
+            self.order.append(h["url"])
+            fresh.append(src)
+        if not fresh:
+            return
+        await self.step("pinned", "Reading your pinned sources", "running", f"{len(fresh)} match this search")
+        await self.emit({"type": "sources", "items": [self.pub(x) for x in fresh]})
+        await asyncio.gather(*(self.read_one(x) for x in fresh))
+        useful = sum(1 for x in fresh if (x.get("relevance") or 0) >= 4)
+        await self.step("pinned", "Read your pinned sources", "done", f"{len(fresh)} checked · {useful} relevant")
 
     async def queries_for_round(self, rnd: int) -> List[str]:
         if rnd == 1:
@@ -558,6 +662,10 @@ class Research:
         if s.get("local"):
             excerpt = s.pop("_text", "")
             s["via"] = "library"
+        elif s.get("pinned") and s.get("_text"):     # pinned page: its saved copy, no fetching
+            text = s.pop("_text")
+            s["via"] = "pinned"
+            excerpt = select_passages(text, list(self.search_terms()), self.excerpt_budget(text))
         else:
             async with self._sem_fetch:
                 s["status"] = "reading"

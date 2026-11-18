@@ -43,3 +43,16 @@ def test_export_is_cleaned_and_standalone():
     assert 'href="https://example.org"' in out and "<button" not in out
     assert 'sandbox="allow-scripts"' in out and "&lt;script&gt;alert(1)" in out   # explainer only inside the sandbox
     assert "Content-Security-Policy" in out
+
+
+def test_pinned_sources():
+    from airag import pinned
+    item = pinned.add("https://example.org/bees", "How bees dance", "Honey bees dance to show where flowers are. " * 20,
+                      {"domain": "example.org", "query": "bee dance"})
+    assert pinned.is_pinned("https://example.org/bees")
+    assert pinned.matching(["bees", "dance", "flowers"])[0]["text"].startswith("Honey bees")   # original text, not lower-cased
+    assert pinned.matching(["volcano", "lava"]) == []
+    assert pinned.get(item["id"])["text"]
+    with pytest.raises(ValueError):
+        pinned.add("file:///etc/passwd", "x", "x")
+    assert pinned.remove(item["id"]) and not pinned.is_pinned("https://example.org/bees")

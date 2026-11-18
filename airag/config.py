@@ -20,7 +20,7 @@ MASK = "••••"
 DEFAULT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 
-SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage", "audio", "speech")
+SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage", "audio", "speech", "buttons")
 
 GENERAL_SCHEMA: dict = {
     "app": [
@@ -54,8 +54,20 @@ GENERAL_SCHEMA: dict = {
         {"key": "dates", "label": "Time range", "type": "select", "default": "any", "options": ["any", "week", "month", "year"]},
         {"key": "translate_to", "label": "Translate into", "type": "hidden", "default": ""},
         {"key": "save_rich", "label": "Save articles with pictures and the explainer", "type": "bool", "default": False},
+        {"key": "pinned_view", "label": "Open pinned sources as", "type": "select", "default": "fetched",
+         "options": ["fetched", "generated"],
+         "help": "Fetched: the saved copy of the page. Generated: a short AI-written version focused on why you pinned it."},
         {"key": "speech_autosearch", "label": "Search as soon as you stop speaking", "type": "bool", "default": True,
          "help": "After speaking into the microphone, the search starts by itself. Off: check or edit the text first."},
+    ],
+    # which tool buttons are shown on articles, results and sources (Settings -> Appearance); all on by default
+    "buttons": [
+        {"key": k, "label": lab, "type": "bool", "default": True} for k, lab in (
+            ("summarize", "Summarize"), ("interactive", "Interactive explainer"), ("results", "Search results"),
+            ("more_sources", "Locate more sources"), ("save", "Save"), ("copy", "Copy as Markdown"),
+            ("translate", "Translate with AI"), ("listen", "Listen (read aloud)"), ("pin", "Pin article"),
+            ("export", "Export web page"), ("source_summarize", "Summarize (on sources)"),
+            ("source_save", "Save page (on sources)"), ("source_pin", "Pin source (on sources)"))
     ],
     # sound effects (Settings -> Appearance -> Customize audio); edited by its own panel
     "audio": [
@@ -127,6 +139,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "user_agent", "label": "User agent", "type": "text", "default": DEFAULT_UA},
     ],
     "research": [
+        {"key": "use_pinned", "label": "Use pinned sources in searches", "type": "bool", "default": True,
+         "help": "Pinned pages that match the question are read from their saved copy (no download) and can be cited."},
         {"key": "max_rounds", "label": "Max search rounds", "type": "number", "default": 3, "min": 1, "max": 6, "step": 1,
          "help": "Round 1 = direct searches, round 2 = related/indirect searches, 3+ = gap-filling searches."},
         {"key": "results_per_query", "label": "Results per query", "type": "number", "default": 8, "min": 3, "max": 20, "step": 1},
@@ -191,6 +205,7 @@ def _base_defaults() -> dict:
         "usage": field_defaults(GENERAL_SCHEMA["usage"]),
         "audio": field_defaults(GENERAL_SCHEMA["audio"]),
         "speech": field_defaults(GENERAL_SCHEMA["speech"]),
+        "buttons": field_defaults(GENERAL_SCHEMA["buttons"]),
     }
 
 

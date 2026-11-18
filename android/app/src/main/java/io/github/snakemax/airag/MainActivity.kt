@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
             visibility = View.INVISIBLE
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.mediaPlaybackRequiresUserGesture = true
+            settings.mediaPlaybackRequiresUserGesture = false   // sound effects when a search finishes
             settings.setSupportMultipleWindows(false)
             settings.useWideViewPort = true          // honour the page's viewport tag (no zoomed-out desktop layout)
             settings.loadWithOverviewMode = false

@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import (__repo__, __version__, appctl, browser_install, config, history, jobs, languages,
+from . import (__repo__, __version__, appctl, browser_install, config, guard, history, jobs, languages,
                ollama_manager, paths, updater)
 from .fetch import shutdown as fetch_shutdown
 from .library import LIBRARY, settings_args as library_args
@@ -196,6 +196,7 @@ def schema():
         "prompts": config.GENERAL_SCHEMA["prompts"],
         "defaults": config.GENERAL_SCHEMA["defaults"],
         "usage": config.GENERAL_SCHEMA["usage"],
+        "buttons": config.GENERAL_SCHEMA["buttons"],
         "default_article_prompt": prompts_mod.ARTICLE_RULES,
         "languages": languages.public_list(),
         "version": __version__,
@@ -798,6 +799,7 @@ class ResearchReq(BaseModel):
     date_to: str = ""
     merge_id: Optional[str] = None    # search again, also using the sources of this earlier search
     extras: bool = True               # pictures + interactive explainer check
+    extend_id: Optional[str] = None   # "Locate more sources" for this finished article
 
 
 @app.post("/api/research")
@@ -813,15 +815,24 @@ async def research(req: ResearchReq):
 
     async def emit(ev: dict) -> None:
         await holder["run"].emit(ev)
-    r = Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang, req.from_id,
-                 req.date_from, req.date_to, req.merge_id, req.extras)
+    try:
+        r = Research(req.query, req.mode, settings, emit, req.include_library, req.ui_lang, req.from_id,
+                     req.date_from, req.date_to, req.merge_id, req.extras, req.extend_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    if r.extend:
+        r.run_id = r.id + "-more"
+        if runs.RUNS.get(r.run_id) and not runs.RUNS[r.run_id].finished:
+            return _follow(runs.RUNS[r.run_id])     # already looking: just watch that one
 
     async def go(_emit) -> None:
         prompts_mod.use(settings)    # the task may start later (queued), so set the prompt settings here
         await r.run()
-    while r.id in runs.RUNS:          # same question twice in the same second
+    while not r.extend and r.id in runs.RUNS:          # same question twice in the same second
         r.id += "-2"
-    holder["run"] = runs.start(r.id, r.query, req.mode, go)
+        r.run_id = r.id
+    holder["run"] = runs.start(r.run_id, r.query, req.mode, go, kind="more" if r.extend else "search",
+                               ref=r.id if r.extend else "")
     return _follow(holder["run"])
 
 
@@ -831,9 +842,9 @@ class SoundReq(BaseModel):
 
 
 @app.get("/api/sounds/{name}")
-def sound_file(name: str):
+def sound_file(name: str, builtin: bool = False):
     from . import sounds
-    f = sounds.custom_file(name) or sounds.default_file(name)
+    f = (None if builtin else sounds.custom_file(name)) or sounds.default_file(name)
     if not f:
         raise HTTPException(404, "No such sound")
     return FileResponse(f, media_type=sounds.TYPES.get(f.suffix[1:].lower(), "audio/wav"),
@@ -1044,6 +1055,56 @@ def export_open(req: ExportOpenReq):
         raise HTTPException(404, "Export not found")
     _open_path(p, reveal=req.reveal)
     return {"ok": True}
+
+
+class PinSourceReq(BaseModel):
+    url: str
+    title: str = ""
+    query: str = ""
+    domain: str = ""
+    summary: str = ""
+    trust: Optional[float] = None
+    published: Optional[str] = None
+    site_name: Optional[str] = None
+
+
+@app.get("/api/pins/sources")
+def pinned_sources():
+    from . import pinned
+    return {"items": pinned.listing()}
+
+
+@app.post("/api/pins/source")
+async def pin_source(req: PinSourceReq):
+    """Pins a web page: its text is saved so it can be opened and reused until it's unpinned."""
+    from . import pinned
+    from .fetch import fetch_page
+    if not req.url.startswith(("http://", "https://")):
+        raise HTTPException(400, "Only web pages can be pinned.")
+    s = config.load()
+    page = await fetch_page(req.url, s["fetch"])
+    if not page.ok or not page.text.strip():
+        raise HTTPException(400, f"Couldn't read the page: {page.error or 'no text'}")
+    text, _ = guard.clean(page.text, s)
+    item = await asyncio.to_thread(pinned.add, req.url, page.title or req.title, text,
+                                   {**req.dict(), "published": req.published or page.published,
+                                    "site_name": req.site_name or page.site_name})
+    return item
+
+
+@app.delete("/api/pins/source/{pid}")
+def unpin_source(pid: str):
+    from . import pinned
+    return {"removed": pinned.remove(pid)}
+
+
+@app.get("/api/pins/source/{pid}")
+def pinned_source(pid: str):
+    from . import pinned
+    item = pinned.get(pid)
+    if not item:
+        raise HTTPException(404, "Not pinned")
+    return item
 
 
 class PinReq(BaseModel):

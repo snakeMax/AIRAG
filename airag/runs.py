@@ -84,22 +84,29 @@ def _cleanup() -> None:
             _order.remove(rid)
 
 
+GROUPS = {"more": "search"}   # "Locate more sources" searches the web too: it waits in the search queue
+
+
+def _group(kind: str) -> str:
+    return GROUPS.get(kind, kind)
+
+
 def _limit(kind: str) -> int:
-    return LIMITS.get(kind, MAX_PARALLEL)
+    return LIMITS.get(_group(kind), MAX_PARALLEL)
 
 
 def _schedule() -> None:
     running: Dict[str, int] = {}
     for r in RUNS.values():
         if r.status == "running":
-            running[r.kind] = running.get(r.kind, 0) + 1
+            running[_group(r.kind)] = running.get(_group(r.kind), 0) + 1
     started = False
     for rid in list(_order):
         run = RUNS.get(rid)
-        if run and run.status == "queued" and running.get(run.kind, 0) < _limit(run.kind):
+        if run and run.status == "queued" and running.get(_group(run.kind), 0) < _limit(run.kind):
             run.status = "running"
             run.task = asyncio.create_task(_execute(run))
-            running[run.kind] = running.get(run.kind, 0) + 1
+            running[_group(run.kind)] = running.get(_group(run.kind), 0) + 1
             started = True
     if started:
         _changed()
@@ -137,7 +144,7 @@ def start(rid: str, query: str, mode: str, factory: Callable, kind: str = "searc
     run = Run(rid, query, mode, factory, kind, ref)
     RUNS[rid] = run
     _order.append(rid)
-    position = sum(1 for r in RUNS.values() if not r.finished and r.kind == kind) - 1
+    position = sum(1 for r in RUNS.values() if not r.finished and _group(r.kind) == _group(kind)) - 1
     base = {"id": rid, "query": query, "mode": mode}
     run.events.append({"type": "queued", "position": position, **base} if position else {"type": "accepted", **base})
     _schedule()
@@ -170,9 +177,10 @@ def active() -> List[dict]:
     for rid in _order:
         run = RUNS.get(rid)
         if run and not run.finished:
-            out.append(run.public(queued.get(run.kind, 0) + 1 if run.status == "queued" else 0))
+            g = _group(run.kind)
+            out.append(run.public(queued.get(g, 0) + 1 if run.status == "queued" else 0))
             if run.status == "queued":
-                queued[run.kind] = queued.get(run.kind, 0) + 1
+                queued[g] = queued.get(g, 0) + 1
     return out
 
 

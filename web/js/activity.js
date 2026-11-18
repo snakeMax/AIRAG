@@ -52,7 +52,7 @@ function chime() {
   known = new Set(JOBS.recent.map(j => j.id));
 }
 
-const what = j => j.kind === "explainer" ? t("act.explainer", { q: j.query }) : t("act.search", { q: j.query });
+const what = j => t(j.kind === "explainer" ? "act.explainer" : j.kind === "more" ? "act.more" : "act.search", { q: j.query });
 
 function draw() {
   const bar = $("#activityBar"), btn = $("#historyBtn");

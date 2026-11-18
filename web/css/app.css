@@ -552,3 +552,6 @@ html, body { overflow-x: hidden; }
 .exp-opt { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; }
 .exp-opt > span { display: flex; flex-direction: column; gap: 2px; }
 .exp-opt .help { margin: 0; }
+.btn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 14px; }
+.btn-grid .field { margin: 4px 0; }
+.pinned-page .a-actions .seg { margin-right: 4px; }

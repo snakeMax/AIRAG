@@ -274,6 +274,34 @@ Write the article now, in {lang}."""
     return article_system().replace("{lang}", lang) + "\n" + fence.rule(), user
 
 
+# "Locate more sources": add what new sources contribute, without rewriting the article
+ADDENDUM_RULES = """You extend an existing research article with NEW sources. Do not rewrite or repeat the article.
+Write only the new material, as Markdown:
+- Start with a level-2 heading in the article's language meaning "What more sources add".
+- Then a few short paragraphs or bullet points with facts from the new sources that the article does not
+  already contain: new details, newer data, other viewpoints, and where a new source confirms or contradicts
+  something the article says (say clearly which, and which source is more trustworthy).
+- Cite only the new sources, by their bracketed numbers. If the new sources add nothing, write the heading and
+  one sentence saying they confirm the article."""
+
+
+def addendum(query: str, article_md: str, sources: List[dict], lang: str) -> Tuple[str, str]:
+    fence = Fence()
+    blocks = []
+    per_source = max(500, min(1600, 12000 // max(1, len(sources))))
+    for s in sources:
+        findings = "\n".join(f"- {f.get('claim', '')}" for f in s.get("findings") or [])
+        blocks.append(f"[{s['n']}] {s.get('title') or s['url']} - {s['domain']}\n"
+                      f"Trust: {s.get('trust', '?')}/10 | Date: {s.get('date') or s.get('published') or 'unknown'}\n"
+                      f"Summary: {s.get('summary', '')}\nFindings:\n{findings or '- (none)'}\n"
+                      f"Excerpts:\n{fence.wrap((s.get('excerpt') or '')[:per_source])}\n")
+    system = (ADDENDUM_RULES + "\n\n" + SAFETY + "\n" + UNTRUSTED + "\n" + DATE_NOTE +
+              f"\nWrite in {lang}.\n" + fence.rule())
+    user = (f"Reader's search: {query}\nToday's date: {_today()}\n\nTHE ARTICLE SO FAR (already written, don't repeat):\n"
+            f"{fence.wrap(article_md[:9000])}\n\nNEW SOURCES\n{chr(10).join(blocks)}\nWrite the new section now, in {lang}.")
+    return system, user
+
+
 # suggestions
 def suggest(query: str, intent: str, tried: List[str], partial: List[str], lang: str) -> Tuple[str, str]:
     system = ("You help users of a research search engine when nothing reliable was found. Suggest alternative searches "

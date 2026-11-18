@@ -71,13 +71,13 @@ def _jobs_changed() -> None:
     running = [j for j in items if j["status"] == "running"] or items
 
     def line(j: dict) -> str:
-        what = "Explainer" if j["kind"] == "explainer" else "Search"
+        what = {"explainer": "Explainer", "more": "More sources"}.get(j["kind"], "Search")
         state = "running" if j["status"] == "running" else f"queued ({j['position']} ahead)"
         return f"{what} {state}: {j['query'][:60]}"
     title = ""
     if running:
         j = running[0]
-        title = ("Building explainer: " if j["kind"] == "explainer" else "Researching: ") + j["query"][:80]
+        title = {"explainer": "Building explainer: ", "more": "Finding more sources: "}.get(j["kind"], "Researching: ") + j["query"][:80]
     b = _bridge()
     # the expanded notification lists every job, running or waiting
     b.jobsChanged(len(items), title, "\n".join(line(j) for j in items[:8]))

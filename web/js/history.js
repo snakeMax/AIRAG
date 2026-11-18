@@ -2,6 +2,7 @@
 import { $, $$, h, icon, api, fmtAgo } from "./util.js";
 import { t, uiLang } from "./i18n.js";
 import { jobHref } from "./activity.js";
+import { pinnedCards } from "./pins.js";
 
 const outcomeIcon = o => ({ article: "doc", results: "list", suggestions: "bulb" }[o] || "search");
 const outcomeLabel = o => t("outcome." + (o || "search"));
@@ -38,7 +39,7 @@ async function activeRuns() {
   return (await api("/api/research/active").catch(() => ({ items: [] }))).items || [];
 }
 
-const activeLabel = a => (a.kind === "explainer" ? t("act.explainerShort") + " · " : "")
+const activeLabel = a => (a.kind === "explainer" ? t("act.explainerShort") + " · " : a.kind === "more" ? t("act.moreShort") + " · " : "")
   + (a.status === "queued" ? t("run.queuedShort", { n: a.position }) : t("run.inProgress"));
 
 function activeHtml(list) {
@@ -94,15 +95,17 @@ export async function refreshRecent() {
       <button class="recent-item${it.pinned ? " pinned" : ""}" data-id="${h(it.id)}">${icon(it.pinned ? "pin" : outcomeIcon(it.outcome))}
         <div><div class="ri-t">${h(it.title || it.query)}</div><div class="ri-k">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}</div></div></button>`;
     const pinned = items.filter(it => it.pinned), recent = items.filter(it => !it.pinned).slice(0, 6);
-    el.innerHTML = (pinned.length ? `<div class="recent-head"><h3>${h(t("pin.title"))}</h3></div><div class="recent-grid" style="margin-bottom:14px">${pinned.map(card).join("")}</div>` : "")
+    el.innerHTML = pinnedCards() + (pinned.length ? `<div class="recent-head"><h3>${h(t("pin.title"))}</h3></div><div class="recent-grid" style="margin-bottom:14px">${pinned.map(card).join("")}</div>` : "")
       + `<div class="recent-head"><h3>${h(t("home.recent"))}</h3>${saved}</div>${running}<div class="recent-grid">${recent.map(card).join("")}</div>`;
     $$(".recent-item[data-id]", el).forEach(b => (b.onclick = () => (location.hash = `#/view/${encodeURIComponent(b.dataset.id)}`)));
     $$(".recent-item[data-href]", el).forEach(b => (b.onclick = () => (location.hash = b.dataset.href)));
+    $$(".recent-item[data-pinned]", el).forEach(b => (b.onclick = () => (location.hash = `#/pinned/${encodeURIComponent(b.dataset.pinned)}`)));
     $("#openSaved").onclick = () => openDrawer("saved");
   } catch { /* server not ready */ }
 }
 
 window.addEventListener("airag:history", () => { refreshRecent(); });
+window.addEventListener("airag:pins", () => { if (!$("#view-home").hidden) refreshRecent(); });
 // background jobs started, finished or moved up the queue
 window.addEventListener("airag:jobs", () => {
   if (!$("#view-home").hidden) refreshRecent();
