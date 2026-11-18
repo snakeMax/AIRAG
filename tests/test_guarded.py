@@ -88,6 +88,8 @@ def test_clearing_waits_for_running_tasks(monkeypatch):
     assert out["_applies_later"] == ["llm"]
     c.post("/api/settings", json={"llm": {"provider": "mock"}})
     _set(guarded_execution=False)
+    from airag import paths
+    monkeypatch.setattr(paths, "ANDROID", False)          # no WebView to clear in a test
     try:
         assert c.post("/api/app/clear-cache").status_code == 200        # allowed; the task just reads pages again
     finally:
