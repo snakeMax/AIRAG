@@ -136,7 +136,7 @@ def list_saved(settings: dict) -> List[dict]:
             rec = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        out.append({"file": f.name, "title": rec.get("title") or rec.get("query"), "query": rec.get("query"),
+        out.append({"file": f.name, "id": rec.get("id"), "title": rec.get("title") or rec.get("query"), "query": rec.get("query"),
                     "created": rec.get("created"), "rich": bool(rec.get("saved_rich")), "tags": rec.get("tags") or [],
                     "languages": sorted((rec.get("translations") or {}).keys()),
                     "has_md": f.with_name(f.name[: -len(SAVED_SUFFIX)] + ".md").exists()})
@@ -375,3 +375,162 @@ def status(settings: dict) -> dict:
 def resolve_saved(rec: dict) -> Optional[str]:
     p = rec.get("saved_path")
     return p if p and Path(p).is_file() else None
+
+
+# ---------------------------------------------------------------- unsaving (with a "recently removed" cache)
+# Unsaving takes an article out of My library/Articles (its .md and AIRAG copy) but keeps it in History. The files
+# are moved to a private "recently removed" folder outside My library (not indexed, not synced), so an accidental
+# unsave can be restored exactly as it was. Kept for REMOVED_DAYS days, at most REMOVED_MAX entries.
+REMOVED_DAYS = 30
+REMOVED_MAX = 50
+_RID = re.compile(r"^[\w\-]{6,80}$")
+
+
+def removed_dir() -> Path:
+    return paths.LOCAL_DIR / "removed-saved"
+
+
+def _articles(settings: dict) -> Path:
+    return (folder(settings) / ARTICLES_SUBDIR).resolve()
+
+
+def find_saved(settings: dict, rid: str = "", file: str = "", md_path: str = "") -> Optional[Path]:
+    """The .airag.json of a saved article, by its file name, its .md path or its History id."""
+    import json
+    d = _articles(settings)
+    if file:
+        f = (d / Path(file).name).resolve()
+        if f.parent == d and f.name.endswith(SAVED_SUFFIX) and f.is_file():
+            return f
+    if md_path:
+        p = Path(md_path)
+        f = (d / (p.stem + SAVED_SUFFIX)).resolve()
+        if p.suffix.lower() == ".md" and f.parent == d and f.is_file():
+            return f
+    if rid and d.is_dir():
+        for f in sorted(d.glob("*" + SAVED_SUFFIX), key=lambda x: x.stat().st_mtime, reverse=True):
+            try:
+                if json.loads(f.read_text(encoding="utf-8")).get("id") == rid:
+                    return f
+            except (OSError, ValueError):
+                continue
+    return None
+
+
+def unsave(settings: dict, json_file: Path) -> dict:
+    """Moves a saved article out of My library into the "recently removed" cache; History keeps it."""
+    import json
+    import time
+    from . import history
+    stem = json_file.name[: -len(SAVED_SUFFIX)]
+    md = json_file.with_name(stem + ".md")
+    try:
+        rec = json.loads(json_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        rec = {}
+    if md.is_file() and rec:                        # edits made in another editor are kept in the copy
+        _reread_markdown(rec, json_file, md)
+    rid = f"{time.strftime('%Y%m%d-%H%M%S')}-{secrets_token()}"
+    dest = removed_dir() / rid
+    dest.mkdir(parents=True, exist_ok=True)
+    moved = []
+    for f in (md, json_file):
+        if f.is_file():
+            shutil.move(str(f), str(dest / f.name))
+            moved.append(f.name)
+    meta = {"rid": rid, "id": rec.get("id"), "title": rec.get("title") or rec.get("query") or stem, "query": rec.get("query"),
+            "created": rec.get("created"), "removed": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+            "files": moved, "tags": rec.get("tags") or []}
+    paths.atomic_write_text(dest / "removed.json", json.dumps(meta, ensure_ascii=False))
+    if rec.get("id"):                               # stays in History, now as an unsaved article
+        if history.get(rec["id"]):
+            history.update(rec["id"], {"saved_path": None})
+        else:
+            entry = {k: v for k, v in rec.items() if k not in ("saved_file", "edited_outside", "saved_path")}
+            entry.update({"outcome": "article", "status": "done"})
+            try:
+                history.save(entry)
+            except Exception:
+                pass
+    purge_removed()
+    return meta
+
+
+def secrets_token() -> str:
+    import secrets
+    return secrets.token_hex(3)
+
+
+def list_removed() -> List[dict]:
+    import json
+    out = []
+    d = removed_dir()
+    for sub in sorted(d.iterdir(), reverse=True) if d.is_dir() else []:
+        try:
+            out.append(json.loads((sub / "removed.json").read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            continue
+    return out
+
+
+def restore(settings: dict, rid: str) -> Path:
+    """Puts an unsaved article back in My library/Articles (a free name if one is taken now)."""
+    import json
+    from . import history
+    if not _RID.match(rid or ""):
+        raise FileNotFoundError("Not found")
+    src = (removed_dir() / rid).resolve()
+    if src.parent != removed_dir().resolve() or not src.is_dir():
+        raise FileNotFoundError("This article is no longer in Recently removed")
+    meta = json.loads((src / "removed.json").read_text(encoding="utf-8"))
+    d = ensure(settings) / ARTICLES_SUBDIR
+    d.mkdir(parents=True, exist_ok=True)
+    js = next((f for f in src.iterdir() if f.name.endswith(SAVED_SUFFIX)), None)
+    if js is None:
+        raise FileNotFoundError("The saved copy is missing")
+    stem = js.name[: -len(SAVED_SUFFIX)]
+    base, n, new_stem = stem, 2, stem
+    while (d / f"{new_stem}.md").exists() or (d / f"{new_stem}{SAVED_SUFFIX}").exists():
+        new_stem = f"{base} ({n})"
+        n += 1
+    md_src = src / f"{stem}.md"
+    if md_src.is_file():
+        shutil.move(str(md_src), str(d / f"{new_stem}.md"))
+    shutil.move(str(js), str(d / f"{new_stem}{SAVED_SUFFIX}"))
+    shutil.rmtree(src, ignore_errors=True)
+    md = d / f"{new_stem}.md"
+    try:                                            # the copy mustn't look "edited outside AIRAG"
+        import os
+        st = (d / f"{new_stem}{SAVED_SUFFIX}").stat()
+        if md.exists():
+            os.utime(md, (st.st_atime, st.st_mtime))
+    except OSError:
+        pass
+    if meta.get("id") and history.get(meta["id"]):
+        history.update(meta["id"], {"saved_path": str(md)})
+    return md
+
+
+def forget_removed(rid: str) -> bool:
+    if not _RID.match(rid or ""):
+        return False
+    p = (removed_dir() / rid).resolve()
+    if p.parent == removed_dir().resolve() and p.is_dir():
+        shutil.rmtree(p, ignore_errors=True)
+        return True
+    return False
+
+
+def purge_removed() -> None:
+    import time
+    d = removed_dir()
+    if not d.is_dir():
+        return
+    subs = sorted((p for p in d.iterdir() if p.is_dir()), reverse=True)
+    for i, p in enumerate(subs):
+        try:
+            old = time.time() - p.stat().st_mtime > REMOVED_DAYS * 86400
+        except OSError:
+            continue
+        if old or i >= REMOVED_MAX:
+            shutil.rmtree(p, ignore_errors=True)

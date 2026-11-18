@@ -140,10 +140,12 @@ export function metaRow(R, { onLang, onTag }) {
   const cur = R.translation?.article || null;
   const showTags = R.id && R.finished && R.outcome === "article";
   if (!langs.length && !showTags) { el.innerHTML = ""; return; }
+  const saved = R.savedPath || R.savedFile;
   el.innerHTML = `${langs.length ? `<div class="seg a-langs" role="group" aria-label="${h(t("tr.languages"))}">
       <button type="button" data-lang="" aria-pressed="${!cur}" class="${cur ? "" : "on"}">${h(t("tr.originalShort"))}</button>
       ${langs.map(c => `<button type="button" data-lang="${h(c)}" aria-pressed="${cur === c}" class="${cur === c ? "on" : ""}">${h(langName(c))}</button>`).join("")}</div>` : ""}
     <span class="a-meta-gap"></span>
+    ${saved ? `<span class="a-saved" title="${h(R.savedPath || R.savedFile)}">${icon("check")}${h(t("save.savedChip"))}</span>` : ""}
     ${showTags ? `<div class="a-tags">${icon("tag")}${(R.tags || []).map(x => `<button type="button" class="tag-chip link" data-tag="${h(x)}" title="${h(t("tags.find"))}">${h(x)}</button>`).join("")}
       <button type="button" class="btn sm ghost" data-edit-tags>${h(t((R.tags || []).length ? "tags.edit" : "tags.addBtn"))}</button></div>` : ""}`;
   $$("[data-lang]", el).forEach(b => (b.onclick = () => onLang(b.dataset.lang || null)));

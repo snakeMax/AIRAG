@@ -107,12 +107,20 @@ export function hydrateIcons(root = document) {
   $$("[data-icon]", root).forEach(el => { if (!el.querySelector("svg")) el.insertAdjacentHTML("afterbegin", icon(el.dataset.icon)); });
 }
 
-export function toast(msg, ms = 2400) {
+export function toast(msg, ms = 2400, action = null) {
   const el = $("#toast");
   el.textContent = msg;
+  if (action) {                       // e.g. { label: "Undo", run: () => ... }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "toast-act";
+    b.textContent = action.label;
+    b.onclick = () => { el.hidden = true; action.run(); };
+    el.append(" ", b);
+  }
   el.hidden = false;
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => (el.hidden = true), ms);
+  toast._t = setTimeout(() => (el.hidden = true), action ? Math.max(ms, 6000) : ms);
 }
 
 export async function api(path, opts = {}) {

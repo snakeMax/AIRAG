@@ -330,7 +330,8 @@ details.tried summary { cursor: pointer; }
 .h-item .h-q { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .h-item .h-d { font-size: 11.5px; color: var(--text-3); }
 .h-item .icon-btn { width: 30px; height: 30px; opacity: 0; }
-.h-item:hover .icon-btn { opacity: 1; }
+.h-item:hover .icon-btn, .h-item .icon-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .h-item .icon-btn { opacity: .75; width: 40px; height: 40px; } }   /* touch screens: always shown */
 .h-empty { padding: 30px; text-align: center; color: var(--text-3); }
 .sum-body { padding: 18px 22px; }
 .sum-for { font-size: 12.5px; color: var(--text-3); margin-bottom: 4px; }
@@ -887,3 +888,28 @@ body.is-offline .lib-chip { opacity: .55; pointer-events: none; }
 .off-back { flex: 1; font-size: 12px; min-width: 0; }
 .tag-list { display: contents; }
 .off-back, .save-where { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ---------------------------------------------------------------- saved state, unsave, Saved articles window */
+.toast-act { margin-left: 10px; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
+.a-item.is-saved > svg { color: var(--good, #15803d); }
+.a-saved { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--surface-3); font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.a-saved svg { width: 13px; height: 13px; }
+.recent-links { display: inline-flex; align-items: center; gap: 12px; }
+.saved-dlg { width: min(640px, 95vw); }
+.saved-body { display: flex; flex-direction: column; gap: 10px; padding: 4px 22px 14px; }
+.saved-intro { margin: 0; }
+.saved-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.saved-list li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; min-height: 44px; }
+.saved-list li:hover { background: var(--surface-3); }
+.saved-list .check { min-height: 0; }
+.saved-t { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 14px; font-weight: 500; color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.saved-t small { font-size: 12px; font-weight: 400; color: var(--text-3); }
+.saved-removed summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 6px 0; }
+.saved-all { flex: 1; font-size: 13px; }
+@media (max-width: 720px) {
+  .dlg.saved-dlg { margin: 0; inset: auto 0 0 0; position: fixed; width: 100vw; max-width: 100vw; height: auto; max-height: 92dvh; border-radius: 22px 22px 0 0; }
+  .dlg.saved-dlg form { height: auto; max-height: 92dvh; }
+  .saved-dlg .dlg-foot .btn { flex: 1; height: 46px; justify-content: center; }
+  .saved-all { flex-basis: 100%; }
+  .saved-list .icon-btn { width: 44px; height: 44px; }
+}

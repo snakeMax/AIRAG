@@ -1,5 +1,5 @@
 // History drawer and the "Recent" list on the home page.
-import { $, $$, h, icon, api, fmtAgo } from "./util.js";
+import { $, $$, h, icon, api, fmtAgo, toast } from "./util.js";
 import { t, uiLang } from "./i18n.js";
 import { jobHref } from "./activity.js";
 import { pinnedCards } from "./pins.js";
@@ -30,14 +30,23 @@ export async function loadSaved() {
         <button type="button" class="icon-btn" id="tagFilterOff" aria-label="${h(t("tags.clearFilter"))}">${icon("x")}</button></div>` : "";
     if (tagFilter) items = items.filter(it => (it.tags || []).includes(tagFilter));
     const opener = `<button type="button" class="h-item h-open" id="openFileBtn">${icon("folder")}
-        <div style="min-width:0"><div class="h-q">${h(t("open.button"))}</div><div class="h-d">${h(t("open.hint"))}</div></div></button>`;
+        <div style="min-width:0"><div class="h-q">${h(t("open.button"))}</div><div class="h-d">${h(t("open.hint"))}</div></div></button>
+      <button type="button" class="h-item h-open" id="manageSavedBtn">${icon("book")}
+        <div style="min-width:0"><div class="h-q">${h(t("saved.manage"))}</div><div class="h-d">${h(t("saved.manageHint"))}</div></div></button>`;
     if (!items.length) { el.innerHTML = opener + filter + `<div class="h-empty">${h(t(tagFilter ? "tags.noneSaved" : "saved.empty"))}</div>`; wireOpener(); return; }
     el.innerHTML = opener + filter + items.map(it => `
       <a class="h-item" href="#/saved/${encodeURIComponent(it.file)}">${icon(it.rich ? "palette" : "doc")}
         <div style="min-width:0"><div class="h-q">${h(it.title || it.query)}</div>
         <div class="h-d">${h(fmtAgo(it.created, uiLang()))}${it.rich ? ` · ${h(t("saved.rich"))}` : ""}${it.title !== it.query ? ` · "${h(it.query)}"` : ""}</div>
-        ${(it.tags || []).length ? `<div class="h-tags">${it.tags.map(x => `<span>${h(x)}</span>`).join("")}</div>` : ""}</div></a>`).join("");
-    $$(".h-item", el).forEach(a => a.addEventListener("click", closeDrawer));
+        ${(it.tags || []).length ? `<div class="h-tags">${it.tags.map(x => `<span>${h(x)}</span>`).join("")}</div>` : ""}</div>
+        <button class="icon-btn" data-unsave="${h(it.file)}" title="${h(t("save.unsave"))}" aria-label="${h(t("saved.unsaveOne", { title: it.title || it.query }))}">${icon("trash")}</button></a>`).join("");
+    $$("[data-unsave]", el).forEach(b => (b.onclick = async e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const { unsaveArticles } = await import("./savedmgr.js");
+      unsaveArticles({ files: [b.dataset.unsave] }).catch(err => toast(err.message, 5000));
+    }));
+    $$("a.h-item", el).forEach(a => a.addEventListener("click", closeDrawer));
     wireOpener();
   } catch (e) { el.innerHTML = `<div class="h-empty">${h(e.message)}</div>`; }
 }
@@ -47,6 +56,8 @@ function wireOpener() {
   if (off) off.onclick = () => { tagFilter = ""; loadSaved(); };
   const b = $("#openFileBtn");
   if (b) b.onclick = () => { closeDrawer(); pickFile(); };
+  const m = $("#manageSavedBtn");
+  if (m) m.onclick = () => import("./savedmgr.js").then(x => x.openSavedManager());
 }
 export function closeDrawer() { $("#drawer").hidden = true; if ($("#sheet").hidden) $("#scrim").hidden = true; }
 
@@ -102,11 +113,16 @@ export async function refreshRecent() {
   const el = $("#recent");
   try {
     const [{ items }, active] = await Promise.all([api("/api/history"), activeRuns()]);
-    const saved = `<button type="button" class="link-btn" id="openSaved">${icon("book")}${h(t("saved.title"))}</button>`;
+    const saved = `<span class="recent-links"><button type="button" class="link-btn" id="openSaved">${icon("book")}${h(t("saved.title"))}</button>
+      <button type="button" class="link-btn" id="manageSaved">${h(t("saved.manageShort"))}</button></span>`;
     const running = active.length ? `<div class="recent-grid" style="margin-bottom:10px">${active.map(a => `
       <button class="recent-item running" data-href="${h(jobHref(a))}"><span class="spinner sm"></span>
         <div><div class="ri-t">${h(a.query)}</div><div class="ri-k">${h(activeLabel(a))}</div></div></button>`).join("")}</div>` : "";
-    if (!items.length && !active.length) { el.innerHTML = `<div class="recent-head">${saved}</div>`; $("#openSaved").onclick = () => openDrawer("saved"); return; }
+    const wireSaved = () => {
+      $("#openSaved").onclick = () => openDrawer("saved");
+      $("#manageSaved").onclick = () => import("./savedmgr.js").then(x => x.openSavedManager());
+    };
+    if (!items.length && !active.length) { el.innerHTML = `<div class="recent-head">${saved}</div>`; wireSaved(); return; }
     const card = it => `
       <button class="recent-item${it.pinned ? " pinned" : ""}" data-id="${h(it.id)}">${icon(it.pinned ? "pin" : outcomeIcon(it.outcome))}
         <div><div class="ri-t">${h(it.title || it.query)}</div><div class="ri-k">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}</div></div></button>`;
@@ -116,11 +132,12 @@ export async function refreshRecent() {
     $$(".recent-item[data-id]", el).forEach(b => (b.onclick = () => (location.hash = `#/view/${encodeURIComponent(b.dataset.id)}`)));
     $$(".recent-item[data-href]", el).forEach(b => (b.onclick = () => (location.hash = b.dataset.href)));
     $$(".recent-item[data-pinned]", el).forEach(b => (b.onclick = () => (location.hash = `#/pinned/${encodeURIComponent(b.dataset.pinned)}`)));
-    $("#openSaved").onclick = () => openDrawer("saved");
+    wireSaved();
   } catch { /* server not ready */ }
 }
 
 window.addEventListener("airag:history", () => { refreshRecent(); });
+window.addEventListener("airag:saved", () => { if (!$("#drawer").hidden && tab === "saved") loadSaved(); });
 window.addEventListener("airag:pins", () => { if (!$("#view-home").hidden) refreshRecent(); });
 // background jobs started, finished or moved up the queue
 window.addEventListener("airag:jobs", () => {

@@ -606,7 +606,12 @@ def _reindex_soon() -> None:
     """Index new files in the library folders in the background (only changed files are read)."""
     if jobs.running("library-sync"):
         return
-    asyncio.get_running_loop().run_in_executor(None, lambda: LIBRARY.sync(**library_args(config.load())))
+    work = lambda: LIBRARY.sync(**library_args(config.load()))
+    try:
+        asyncio.get_running_loop().run_in_executor(None, work)
+    except RuntimeError:                     # called from a worker thread (plain "def" endpoints)
+        import threading
+        threading.Thread(target=work, daemon=True).start()
 
 
 # My library: personal folder for saved articles and imported files
@@ -772,6 +777,63 @@ def mylibrary_saved_one(name: str):
         return mylibrary.load_saved(config.load(), name)
     except (FileNotFoundError, ValueError) as e:
         raise HTTPException(404, str(e))
+
+
+class UnsaveReq(BaseModel):
+    files: List[str] = []       # .airag.json names in My library/Articles
+    id: str = ""                # or the History id of the article
+    path: str = ""              # or its .md path
+
+
+@app.post("/api/mylibrary/unsave")
+def mylibrary_unsave(req: UnsaveReq):
+    """Takes saved articles out of My library (History keeps them). They go to Recently removed for 30 days."""
+    from . import mylibrary
+    s = config.load()
+    targets = [mylibrary.find_saved(s, file=f) for f in req.files[:200]]
+    if req.id or req.path:
+        targets.append(mylibrary.find_saved(s, rid=req.id, md_path=req.path))
+    targets = [t for t in dict.fromkeys(targets) if t]
+    if not targets:
+        raise HTTPException(404, "That article isn't saved in My library.")
+    out = []
+    for f in targets:
+        try:
+            out.append(mylibrary.unsave(s, f))
+        except OSError as e:
+            raise _err(e)
+    _reindex_soon()
+    return {"removed": out}
+
+
+@app.get("/api/mylibrary/removed")
+def mylibrary_removed():
+    from . import mylibrary
+    mylibrary.purge_removed()
+    return {"items": mylibrary.list_removed(), "days": mylibrary.REMOVED_DAYS}
+
+
+class RestoreReq(BaseModel):
+    rid: str
+
+
+@app.post("/api/mylibrary/restore")
+def mylibrary_restore(req: RestoreReq):
+    from . import mylibrary
+    try:
+        md = mylibrary.restore(config.load(), req.rid)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    except OSError as e:
+        raise _err(e)
+    _reindex_soon()
+    return {"path": str(md), "file": md.stem + mylibrary.SAVED_SUFFIX}
+
+
+@app.delete("/api/mylibrary/removed/{rid}")
+def mylibrary_forget_removed(rid: str):
+    from . import mylibrary
+    return {"deleted": mylibrary.forget_removed(rid)}
 
 
 class SaveSourceReq(BaseModel):

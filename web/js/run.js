@@ -150,14 +150,48 @@ function onEvent(R, ev) {
 }
 
 // save the article to My library (Markdown with the sources at the bottom)
+const isSaved = R => !!(R.savedPath || R.savedFile);
+
 function updateSaveButton(R) {
   const b = $("#saveBtn");
   if (!b) return;
-  const ready = R.finished && !R.error && R.id && R.outcome === "article" && !R.savedFile;
+  const ready = R.finished && !R.error && R.id && R.outcome === "article";
   b.disabled = !ready;
-  b.innerHTML = R.savedPath ? `${icon("check")}${h(t("save.saved"))}` : `${icon("download")}${h(t("save.button"))}`;
-  if (R.savedPath) b.title = R.savedPath;
+  b.classList.toggle("is-saved", isSaved(R));
+  b.innerHTML = isSaved(R)
+    ? `${icon("check")}<span class="a-item-t">${h(t("save.saved"))}<small>${h(t("save.again"))}</small></span>`
+    : `${icon("download")}<span class="a-item-t">${h(t("save.button"))}<small>${h(t("save.desc"))}</small></span>`;
+  b.title = isSaved(R) ? (R.savedPath || R.savedFile) : t("save.tip");
+  const u = $("#unsaveBtn");
+  if (u) u.hidden = !isSaved(R) || !ready;
 }
+
+async function unsaveArticle(R) {
+  const { unsaveArticles } = await import("./savedmgr.js");
+  const after = (gone, undone) => {
+    if (RUN.current !== R) return;
+    if (undone) { reloadRecord(R.id); return; }
+    R.savedPath = null;
+    R.savedFile = null;
+    updateSaveButton(R);
+    drawMeta(R);
+  };
+  try {
+    await unsaveArticles({ id: R.id || "", path: R.savedPath || "", files: R.savedFile ? [R.savedFile] : [] }, after);
+  } catch (e) { toast(e.message, 5000); }
+}
+
+// unsaved or restored from the Saved articles window while this article is open
+window.addEventListener("airag:saved", async () => {
+  const R = RUN.current;
+  if (!R?.id || R.outcome !== "article") return;
+  const rec = await api(`/api/history/${encodeURIComponent(R.id)}`).catch(() => null);
+  if (!rec || RUN.current !== R) return;
+  const was = isSaved(R);
+  R.savedPath = rec.saved_path || null;
+  if (!R.savedPath) R.savedFile = null;
+  if (was !== isSaved(R)) { updateSaveButton(R); drawMeta(R); }
+});
 
 function openSavePop(anchor, R) {
   openSaveDialog(R, { rich: !!hooks.defaults?.()?.save_rich }, (rich, tags, keep) => saveArticle(R, rich, tags, keep));
@@ -169,7 +203,9 @@ async function saveArticle(R, rich = false, tags = null, translations = null) {
   try {
     const r = await api("/api/mylibrary/save", { method: "POST", body: { id: R.id, rich, tags, translations } });
     R.savedPath = r.path;
-    if (tags) { R.tags = tags; drawMeta(R); }
+    if (tags) R.tags = tags;
+    drawMeta(R);
+    window.dispatchEvent(new CustomEvent("airag:saved"));
     toast(t("save.done", { path: r.path }), 5000);
   } catch (e) { toast(e.message, 5000); }
   updateSaveButton(R);
@@ -322,6 +358,8 @@ $("#runMain").addEventListener("click", e => {
   else if (act === "more-sources" && R.id && R.finished) startResearch(R.query, R.outcome === "article" ? "article" : "results", R.library, null, R.dates, null, false, R.id);
   else if (act === "export-html") exportHtml(R, $("article.article"));
   else if (act === "save") openSavePop(b, R);
+  else if (act === "unsave") unsaveArticle(R);
+  else if (act === "manage-saved") import("./savedmgr.js").then(m => m.openSavedManager());
   else if (act === "regenerate") openRegenerate(R);
   else if (act === "versions") openRegenerate(R, true);
   else if (act === "tr-original") {
@@ -482,7 +520,9 @@ function articleActions(R) {
       item("export-html", "html", t("exp.button"), "", `title="${h(t("exp.tip"))}"`)
       + item("copy", "copy", t("art.copy"))
       + item("sum-file", "download", t("sumfile.button"), t("sumfile.desc"), `title="${h(t("sumfile.tip"))}"`)
-      + item("save", "download", t("save.button"), t("save.desc"), `id="saveBtn" disabled title="${h(t("save.tip"))}"`))}
+      + item("save", "download", t("save.button"), t("save.desc"), `id="saveBtn" disabled title="${h(t("save.tip"))}"`)
+      + item("unsave", "trash", t("save.unsave"), t("save.unsaveDesc"), `id="unsaveBtn" hidden`)
+      + item("manage-saved", "book", t("saved.manage"), t("saved.manageHint")))}
     <button type="button" class="btn sm ghost a-more-btn" data-more-toggle aria-expanded="false">${icon("more")}<span>${h(t("grp.more"))}</span></button>
     <div class="a-more">${head(t("grp.more"))}
       ${group("rewrite", "edit", t("grp.rewrite"),

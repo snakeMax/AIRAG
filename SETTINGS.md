@@ -535,6 +535,13 @@ Saves a Markdown file to *My library → Articles*, plus a small `.airag.json` c
 Saving again updates the same file.
 - **Editing the .md:** you can change the saved Markdown file in any editor (Obsidian, Notepad...). Next time you open the article in AIRAG, it's read from your edited file, and a note says so. Keep the "Sources" list at the bottom as it is, so the source numbers still work.
 
+### Unsave and Saved articles
+- **Saved state:** a saved article shows *Saved* under its byline, and in *Export options* the Save item reads *Saved · Save again to update it*, with **Unsave** right under it.
+- **Unsave** takes the article out of *My library → Articles* (its `.md` and AIRAG copy) but keeps it in History, so it opens like any other search. A message offers **Undo**.
+- **Manage saved articles** (*Export options* in an article, *Manage* next to *Saved articles* on the home page, or the top of the *Saved* tab in History): tick several to unsave them at once, or use the bin icon on one.
+- **Recently removed** (in the same window): unsaved articles are kept for 30 days in AIRAG's private app folder, outside My library (so they aren't searched or synced). *Restore* puts the article back exactly as it was, with its tags and translations; × deletes that copy for good (the article stays in History). At most 50 are kept.
+- On phones, the delete and unsave buttons in History lists are always shown (they used to appear only when a mouse hovered over them).
+
 ### Save articles with pictures and the explainer (Settings → Defaults)
 Also keeps pictures and the interactive explainer in the saved copy, so they work offline. This makes larger files.
 
@@ -585,7 +592,7 @@ Off: tasks read the settings file directly, as before 0.4.1, and clearing is alw
 - **Check & repair** (Settings → System): finds and fixes broken or missing app files.
 
 ### Searches kept in history
-Older searches are deleted automatically; pinned articles are never deleted.
+Every finished search (article, results page, or "nothing reliable found") is kept as one small file in AIRAG's own app folder, not in My library: on Windows `%APPDATA%\AIRAG\history`, on the phone inside the app's private storage. Up to this many are kept (default 300 on PC, 100 on the phone); when there are more, the oldest are deleted automatically. Pinned articles are never deleted this way. Each file holds the article, its sources and their notes, follow-up answers, translations, tags and the explainer, so reopening it needs no AI. Earlier versions of an article (Version history) are kept next to it and deleted with it. Saving an article additionally puts a copy in My library; unsaving removes only that copy.
 
 ### Preferred port (PC)
 The local address AIRAG uses on your computer; a free one is picked if it's busy.
