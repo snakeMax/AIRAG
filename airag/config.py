@@ -111,8 +111,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "reopen_to_history", "label": "Reopened saved articles go back in History", "type": "bool", "default": True,
          "help": "So follow-ups and the other toolbar tools work on them."},
         {"key": "extensions", "label": "File types", "type": "text",
-         "default": ".md, .markdown, .txt, .text, .rst, .org, .tex, .pdf, .docx, .odt, .html, .htm, .csv, .json, .log",
-         "help": "Comma separated."},
+         "default": ".md, .markdown, .txt, .text, .rst, .org, .tex, .log, .pdf, .docx, .odt, .rtf, .pptx, .odp, .html, .htm, .csv, .tsv, .json, .xlsx, .ods, .db, .sqlite",
+         "help": "Comma separated. Readable: text and Markdown, PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument, RTF, web pages, CSV, JSON and SQLite databases (read-only)."},
         {"key": "max_file_mb", "label": "Skip files larger than (MB)", "type": "number", "default": 25, "min": 1, "max": 500, "step": 1},
         {"key": "max_results", "label": "Library files read per search", "type": "number", "default": 6, "min": 1, "max": 30, "step": 1},
         {"key": "min_relevance", "label": "Minimum relevance to use a library file (1-10)", "type": "number", "default": 4, "min": 1, "max": 10, "step": 1,
@@ -343,6 +343,9 @@ def load(with_env: bool = True) -> dict:
         raw["research"]["skip_domains"] = old_skip.replace("youtube.com, ", "")
     if raw.get("research", {}).get("article_max_tokens") == 4096:
         raw["research"]["article_max_tokens"] = 8192   # old default, too low for reasoning models
+    lib = raw.get("library", {})
+    if lib.get("extensions") == ".md, .markdown, .txt, .text, .rst, .org, .tex, .pdf, .docx, .odt, .html, .htm, .csv, .json, .log":
+        lib["extensions"] = ".md, .markdown, .txt, .text, .rst, .org, .tex, .log, .pdf, .docx, .odt, .rtf, .pptx, .odp, .html, .htm, .csv, .tsv, .json, .xlsx, .ods, .db, .sqlite"    # 0.4.1: more file types; only when the list was never changed
     s = _coerce(deep_merge(defaults(), raw))
     if with_env:
         for path, f in _secret_fields():

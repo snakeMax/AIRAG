@@ -6,14 +6,12 @@ your computer except the excerpts sent to the AI model you selected.
 """
 from __future__ import annotations
 
-import html
 import logging
 import os
 import re
 import sqlite3
 import threading
 import time
-import zipfile
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -45,34 +43,12 @@ def _read_text(p: Path) -> str:
     return raw.decode("utf-8", errors="replace")
 
 
-def _xml_text(xml: str, para_tag: str) -> str:
-    xml = re.sub(rf"</{para_tag}>", "\n", xml)
-    xml = re.sub(r"<[^>]+>", "", xml)
-    return html.unescape(xml)
-
-
 def extract(p: Path) -> str:
-    ext = p.suffix.lower()
-    if ext == ".pdf":
-        from pypdf import PdfReader
-        reader = PdfReader(str(p))
-        return "\n".join((pg.extract_text() or "") for pg in reader.pages[:400])
-    if ext == ".docx":
-        with zipfile.ZipFile(p) as z:
-            return _xml_text(z.read("word/document.xml").decode("utf-8", "replace"), "w:p")
-    if ext == ".odt":
-        with zipfile.ZipFile(p) as z:
-            return _xml_text(z.read("content.xml").decode("utf-8", "replace"), "text:p")
-    if ext in (".html", ".htm"):
-        from bs4 import BeautifulSoup
-        try:
-            soup = BeautifulSoup(_read_text(p), "lxml")
-        except Exception:
-            soup = BeautifulSoup(_read_text(p), "html.parser")
-        for t in soup(["script", "style", "noscript"]):
-            t.decompose()
-        return soup.get_text("\n", strip=True)
-    return _read_text(p)
+    """The file's text as Markdown (tables as Markdown tables), from the readers in filereaders.py."""
+    from . import filereaders
+    if p.suffix.lower() not in filereaders.READERS:
+        return _read_text(p)
+    return filereaders.read_path(p, MAX_TEXT * 50).text
 
 
 def title_of(p: Path, text: str) -> str:
@@ -121,6 +97,11 @@ class Library:
                 mtime REAL, size INTEGER, chunks INTEGER DEFAULT 0, error TEXT);
             CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
         """)
+        cols = {r[1] for r in c.execute("PRAGMA table_info(files)")}
+        if "tags" not in cols:      # 0.4.1: tags; Markdown files are read again once to pick theirs up
+            c.execute("ALTER TABLE files ADD COLUMN tags TEXT")
+            c.execute("UPDATE files SET mtime = 0 WHERE lower(path) LIKE '%.md' OR lower(path) LIKE '%.markdown'")
+            c.commit()
         try:
             c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS chunks USING fts5(text, title, file_id UNINDEXED, "
                       "ord UNINDEXED, tokenize='unicode61 remove_diacritics 2')")
@@ -178,9 +159,13 @@ class Library:
                         progress(i, len(todo), path)
                     root, mt, sz = files[path]
                     p = Path(path)
+                    file_tags = ""
                     try:
                         text = extract(p)[:MAX_TEXT]
                         err = None
+                        if p.suffix.lower() in (".md", ".markdown"):
+                            from .tags import from_front_matter, DEFAULT
+                            file_tags = ",".join(t for t in from_front_matter(text) if t != DEFAULT)
                     except Exception as e:
                         text, err = "", f"{type(e).__name__}: {e}"[:200]
                         failed += 1
@@ -189,12 +174,12 @@ class Library:
                     if path in known:
                         fid = known[path][0]
                         c.execute("DELETE FROM chunks WHERE file_id=?", (fid,))
-                        c.execute("UPDATE files SET root=?, title=?, mtime=?, size=?, chunks=?, error=? WHERE id=?",
-                                  (root, title, mt, sz, len(parts), err, fid))
+                        c.execute("UPDATE files SET root=?, title=?, mtime=?, size=?, chunks=?, error=?, tags=? WHERE id=?",
+                                  (root, title, mt, sz, len(parts), err, file_tags, fid))
                         updated += 1
                     else:
-                        cur = c.execute("INSERT INTO files(path, root, title, mtime, size, chunks, error) VALUES(?,?,?,?,?,?,?)",
-                                        (path, root, title, mt, sz, len(parts), err))
+                        cur = c.execute("INSERT INTO files(path, root, title, mtime, size, chunks, error, tags) VALUES(?,?,?,?,?,?,?,?)",
+                                        (path, root, title, mt, sz, len(parts), err, file_tags))
                         fid = cur.lastrowid
                         added += 1
                     c.executemany("INSERT INTO chunks(text, title, file_id, ord) VALUES(?,?,?,?)",
@@ -236,6 +221,17 @@ class Library:
                     f = by_file.setdefault(int(r["file_id"]), {"score": 0.0, "hits": []})
                     f["score"] += -float(r["score"])  # bm25: lower is better
                     f["hits"].append((int(r["ord"]), r["text"]))
+                # files whose tags appear in the question are read first (with their opening parts if no word matched)
+                from .tags import matches
+                question = " ".join(queries)
+                for r in c.execute("SELECT id, tags FROM files WHERE tags IS NOT NULL AND tags != ''"):
+                    if matches(r["tags"].split(","), question):
+                        f = by_file.setdefault(int(r["id"]), {"score": 0.0, "hits": []})
+                        f["score"] += 1e6
+                        f["tagged"] = True
+                        if not f["hits"]:
+                            f["hits"] = [(int(x["ord"]), x["text"]) for x in
+                                         c.execute("SELECT ord, text FROM chunks WHERE file_id=? ORDER BY ord LIMIT 3", (r["id"],))]
                 best = sorted(by_file.items(), key=lambda kv: -kv[1]["score"])[:limit]
                 out = []
                 for fid, f in best:
@@ -251,7 +247,9 @@ class Library:
                         excerpt.append(t)
                         used += len(t)
                     out.append({"file_id": fid, "path": meta["path"], "root": meta["root"], "title": meta["title"],
-                                "score": round(f["score"], 3), "excerpt": "\n[…]\n".join(excerpt), "mtime": meta["mtime"]})
+                                "score": round(f["score"] - (1e6 if f.get("tagged") else 0), 3), "tagged": bool(f.get("tagged")),
+                                "tags": [t for t in (meta["tags"] or "").split(",") if t],
+                                "excerpt": "\n[…]\n".join(excerpt), "mtime": meta["mtime"]})
                 return out
             finally:
                 c.close()

@@ -27,7 +27,7 @@ def main() -> None:
     p.add_argument("--install-browser", action="store_true")
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--version", action="store_true")
-    p.add_argument("file", nargs="?", help="a .md, .airag.json or exported .html file to open")
+    p.add_argument("file", nargs="?", help="a file to open as an article (Markdown, text, Office, PDF, CSV, JSON, SQLite, .airag.json, .html)")
     args = p.parse_args()
 
     if args.version:

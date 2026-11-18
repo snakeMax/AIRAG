@@ -910,4 +910,4 @@
  "regen.changed": "The article was changed back",
  "regen.compareTitle": "Version {n} and the current article",
  "regen.cancelled": "Regenerating was cancelled",
- "regen.done": "New version ready","grp.exportShort":"Export","grp.rewriteShort":"Rewrite","grp.sourcesShort":"Sources"}
+ "regen.done": "New version ready","grp.exportShort":"Export","grp.rewriteShort":"Rewrite","grp.sourcesShort":"Sources","act.tags":"Suggesting tags: \"{q}\""}

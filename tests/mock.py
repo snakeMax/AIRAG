@@ -62,6 +62,8 @@ class MockLLM(LLMProvider):
     async def complete(self, system, user, max_tokens=2048, json_mode=False):
         await asyncio.sleep(float(os.environ.get('AIRAG_MOCK_DELAY', '0.05')))
         first = user.split("\n")[0].lower()
+        if "short tags for this article" in system:
+            return '["Hummingbirds", "wing speed", "airag", "birds"]'
         if "planning module" in system:
             return json.dumps({"intent": "How many times per second hummingbird wings beat", "answer_type": "number",
                                "key_terms": ["hummingbird", "wingbeat", "beats per second"],

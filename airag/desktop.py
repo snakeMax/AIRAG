@@ -296,8 +296,8 @@ def _open_at_start(path: str) -> None:
     """Open with AIRAG when AIRAG wasn't running: the page picks the file up once it has loaded."""
     from . import openfile
     try:
-        name, text = openfile.read_path(path)
-        openfile.queue(openfile.open_file(name, text, trusted=_in_my_library(path))["id"])
+        name, data = openfile.read_path(path)
+        openfile.queue(openfile.open_file(name, trusted=_in_my_library(path), data=data)["id"])
     except Exception as e:
         log.warning("couldn't open %s: %s", path, e)
         openfile.errors.append(str(e))

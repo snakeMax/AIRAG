@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from . import paths
+from . import paths, tags
 
 ARTICLES_SUBDIR = "Articles"
 SOURCES_SUBDIR = "Sources"
@@ -56,7 +56,7 @@ def article_markdown(rec: dict) -> str:
     title = rec.get("title") or rec.get("query") or "Article"
     created = rec.get("created") or dt.datetime.now().astimezone().isoformat(timespec="seconds")
     head = ["---", f"title: {_yaml(title)}", f"search: {_yaml(rec.get('query', ''))}", f"created: {created}",
-            f"model: {_yaml(rec.get('model', ''))}", "source: AIRAG", "tags: [airag]", "---", ""]
+            f"model: {_yaml(rec.get('model', ''))}", "source: AIRAG", f"tags: {tags.yaml_list(rec.get('tags') or [])}", "---", ""]
     if not md.lstrip().startswith("#"):
         head.append(f"# {title}\n")
     lines = ["", "", "## Sources", ""]
@@ -87,9 +87,10 @@ def _embed_images(images: List[dict]) -> List[dict]:
     return out
 
 
-def save_article(rec: dict, settings: dict, rich: bool = False) -> Path:
+def save_article(rec: dict, settings: dict, rich: bool = False, translations: Optional[List[str]] = None) -> Path:
     """Save as Markdown (text + source links). Next to it goes a small .airag.json copy so the article can be
-    opened again in AIRAG; with rich=True that copy also keeps the pictures and the interactive explainer."""
+    opened again in AIRAG; with rich=True that copy also keeps the pictures and the interactive explainer.
+    `translations`: languages of the article's translations to keep in the copy (None = all of them)."""
     import json
     if rec.get("outcome") != "article" or not rec.get("article"):
         raise ValueError("Only finished articles can be saved.")
@@ -110,6 +111,9 @@ def save_article(rec: dict, settings: dict, rich: bool = False) -> Path:
                                     "article_sources", "related", "language", "dates", "outcome", "elapsed")}
     keep["sources"] = rec.get("article_sources") or []
     keep["saved_rich"] = bool(rich)
+    keep["tags"] = tags.clean(rec.get("tags") or [])
+    have = rec.get("translations") or {}
+    keep["translations"] = {k: v for k, v in have.items() if translations is None or k in translations}
     if rich:
         keep["images"] = _embed_images(rec.get("images") or [])
         keep["interactive"] = rec.get("interactive")
@@ -130,7 +134,8 @@ def list_saved(settings: dict) -> List[dict]:
         except (OSError, ValueError):
             continue
         out.append({"file": f.name, "title": rec.get("title") or rec.get("query"), "query": rec.get("query"),
-                    "created": rec.get("created"), "rich": bool(rec.get("saved_rich")),
+                    "created": rec.get("created"), "rich": bool(rec.get("saved_rich")), "tags": rec.get("tags") or [],
+                    "languages": sorted((rec.get("translations") or {}).keys()),
                     "has_md": f.with_name(f.name[: -len(SAVED_SUFFIX)] + ".md").exists()})
     return out
 
@@ -162,9 +167,11 @@ def _reread_markdown(rec: dict, json_file: Path, md_file: Path) -> bool:
         new = openfile.parse_markdown(md_file.read_text(encoding="utf-8", errors="replace"), md_file.name)
     except (OSError, ValueError):
         return False
-    if new["article"].strip() == (rec.get("article") or "").strip() and new["title"] == rec.get("title"):
+    new_tags = [t for t in new.get("tags") or [] if t != tags.DEFAULT]
+    if (new["article"].strip() == (rec.get("article") or "").strip() and new["title"] == rec.get("title")
+            and new_tags == (rec.get("tags") or [])):
         return False
-    rec["article"], rec["title"] = new["article"], new["title"]
+    rec["article"], rec["title"], rec["tags"] = new["article"], new["title"], new_tags
     if new["article_sources"]:
         old = {s.get("n"): s for s in rec.get("article_sources") or []}
         rec["article_sources"] = [{**old.get(s["n"], {}), **s} for s in new["article_sources"]]
@@ -188,7 +195,7 @@ def _back_to_history(rec: dict) -> None:
 
                 def take(cur: dict) -> None:
                     before, before_src = cur.get("article") or "", cur.get("article_sources")
-                    cur.update({k: rec[k] for k in ("article", "title", "article_sources", "sources") if k in rec})
+                    cur.update({k: rec[k] for k in ("article", "title", "article_sources", "sources", "tags") if k in rec})
                     versions.note_change(cur, before, "edit", "Edited outside AIRAG", before_src)
                 history.update(rec["id"], take)
             return
@@ -196,6 +203,37 @@ def _back_to_history(rec: dict) -> None:
         entry.update({"outcome": "article", "status": "done"})
         history.save(entry)
     except Exception:
+        pass
+
+
+def set_tags(rec: dict, settings: dict) -> None:
+    """New tags on a saved article: the Markdown properties and the AIRAG copy are updated in place."""
+    import json
+    md = Path(rec.get("saved_path") or "")
+    d = (folder(settings) / ARTICLES_SUBDIR).resolve()
+    if not md.is_file() or md.resolve().parent != d:
+        return
+    text = md.read_text(encoding="utf-8", errors="replace")
+    line = f"tags: {tags.yaml_list(rec.get('tags') or [])}"
+    if text.startswith("---") and text.find("\n---", 3) > 0:
+        end = text.find("\n---", 3)
+        head, rest = text[:end], text[end:]
+        head = re.sub(r"(?ms)^tags[ \t]*:[ \t]*(\[.*?\]|[^\n]*)(\n[ \t]*-[^\n]*)*", line, head, count=1) \
+            if re.search(r"(?m)^tags[ \t]*:", head) else head + "\n" + line
+        text = head + rest
+    paths.atomic_write_text(md, text)
+    js = md.with_name(md.stem + SAVED_SUFFIX)
+    try:
+        data = json.loads(js.read_text(encoding="utf-8"))
+        data["tags"] = tags.clean(rec.get("tags") or [])
+        paths.atomic_write_text(js, json.dumps(data, ensure_ascii=False))
+    except (OSError, ValueError):
+        pass
+    try:                                 # so the copy isn't seen as "edited outside AIRAG"
+        import os
+        st = js.stat()
+        os.utime(md, (st.st_atime, st.st_mtime))
+    except OSError:
         pass
 
 

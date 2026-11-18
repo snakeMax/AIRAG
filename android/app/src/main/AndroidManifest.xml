@@ -46,7 +46,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Open with AIRAG: Markdown, saved articles (.airag.json), exported web pages, text files -->
+            <!-- Open with AIRAG: text, Markdown, Office and OpenDocument files, PDF, CSV, JSON, SQLite, saved articles, web pages -->
             <intent-filter android:label="@string/open_with">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -56,6 +56,20 @@
                 <data android:mimeType="text/html" />
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="application/json" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/comma-separated-values" />
+                <data android:mimeType="text/tab-separated-values" />
+                <data android:mimeType="text/rtf" />
+                <data android:mimeType="application/rtf" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+                <data android:mimeType="application/vnd.oasis.opendocument.text" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation" />
+                <data android:mimeType="application/vnd.sqlite3" />
+                <data android:mimeType="application/x-sqlite3" />
             </intent-filter>
             <intent-filter android:label="@string/open_with">
                 <action android:name="android.intent.action.SEND" />
@@ -64,6 +78,20 @@
                 <data android:mimeType="text/x-markdown" />
                 <data android:mimeType="text/html" />
                 <data android:mimeType="application/json" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/comma-separated-values" />
+                <data android:mimeType="text/tab-separated-values" />
+                <data android:mimeType="text/rtf" />
+                <data android:mimeType="application/rtf" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+                <data android:mimeType="application/vnd.oasis.opendocument.text" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation" />
+                <data android:mimeType="application/vnd.sqlite3" />
+                <data android:mimeType="application/x-sqlite3" />
             </intent-filter>
             <!-- Share a picture or screenshot to AIRAG to have the AI model analyze it -->
             <intent-filter android:label="@string/share_analyze">

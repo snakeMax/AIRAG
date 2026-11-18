@@ -1,12 +1,12 @@
-// Open with AIRAG: Markdown and text files, saved articles (.airag.json) and exported web pages open as an
-// article, without the AI. Ways in:
+// Open with AIRAG: text, Markdown, Word, PowerPoint, Excel, CSV, JSON, SQLite, PDF..., saved articles (.airag.json)
+// and exported web pages open as an article, without the AI. Ways in:
 //  - Windows: "Open with" -> AIRAG (the app hands the file to this page)
 //  - Android: open a file in a file manager with AIRAG, or share the file to it
 //  - the "Open a file" button in the Saved tab
 import { api, toast } from "./util.js";
 import { t } from "./i18n.js";
 
-const ACCEPT = ".md,.markdown,.txt,.html,.htm,.json";
+const ACCEPT = ".md,.markdown,.txt,.html,.htm,.json,.csv,.tsv,.xlsx,.xlsm,.ods,.docx,.odt,.rtf,.pdf,.pptx,.odp,.db,.sqlite,.sqlite3";
 let show = () => {};
 
 export function initOpenFile() {
@@ -29,15 +29,15 @@ export function initOpenFile() {
     let f;
     try { f = JSON.parse(raw); } catch { return; }
     if (f.error) { toast(t(f.error === "big" ? "open.tooBig" : "open.unreadable"), 6000); return; }
-    send(f.name, f.text);
+    send(f.name, f.text || "", f.data || "");
   };
   addEventListener("airag-share", takeFile);
   setTimeout(takeFile, 700);
 }
 
-async function send(name, text) {
+async function send(name, text, data = "") {
   try {
-    const { id } = await api("/api/open-file", { method: "POST", body: { name, text } });
+    const { id } = await api("/api/open-file", { method: "POST", body: { name, text, data } });
     show(id);
     toast(t("open.opened"), 3000);
   } catch (e) {
@@ -52,7 +52,16 @@ export function pickFile() {
     const f = inp.files[0];
     if (!f) return;
     if (f.size > 20 * 1024 * 1024) { toast(t("open.tooBig"), 6000); return; }
-    send(f.name, await f.text());
+    send(f.name, "", await toBase64(f));
   };
   inp.click();
+}
+
+function toBase64(blob) {
+  return new Promise((ok, fail) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",", 2)[1] || "");
+    r.onerror = () => fail(r.error);
+    r.readAsDataURL(blob);
+  });
 }

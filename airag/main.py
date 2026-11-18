@@ -137,10 +137,10 @@ def app_open_path(req: OpenPathReq, request: Request):
         raise HTTPException(403, "Not allowed")
     from . import openfile, mylibrary
     try:
-        name, text = openfile.read_path(req.path)
+        name, data = openfile.read_path(req.path)
         lib = mylibrary.folder(config.load()).resolve()
         trusted = lib in Path(req.path).resolve().parents
-        openfile.queue(openfile.open_file(name, text, trusted)["id"])
+        openfile.queue(openfile.open_file(name, trusted=trusted, data=data)["id"])
     except Exception as e:
         openfile.errors.append(str(e))
     appctl.show()
@@ -154,17 +154,27 @@ def app_inbox():
     return openfile.take()
 
 
-class OpenFileReq(BaseModel):
+class OpenFileBody(BaseModel):
     name: str
-    text: str
+    text: str = ""
+    data: str = ""          # the file's bytes, base64 (anything that isn't plain text)
 
 
 @app.post("/api/open-file")
-def open_file(req: OpenFileReq):
+async def open_file(req: OpenFileBody):
     """A file the reader picked in AIRAG (or shared to it on Android). Opened without the AI."""
     from . import openfile
+    import base64
     try:
-        rec = openfile.open_file(req.name, req.text)
+        data = None
+        if req.data:
+            if len(req.data) > openfile.MAX_BYTES * 4 // 3 + 8:
+                raise openfile.NotOpenable("The file is too big to open (over 20 MB).")
+            try:
+                data = base64.b64decode(req.data, validate=True)
+            except ValueError:
+                raise HTTPException(400, "The file couldn't be read.")
+        rec = await asyncio.to_thread(openfile.open_file, req.name, req.text, False, data)
     except openfile.NotOpenable as e:
         raise HTTPException(400, str(e))
     return {"id": rec["id"]}
@@ -620,6 +630,8 @@ async def mylibrary_folder(req: MyFolderReq):
 class SaveReq(BaseModel):
     id: str
     rich: bool = False      # also keep pictures and the interactive explainer
+    tags: Optional[List[str]] = None            # None = keep the article's tags
+    translations: Optional[List[str]] = None    # languages to keep (None = all)
 
 
 @app.post("/api/mylibrary/save")
@@ -629,13 +641,53 @@ async def mylibrary_save(req: SaveReq):
     if not rec:
         raise HTTPException(404, "Search not found")
     s = config.load()
+    from . import tags as tagmod
+    if req.tags is not None:
+        rec["tags"] = tagmod.clean(req.tags)
     try:
-        path = await asyncio.to_thread(mylibrary.save_article, rec, s, req.rich)
+        path = await asyncio.to_thread(mylibrary.save_article, rec, s, req.rich, req.translations)
     except (ValueError, OSError) as e:
         raise _err(e)
-    history.update(req.id, {"saved_path": str(path)})
+    history.update(req.id, {"saved_path": str(path), **({"tags": rec["tags"]} if req.tags is not None else {})})
     _reindex_soon()
     return {"path": str(path)}
+
+
+class TagsReq(BaseModel):
+    tags: List[str]
+
+
+@app.post("/api/tags/{rid}")
+async def set_tags(rid: str, req: TagsReq):
+    """Tags of an article; a saved copy (Markdown properties + AIRAG copy) is updated too."""
+    from . import tags as tagmod, mylibrary
+    clean = [t for t in tagmod.clean(req.tags) if t != tagmod.DEFAULT]
+    rec = history.update(rid, {"tags": clean})
+    if not rec:
+        raise HTTPException(404, "Search not found")
+    if rec.get("saved_path"):
+        try:
+            await asyncio.to_thread(mylibrary.set_tags, rec, config.load())
+            _reindex_soon()
+        except OSError:
+            pass
+    return {"tags": clean}
+
+
+@app.post("/api/tags/{rid}/suggest")
+async def suggest_tags(rid: str):
+    """A few tags from the AI (runs as a background job; tokens only when pressed)."""
+    from . import tags as tagmod
+    rec = history.get(rid)
+    if not rec or not rec.get("article"):
+        raise HTTPException(404, "Article not found")
+    s = config.load()
+    return await _job_result(lambda: _suggest(s, rec), "tags", rec.get("title") or rec.get("query") or "", rid)
+
+
+async def _suggest(s: dict, rec: dict) -> dict:
+    from . import tags as tagmod
+    return {"tags": await tagmod.suggest(s, rec)}
 
 
 @app.get("/api/mylibrary/saved")

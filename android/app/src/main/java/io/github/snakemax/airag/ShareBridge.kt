@@ -30,7 +30,7 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
         return p
     }
 
-    /** A Markdown file, saved article or web page opened with AIRAG: {"name": ..., "text": ...} as JSON. */
+    /** A file opened with (or shared to) AIRAG: {"name": ..., "data": base64} as JSON. */
     @JavascriptInterface
     fun takeFile(key: String): String {
         if (!NativeKey.ok(key)) return ""
@@ -55,7 +55,7 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
         }
     }
 
-    /** Reads a text file (up to 20 MB) and hands it to the page, which opens it without the AI. */
+    /** Reads a file (up to 20 MB) and hands it to the page, which opens it without the AI. */
     private fun openDocument(uri: Uri) {
         thread(name = "airag-open") {
             val json = try {
@@ -77,7 +77,8 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
                     }
                     out.toByteArray()
                 } ?: return@thread
-                JSONObject().put("name", name).put("text", String(bytes, Charsets.UTF_8)).toString()
+                // raw bytes as base64: AIRAG reads Word, Excel, CSV, SQLite... as well as text
+                JSONObject().put("name", name).put("data", Base64.encodeToString(bytes, Base64.NO_WRAP)).toString()
             } catch (e: Throwable) {
                 JSONObject().put("name", "").put("error", if (e.message == "too big") "big" else "read").toString()
             }

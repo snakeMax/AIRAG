@@ -24,7 +24,7 @@ JSON_TYPES = {".json"}
 TYPES = MD_TYPES | HTML_TYPES | JSON_TYPES
 SAVED_SUFFIX = ".airag.json"
 DATA_ID = "airag-record"            # <script type="application/json" id="airag-record"> in exported pages
-KEEP = ("query", "mode", "created", "model", "title", "article", "related", "language", "dates", "elapsed")
+KEEP = ("query", "mode", "created", "model", "title", "article", "related", "language", "dates", "elapsed", "tags", "translations")
 _SOURCE_LINE = re.compile(r"^\s*(\d+)\.\s+(?:\[(.*?)\]\((.*?)\)|(.+?))(?:\s+-\s+reliability\s+(\d+)/10)?\s*$")
 _DISCLAIMER = re.compile(r"\n\*(?:Summary )?[Ww]ritten by AI with AIRAG[^\n]*\*\s*$")
 
@@ -34,14 +34,19 @@ class NotOpenable(ValueError):
 
 
 def kind_of(name: str) -> str:
+    from . import filereaders
     n = name.lower()
-    if n.endswith(SAVED_SUFFIX) or Path(n).suffix in JSON_TYPES:
+    ext = Path(n).suffix
+    if n.endswith(SAVED_SUFFIX) or ext in JSON_TYPES:
         return "json"
-    if Path(n).suffix in MD_TYPES:
+    if ext in MD_TYPES:
         return "md"
-    if Path(n).suffix in HTML_TYPES:
+    if ext in HTML_TYPES:
         return "html"
-    raise NotOpenable("AIRAG can open Markdown or text files (.md, .txt), saved AIRAG articles (.airag.json) and exported web pages (.html).")
+    if ext in filereaders.READERS or ext in filereaders.LEGACY:
+        return "doc"
+    raise NotOpenable("AIRAG can open text and Markdown, Word, PowerPoint, Excel, OpenDocument, PDF, RTF, CSV, JSON, "
+                      "SQLite databases, saved AIRAG articles (.airag.json) and web pages.")
 
 
 # ---------------------------------------------------------------- Markdown
@@ -99,8 +104,10 @@ def parse_markdown(text: str, name: str = "") -> dict:
     title = meta.get("title") or (heading.group(1).strip() if heading else "") or Path(name).stem or "Article"
     if not body:
         raise NotOpenable("The file is empty.")
+    from . import tags
     return {"title": title, "query": meta.get("search") or title, "created": meta.get("created") or None,
-            "model": meta.get("model") or "", "article": body, "article_sources": sources, "from_airag": ours}
+            "model": meta.get("model") or "", "article": body, "article_sources": sources, "from_airag": ours,
+            "tags": [t for t in tags.from_front_matter(text.replace("\r\n", "\n")) if t != tags.DEFAULT]}
 
 
 # ---------------------------------------------------------------- saved JSON copies
@@ -133,6 +140,12 @@ def parse_saved_json(text: str, trusted: bool = False) -> dict:
     if not isinstance(rec, dict) or not isinstance(rec.get("article"), str) or not (rec.get("query") or rec.get("title")):
         raise NotOpenable("This JSON file isn't a saved AIRAG article.")
     out = {k: rec[k] for k in KEEP if k in rec and isinstance(rec[k], (str, int, float, list, dict))}
+    from . import tags
+    out["tags"] = [t for t in tags.clean(out.get("tags") if isinstance(out.get("tags"), list) else []) if t != tags.DEFAULT]
+    tr = out.get("translations")
+    out["translations"] = {k: v for k, v in (tr.items() if isinstance(tr, dict) else [])
+                           if isinstance(k, str) and re.fullmatch(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?", k)
+                           and isinstance(v, str) and len(v) < 400_000}
     out["article_sources"] = _clean_sources(rec.get("article_sources") or rec.get("sources"))
     out["images"] = _clean_images(rec.get("images"))
     if trusted and isinstance(rec.get("interactive_html"), str):
@@ -178,18 +191,50 @@ def parse_html(text: str, name: str = "") -> dict:
     return {"title": title, "query": title, "article": md, "article_sources": [], "from_airag": False}
 
 
+# ---------------------------------------------------------------- documents and data (Word, Excel, CSV, SQLite...)
+def parse_document(name: str, data: bytes) -> dict:
+    """Any other readable file: its text (tables as tables) becomes the article, its web links the sources.
+    Nothing in the file runs; a database is only read."""
+    from . import filereaders
+    from urllib.parse import urlparse
+    try:
+        doc = filereaders.read(name, data)
+    except filereaders.Unreadable as e:
+        raise NotOpenable(str(e))
+    if not doc.text.strip():
+        raise NotOpenable("No readable text was found in this file.")
+    title = doc.title or Path(name).stem or "File"
+    body = doc.text.strip()
+    if not body.startswith("# "):
+        body = f"# {title}\n\n{body}"
+    sources = [{"n": i, "title": urlparse(u).netloc or u, "url": u, "domain": urlparse(u).netloc}
+               for i, u in enumerate(doc.links, 1)]
+    return {"title": title, "query": title, "article": body, "article_sources": sources, "from_airag": False,
+            "file_kind": doc.kind, "file_tables": doc.tables}
+
+
 # ---------------------------------------------------------------- entry points
-def parse(name: str, text: str, trusted: bool = False) -> dict:
+def parse(name: str, text: str = "", trusted: bool = False, data: Optional[bytes] = None) -> dict:
+    """A file's record. Give `data` (the raw bytes) for anything that isn't plain text."""
+    from . import filereaders
     kind = kind_of(name)
-    if len(text.encode("utf-8", "ignore")) > MAX_BYTES:
+    size = len(data) if data is not None else len(text.encode("utf-8", "ignore"))
+    if size > MAX_BYTES:
         raise NotOpenable("The file is too big to open (over 20 MB).")
+    if kind == "doc":
+        return parse_document(name, data if data is not None else text.encode("utf-8"))
+    if data is not None:
+        text = filereaders.decode(data)
     if kind == "md":
-        rec = parse_markdown(text, name)
-    elif kind == "json":
-        rec = parse_saved_json(text, trusted)
-    else:
-        rec = parse_html(text, name)
-    return rec
+        return parse_markdown(text, name)
+    if kind == "json":
+        try:
+            return parse_saved_json(text, trusted)
+        except NotOpenable:
+            if name.lower().endswith(SAVED_SUFFIX):
+                raise
+            return parse_document(name, text.encode("utf-8"))     # any other JSON: shown as data
+    return parse_html(text, name)
 
 
 def to_record(parsed: dict, name: str) -> dict:
@@ -205,7 +250,7 @@ def to_record(parsed: dict, name: str) -> dict:
     return rec
 
 
-def read_path(path: str) -> Tuple[str, str]:
+def read_path(path: str) -> Tuple[str, bytes]:
     """Reads a file given by the operating system (Open with AIRAG). Only the types above, up to 20 MB."""
     p = Path(path)
     kind_of(p.name)
@@ -213,12 +258,12 @@ def read_path(path: str) -> Tuple[str, str]:
         raise NotOpenable("The file wasn't found.")
     if p.stat().st_size > MAX_BYTES:
         raise NotOpenable("The file is too big to open (over 20 MB).")
-    return p.name, p.read_text(encoding="utf-8", errors="replace")
+    return p.name, p.read_bytes()
 
 
-def open_file(name: str, text: str, trusted: bool = False) -> dict:
+def open_file(name: str, text: str = "", trusted: bool = False, data: Optional[bytes] = None) -> dict:
     from . import history
-    rec = to_record(parse(name, text, trusted), name)
+    rec = to_record(parse(name, text, trusted, data), name)
     history.save(rec)
     return rec
 
