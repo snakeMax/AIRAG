@@ -45,7 +45,7 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 
 Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
 
-### 0.3.0
+### 0.3.0 (18 Nov 2026)
 The Android app, My library with saving and reopening articles, background searches with a queue and Cancel, Search again, date ranges, translation with AI, sharing your PC's Ollama with your phone, a microphone button, an update popup, backups, hardware info and Check & repair. Settings got Defaults and System tabs. Better protection against web pages that try to trick the AI, and fewer AI calls per search.
 Fixes: summaries now use your search language, DuckDuckGo failures retry, the interactive explainer no longer opens blank, phone screens no longer overflow, and the app no longer shows old screens after updating.
 
