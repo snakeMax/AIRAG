@@ -1,4 +1,4 @@
-"""Searches that keep going when you leave the page.
+"""Background jobs (searches, explainers, later autonomous research) that keep going when you leave the page.
 
 Each search runs on the server as a background task. Its events are kept in memory,
 so the page can leave and come back (or the app can be reopened) and replay what
@@ -15,13 +15,16 @@ from typing import Callable, Dict, List, Optional
 
 log = logging.getLogger("airag.runs")
 
-MAX_PARALLEL = 1          # one search at a time keeps the AI provider's rate limits and the phone's battery happy
+MAX_PARALLEL = 1          # default jobs at a time per kind: keeps the AI provider's rate limits and the phone's battery happy
+LIMITS = {"search": 1, "explainer": 1}
 KEEP_FINISHED = 600       # seconds a finished search stays here (after that it's only in history)
 
 
 class Run:
-    def __init__(self, rid: str, query: str, mode: str, factory: Callable):
+    def __init__(self, rid: str, query: str, mode: str, factory: Callable, kind: str = "search", ref: str = ""):
         self.id, self.query, self.mode = rid, query, mode
+        self.kind = kind                 # search | explainer | ...
+        self.ref = ref or rid            # the history record it belongs to
         self.factory = factory           # async fn(emit) that runs the research
         self.status = "queued"           # queued -> running -> done | error | cancelled
         self.events: List[dict] = []
@@ -40,18 +43,34 @@ class Run:
         self.finished_at = time.time()
         for q in list(self.listeners):
             q.put_nowait(None)
+        _changed()
 
     @property
     def finished(self) -> bool:
         return self.status in ("done", "error", "cancelled")
 
     def public(self, position: int = 0) -> dict:
-        return {"id": self.id, "query": self.query, "mode": self.mode, "status": self.status,
-                "created": self.created, "position": position}
+        return {"id": self.id, "query": self.query, "mode": self.mode, "status": self.status, "kind": self.kind,
+                "ref": self.ref, "created": self.created, "finished": self.finished_at, "position": position}
 
 
 RUNS: Dict[str, Run] = {}
 _order: List[str] = []
+_hooks: List[Callable[[], None]] = []
+_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+def on_change(fn: Callable[[], None]) -> None:
+    """Call fn whenever a job starts, finishes or is cancelled (used for the Android notification)."""
+    _hooks.append(fn)
+
+
+def _changed() -> None:
+    for fn in list(_hooks):
+        try:
+            fn()
+        except Exception:
+            log.exception("job change hook failed")
 
 
 def _cleanup() -> None:
@@ -62,16 +81,25 @@ def _cleanup() -> None:
             _order.remove(rid)
 
 
+def _limit(kind: str) -> int:
+    return LIMITS.get(kind, MAX_PARALLEL)
+
+
 def _schedule() -> None:
-    running = sum(1 for r in RUNS.values() if r.status == "running")
+    running: Dict[str, int] = {}
+    for r in RUNS.values():
+        if r.status == "running":
+            running[r.kind] = running.get(r.kind, 0) + 1
+    started = False
     for rid in list(_order):
-        if running >= MAX_PARALLEL:
-            break
         run = RUNS.get(rid)
-        if run and run.status == "queued":
+        if run and run.status == "queued" and running.get(run.kind, 0) < _limit(run.kind):
             run.status = "running"
             run.task = asyncio.create_task(_execute(run))
-            running += 1
+            running[run.kind] = running.get(run.kind, 0) + 1
+            started = True
+    if started:
+        _changed()
 
 
 async def _execute(run: Run) -> None:
@@ -94,15 +122,23 @@ async def _execute(run: Run) -> None:
         _schedule()
 
 
-def start(rid: str, query: str, mode: str, factory: Callable) -> Run:
+def start(rid: str, query: str, mode: str, factory: Callable, kind: str = "search", ref: str = "") -> Run:
+    global _loop
+    _loop = asyncio.get_running_loop()
     _cleanup()
-    run = Run(rid, query, mode, factory)
+    old = RUNS.get(rid)
+    if old and old.finished:          # same id again (e.g. rebuilding an explainer): replace the old job
+        RUNS.pop(rid)
+        if rid in _order:
+            _order.remove(rid)
+    run = Run(rid, query, mode, factory, kind, ref)
     RUNS[rid] = run
     _order.append(rid)
-    position = sum(1 for r in RUNS.values() if not r.finished) - 1
+    position = sum(1 for r in RUNS.values() if not r.finished and r.kind == kind) - 1
     base = {"id": rid, "query": query, "mode": mode}
     run.events.append({"type": "queued", "position": position, **base} if position else {"type": "accepted", **base})
     _schedule()
+    _changed()
     return run
 
 
@@ -127,14 +163,35 @@ def cancel(rid: str) -> bool:
 def active() -> List[dict]:
     _cleanup()
     out = []
-    queued = 0
+    queued: Dict[str, int] = {}
     for rid in _order:
         run = RUNS.get(rid)
         if run and not run.finished:
-            out.append(run.public(queued if run.status == "queued" else 0))
+            out.append(run.public(queued.get(run.kind, 0) + 1 if run.status == "queued" else 0))
             if run.status == "queued":
-                queued += 1
+                queued[run.kind] = queued.get(run.kind, 0) + 1
     return out
+
+
+def recent() -> List[dict]:
+    """Jobs that finished in the last few minutes (for the "something finished" dot)."""
+    return [r.public() for r in sorted(RUNS.values(), key=lambda r: r.finished_at or 0) if r.finished]
+
+
+def find(kind: str, ref: str) -> Optional[Run]:
+    """The newest job of this kind for this record, running or recently finished."""
+    hits = [r for r in RUNS.values() if r.kind == kind and r.ref == ref]
+    return max(hits, key=lambda r: r.created) if hits else None
+
+
+def cancel_all_threadsafe() -> None:
+    """Cancel everything from another thread (the Android notification's Cancel button)."""
+    if _loop is None:
+        return
+    def go():
+        for rid in list(_order):
+            cancel(rid)
+    _loop.call_soon_threadsafe(go)
 
 
 async def follow(run: Run):

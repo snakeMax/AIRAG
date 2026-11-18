@@ -8,4 +8,16 @@
     <string name="perm_message">To install the update, Android needs you to allow AIRAG to install apps. Turn on \"Allow from this source\" on the next screen, then come back.</string>
     <string name="perm_give">Give permission</string>
     <string name="perm_later">Not now</string>
+    <string name="ch_jobs">Searches running</string>
+    <string name="ch_done">Finished searches</string>
+    <string name="job_working">AIRAG is working</string>
+    <string name="job_background">Keeps going in the background. Tap to open.</string>
+    <string name="job_more">and %1$d more in the queue</string>
+    <string name="job_cancel">Cancel</string>
+    <string name="battery_title">Let searches finish in the background?</string>
+    <string name="battery_message">Android can pause apps to save battery, which can stop a search when you leave AIRAG. Allowing AIRAG to run in the background lets searches and explainers finish while the app is closed. AIRAG only works in the background while something is running, and shows a notification when it does.</string>
+    <string name="battery_allow">Allow</string>
+    <string name="done_search">Finished. Tap to see the result.</string>
+    <string name="done_explainer">The interactive explainer is ready. Tap to open it.</string>
+    <string name="done_failed">Didn\'t finish. Tap to see what happened.</string>
 </resources>

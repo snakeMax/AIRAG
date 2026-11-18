@@ -242,8 +242,42 @@ def run_desktop(url: str, minimized: bool = False) -> bool:
     def pick_files():
         return list(win.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=True) or [])
 
-    appctl.show_hook = show
-    appctl.quit_hook = win.destroy
+    # Closing the window while searches or explainers are running hides it instead, so they can
+    # finish; the app quits by itself when the last one is done (or opens again from the Start menu).
+    state = {"hidden": False, "quitting": False}
+
+    def on_closing():
+        from . import runs
+        if state["quitting"] or not runs.active():
+            return True
+        state["hidden"] = True
+        try:
+            win.hide()
+        except Exception:
+            return True
+        return False
+
+    def on_jobs_changed():
+        from . import runs
+        if state["hidden"] and not runs.active():
+            quit_now()
+
+    def quit_now():
+        state["quitting"] = True
+        win.destroy()
+
+    def show_again():
+        state["hidden"] = False
+        show()
+
+    try:
+        win.events.closing += on_closing
+        from . import runs
+        runs.on_change(on_jobs_changed)
+    except Exception:
+        log.warning("can't keep running in the background with this window backend")
+    appctl.show_hook = show_again
+    appctl.quit_hook = quit_now
     appctl.pick_folder_hook = pick_folder
     appctl.pick_files_hook = pick_files
     try:

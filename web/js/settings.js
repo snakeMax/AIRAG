@@ -58,7 +58,7 @@ const fields = (list, sec, base, values) => list.map(f => field(f, sec, `${base}
 // dialog
 const TABS = [
   ["general", "home"], ["defaults", "check"], ["appearance", "palette"], ["model", "cpu"], ["search", "globe"],
-  ["library", "folder"], ["research", "sliders"], ["prompts", "doc"], ["system", "cpu2"], ["about", "info"],
+  ["library", "folder"], ["research", "sliders"], ["prompts", "doc"], ["usage", "coin"], ["system", "cpu2"], ["about", "info"],
 ];
 
 export async function openSettings(tab = "general") {
@@ -86,6 +86,7 @@ export async function openSettings(tab = "general") {
             <div class="field-grid">${fields(sc.research.filter(f => f.type === "number"), "research", "research", st.research)}</div>
             ${fields(sc.research.filter(f => f.type !== "number"), "research", "research", st.research)}
             ${fetchPane(sc, st)}</section>
+          <section data-pane="usage" hidden>${usagePane(sc, st)}</section>
           <section data-pane="system" hidden>${systemPane(sc, st)}</section>
           <section data-pane="about" hidden>${aboutPane()}</section>
         </div>
@@ -101,6 +102,7 @@ export async function openSettings(tab = "general") {
     if (k === "model") { refreshOllama(); refreshPcLink(); }
     if (k === "library") refreshLibrary();
     if (k === "research") refreshBrowser();
+    if (k === "usage") refreshUsage();
     if (k === "system") { refreshSystem(); refreshStorage(); refreshLog(); }
   };
   $$(".dlg-tabs button", dlg).forEach(b => (b.onclick = () => showTab(b.dataset.tab)));
@@ -111,6 +113,7 @@ export async function openSettings(tab = "general") {
   wireLibrary(dlg);
   wirePrompts(dlg);
   wireSystem(dlg);
+  wireUsage(dlg);
   $("#saveSettings").onclick = save;
   showTab(TABS.some(x => x[0] === tab) ? tab : "general");
   if (!dlg.open) dlg.showModal();
@@ -677,6 +680,42 @@ function versionLabel(v, build) {
   if (build?.channel === "test") return t("about.testBuild", { v, c: build.commit || "?" });
   return v + (build?.channel === "source" ? " (source)" : "");
 }
+
+// usage: tokens and cost per model this month, against the monthly budget
+function usagePane(sc, st) {
+  return `<h3>${h(t("tab.usage"))}</h3><p>${h(t("usage.intro"))}</p>
+    <div id="usageBox"><div class="status-line">${h(t("common.checking"))}</div></div>
+    ${fields(sc.usage, "usage", "usage", st.usage)}`;
+}
+
+const money = v => "$" + (v < 0.01 && v > 0 ? v.toFixed(4) : v.toFixed(2));
+const tokens = n => n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(n);
+
+async function refreshUsage() {
+  const box = $("#usageBox");
+  if (!box) return;
+  const u = await api("/api/usage").catch(e => ({ error: e.message }));
+  if (u.error) { box.innerHTML = `<div class="status-line err">${h(u.error)}</div>`; return; }
+  const share = u.budget ? Math.min(1, u.spent / u.budget) : 0;
+  const level = share >= 1 ? "bad" : share >= 0.7 ? "warn" : "ok";
+  const bar = u.budget ? `<div class="budget-bar ${level}"><span style="width:${(share * 100).toFixed(1)}%"></span></div>
+      <div class="lr-s">${h(t("usage.ofBudget", { spent: money(u.spent), budget: money(u.budget), left: money(Math.max(0, u.left)) }))}</div>`
+    : `<div class="lr-s">${h(t("usage.noBudget", { spent: money(u.spent) }))}</div>`;
+  const rows = u.rows.map(r => `<tr><td><div class="lr-t">${h(r.model || "?")}</div><div class="lr-s">${h(r.provider)}${r.estimated ? ` · ${h(t("usage.estimated"))}` : ""}</div></td>
+      <td>${r.calls}</td><td>${tokens(r.in)}</td><td>${tokens(r.out)}</td><td>${r.priced === false ? "?" : money(r.cost)}</td></tr>`).join("");
+  box.innerHTML = `<div class="usage-top"><div><div class="usage-big">${money(u.spent)}</div><div class="lr-s">${h(t("usage.thisMonth", { n: tokens(u.tokens) }))}</div></div></div>
+    ${bar}
+    ${u.rows.length ? `<div class="table-wrap"><table class="usage-table"><thead><tr><th>${h(t("usage.model"))}</th><th>${h(t("usage.calls"))}</th><th>${h(t("usage.in"))}</th><th>${h(t("usage.out"))}</th><th>${h(t("usage.cost"))}</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="h-empty">${h(t("usage.none"))}</div>`}
+    ${u.unpriced.length ? `<div class="help">${h(t("usage.unpriced"))}</div>` : ""}
+    <div class="help">${h(u.prices_updated ? t("usage.prices", { when: fmtAgo(u.prices_updated * 1000, uiLang()) }) : t("usage.pricesBuiltIn"))}</div>
+    <div class="row" style="margin:8px 0 14px"><button type="button" class="btn sm ghost" id="usagePrices">${icon("refresh")}${h(t("usage.refreshPrices"))}</button>
+      <button type="button" class="btn sm ghost" id="usageReset">${icon("trash")}${h(t("usage.reset"))}</button></div>`;
+  $("#usagePrices").onclick = async () => { await api("/api/usage/prices", { method: "POST" }).catch(() => {}); refreshUsage(); };
+  $("#usageReset").onclick = async () => { if (!confirm(t("usage.resetConfirm"))) return; await api("/api/usage/reset", { method: "POST" }); refreshUsage(); };
+}
+
+function wireUsage() { /* buttons are wired each time the box is drawn */ }
 
 function aboutPane() {
   const i = S.info;

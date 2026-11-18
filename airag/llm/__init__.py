@@ -25,7 +25,9 @@ def get_llm(settings: dict) -> LLMProvider:
         raise LLMError(f"Unknown AI provider '{name}'. Pick one in Settings.")
     cfg = {f["key"]: f.get("default", "") for f in cls.fields}
     cfg.update(llm.get("providers", {}).get(name, {}))
-    return cls(cfg, temperature=float(llm.get("temperature", 0.3)))
+    provider = cls(cfg, temperature=float(llm.get("temperature", 0.3)))
+    from ..usage import Metered
+    return Metered(provider)   # counts tokens and cost of every call
 
 
 # Registration order = order shown in the UI.

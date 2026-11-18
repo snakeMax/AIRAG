@@ -30,7 +30,9 @@ object Bridge {
     private var pickLatch: CountDownLatch? = null
     private var pickResult: String = ""
 
-    fun attach(a: MainActivity) { activityRef = WeakReference(a) }
+    @Volatile private var appContext: android.content.Context? = null
+
+    fun attach(a: MainActivity) { activityRef = WeakReference(a); appContext = a.applicationContext }
     fun detach(a: MainActivity) { if (activityRef.get() === a) activityRef = WeakReference(null) }
     private fun activity() = activityRef.get()
 
@@ -266,5 +268,55 @@ object Bridge {
                 .setNegativeButton(R.string.perm_later) { _, _ -> pendingApk = null }
                 .show()
         }
+    }
+
+    // ------------------------------------------------------------ background jobs
+    /** Python: number of running/queued jobs changed. Keeps the app alive with a notification while count > 0. */
+    @JvmStatic
+    fun jobsChanged(count: Int, title: String) {
+        val ctx = appContext ?: return
+        JobService.update(ctx, count, title)
+        if (count > 0) activity()?.let { a -> a.runOnUiThread { askBackgroundPermissions(a) } }
+    }
+
+    /** Python: a job finished. Shown as a notification that opens the result (hash = page inside the app). */
+    @JvmStatic
+    fun jobDone(title: String, status: String, hash: String) {
+        val ctx = appContext ?: return
+        val a = activity()
+        if (a != null && a.isInForeground) return   // the user is looking at the app: the page shows it
+        val text = ctx.getString(when (status) {
+            "done|explainer" -> R.string.done_explainer
+            "done" -> R.string.done_search
+            else -> R.string.done_failed
+        })
+        JobService.done(ctx, title, text, hash)
+    }
+
+    /** Once: notifications (Android 13+) and, with an explanation, an exemption from battery optimization. */
+    private fun askBackgroundPermissions(a: MainActivity) {
+        val prefs = a.getSharedPreferences("airag", android.content.Context.MODE_PRIVATE)
+        if (Build.VERSION.SDK_INT >= 33 && !prefs.getBoolean("asked_notify", false) &&
+            a.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            prefs.edit().putBoolean("asked_notify", true).apply()
+            a.notifyPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            return
+        }
+        val pm = a.getSystemService(android.os.PowerManager::class.java)
+        if (prefs.getBoolean("asked_battery", false) || pm.isIgnoringBatteryOptimizations(a.packageName)) return
+        prefs.edit().putBoolean("asked_battery", true).apply()
+        AlertDialog.Builder(a)
+            .setTitle(R.string.battery_title)
+            .setMessage(R.string.battery_message)
+            .setPositiveButton(R.string.battery_allow) { _, _ ->
+                try {
+                    @Suppress("BatteryLife")
+                    a.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + a.packageName)))
+                } catch (_: Exception) {
+                    try { a.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) } catch (_: Exception) { }
+                }
+            }
+            .setNegativeButton(R.string.perm_later, null)
+            .show()
     }
 }

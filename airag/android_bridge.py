@@ -59,6 +59,37 @@ def install_apk(path: str) -> str:
     return str(_bridge().installApk(str(path)))
 
 
+# ------------------------------------------------------------ background jobs
+_notified: set = set()
+
+
+def _jobs_changed() -> None:
+    """Runs on every job start/finish: keeps the foreground service (and its notification) in step,
+    and posts a notification for each job that finished."""
+    from . import runs
+    items = runs.active()
+    running = [j for j in items if j["status"] == "running"] or items
+    title = ""
+    if running:
+        j = running[0]
+        title = ("Building explainer: " if j["kind"] == "explainer" else "Researching: ") + j["query"][:80]
+    b = _bridge()
+    b.jobsChanged(len(items), title)
+    for j in runs.recent():
+        if j["id"] in _notified or j["status"] == "cancelled":
+            continue
+        _notified.add(j["id"])
+        explainer = j["kind"] == "explainer"
+        hashpart = f"#/view/{j['ref']}" + ("?explainer" if explainer else "")
+        b.jobDone(j["query"][:80], j["status"] + ("|explainer" if explainer else ""), hashpart)
+
+
+def cancel_all() -> None:
+    """The notification's Cancel button."""
+    from . import runs
+    runs.cancel_all_threadsafe()
+
+
 def start(data_dir: str, time_zone: str = "") -> int:
     """Start the local server; returns the port the WebView should load.
     time_zone is the phone's zone (e.g. Europe/Oslo): Python doesn't pick it up by itself on Android."""
@@ -76,6 +107,8 @@ def start(data_dir: str, time_zone: str = "") -> int:
     from . import appctl, config, desktop, paths
     desktop.setup_logging()
     paths.ensure_dirs()
+    from . import runs
+    runs.on_change(_jobs_changed)
     port = desktop.choose_port(int(config.load()["app"].get("port") or 0) or 18765)  # stable port keeps WebView storage
     _server = desktop.ServerThread(port)
     _server.start()

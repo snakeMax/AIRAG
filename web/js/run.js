@@ -6,6 +6,7 @@ import { openTranslate, restoreTranslation } from "./translate.js";
 import { t, has, uiLang } from "./i18n.js";
 import { openSummary } from "./summary.js";
 import { openInteractive } from "./interactive.js";
+import { jobFor, pokeJobs } from "./activity.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -22,6 +23,7 @@ function newRun(query, mode, library, dates = emptyRange(), extras = true) {
 // live run
 // While a search runs, the address is #/run/<id>: leaving and coming back (or reopening the app) reconnects to it.
 function rememberRun(R) {
+  pokeJobs();
   if (R.id && !R.finished && RUN.current === R) history.replaceState(null, "", `#/run/${encodeURIComponent(R.id)}`);
 }
 
@@ -59,6 +61,9 @@ export async function attachRun(id) {
 export async function cancelRun(id) {
   await api(`/api/research/${encodeURIComponent(id)}/cancel`, { method: "POST" }).catch(() => {});
 }
+
+// the explainer button follows background explainer jobs
+window.addEventListener("airag:jobs", () => { if (RUN.current?.finished) updateInteractiveButton(RUN.current); });
 
 export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true) {
   RUN.ctrl?.abort();
@@ -180,6 +185,7 @@ async function saveArticle(R, rich = false) {
 function finish(R) {
   if (R.finished) return;
   R.finished = true;
+  pokeJobs();
   $(".again-chip")?.removeAttribute("hidden");
   $(".cancel-chip")?.setAttribute("hidden", "");
   updateSaveButton(R);
@@ -426,6 +432,17 @@ function renderArticle(R) {
 function updateInteractiveButton(R) {
   const b = $("#interBtn"), tip = $("#interTip");
   if (!b) return;
+  const busy = R.id && jobFor("explainer", R.id);
+  b.classList.toggle("busy", !!busy);
+  b.querySelector(".lbl").innerHTML = `${busy ? '<span class="spinner sm"></span>' : icon("play")}${h(t("inter.button"))}`;
+  if (busy) {
+    b.setAttribute("aria-disabled", "false");
+    tip.className = "tip-text";
+    tip.textContent = t(busy.status === "queued" ? "inter.queuedTip" : "inter.buildingTip");
+    tip.style.whiteSpace = "normal";
+    tip.style.width = "240px";
+    return;
+  }
   const info = R.interactive;
   if (!info && R.finished && !R.error && R.extras === false && R.id && !R.savedFile) {
     // searched without the explainer check: the reader can ask for it now
@@ -584,9 +601,13 @@ function renderError(R) {
 }
 
 // saved runs
-export async function openRecord(id) {
+export async function openRecord(id, explainer = false) {
   RUN.ctrl?.abort();
-  if (RUN.current && RUN.current.id === id && RUN.current.finished && !RUN.current.savedFile) { hooks.showView("run"); return; }
+  if (RUN.current && RUN.current.id === id && RUN.current.finished && !RUN.current.savedFile) {
+    hooks.showView("run");
+    if (explainer) openInteractive(RUN.current);
+    return;
+  }
   let rec;
   try {
     rec = await api(`/api/history/${encodeURIComponent(id)}`);
@@ -594,6 +615,7 @@ export async function openRecord(id) {
     return showNotFound(e);
   }
   showRecord(rec);
+  if (explainer && RUN.current) openInteractive(RUN.current);
 }
 
 /** An article saved in My library: shown from the saved copy, no AI or network needed. */

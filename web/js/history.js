@@ -1,6 +1,7 @@
 // History drawer and the "Recent" list on the home page.
 import { $, $$, h, icon, api, fmtAgo } from "./util.js";
 import { t, uiLang } from "./i18n.js";
+import { jobHref } from "./activity.js";
 
 const outcomeIcon = o => ({ article: "doc", results: "list", suggestions: "bulb" }[o] || "search");
 const outcomeLabel = o => t("outcome." + (o || "search"));
@@ -37,11 +38,12 @@ async function activeRuns() {
   return (await api("/api/research/active").catch(() => ({ items: [] }))).items || [];
 }
 
-const activeLabel = a => a.status === "queued" ? t("run.queuedShort", { n: a.position }) : t("run.inProgress");
+const activeLabel = a => (a.kind === "explainer" ? t("act.explainerShort") + " · " : "")
+  + (a.status === "queued" ? t("run.queuedShort", { n: a.position }) : t("run.inProgress"));
 
 function activeHtml(list) {
   return list.map(a => `
-      <a class="h-item h-active" href="#/run/${encodeURIComponent(a.id)}"><span class="spinner sm"></span>
+      <a class="h-item h-active" href="${jobHref(a)}"><span class="spinner sm"></span>
         <div style="min-width:0"><div class="h-q">${h(a.query)}</div><div class="h-d">${h(activeLabel(a))}</div></div>
         <button class="icon-btn" data-cancel="${h(a.id)}" title="${h(t("run.cancel"))}">${icon("x")}</button>
         <button class="icon-btn" data-cancel="${h(a.id)}" data-remove="1" title="${h(t("history.delete"))}">${icon("trash")}</button></a>`).join("");
@@ -85,17 +87,21 @@ export async function refreshRecent() {
     const [{ items }, active] = await Promise.all([api("/api/history"), activeRuns()]);
     const saved = `<button type="button" class="link-btn" id="openSaved">${icon("book")}${h(t("saved.title"))}</button>`;
     const running = active.length ? `<div class="recent-grid" style="margin-bottom:10px">${active.map(a => `
-      <button class="recent-item running" data-run="${h(a.id)}"><span class="spinner sm"></span>
+      <button class="recent-item running" data-href="${h(jobHref(a))}"><span class="spinner sm"></span>
         <div><div class="ri-t">${h(a.query)}</div><div class="ri-k">${h(activeLabel(a))}</div></div></button>`).join("")}</div>` : "";
-    if (active.length) setTimeout(refreshRecent, 5000);   // keep the status fresh while something runs
     if (!items.length && !active.length) { el.innerHTML = `<div class="recent-head">${saved}</div>`; $("#openSaved").onclick = () => openDrawer("saved"); return; }
     el.innerHTML = `<div class="recent-head"><h3>${h(t("home.recent"))}</h3>${saved}</div>${running}<div class="recent-grid">${items.slice(0, 6).map(it => `
       <button class="recent-item" data-id="${h(it.id)}">${icon(outcomeIcon(it.outcome))}
         <div><div class="ri-t">${h(it.title || it.query)}</div><div class="ri-k">${h(outcomeLabel(it.outcome))} · ${h(fmtAgo(it.created, uiLang()))}</div></div></button>`).join("")}</div>`;
     $$(".recent-item[data-id]", el).forEach(b => (b.onclick = () => (location.hash = `#/view/${encodeURIComponent(b.dataset.id)}`)));
-    $$(".recent-item[data-run]", el).forEach(b => (b.onclick = () => (location.hash = `#/run/${encodeURIComponent(b.dataset.run)}`)));
+    $$(".recent-item[data-href]", el).forEach(b => (b.onclick = () => (location.hash = b.dataset.href)));
     $("#openSaved").onclick = () => openDrawer("saved");
   } catch { /* server not ready */ }
 }
 
 window.addEventListener("airag:history", () => { refreshRecent(); });
+// background jobs started, finished or moved up the queue
+window.addEventListener("airag:jobs", () => {
+  if (!$("#view-home").hidden) refreshRecent();
+  if (!$("#drawer").hidden && !$("#historyList .h-empty, #historyList [href^='#/saved/']")) loadHistory();
+});

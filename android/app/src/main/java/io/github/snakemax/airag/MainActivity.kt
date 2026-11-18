@@ -47,6 +47,10 @@ class MainActivity : AppCompatActivity() {
         speech?.onPermission(granted)
     }
     private var speech: Speech? = null
+    val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    var isInForeground = false
+        private set
+    private var pendingHash = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +63,15 @@ class MainActivity : AppCompatActivity() {
                 else { isEnabled = false; onBackPressedDispatcher.onBackPressed() }
             }
         })
+        pendingHash = intent?.getStringExtra(JobService.EXTRA_HASH) ?: ""
         startServer()
+    }
+
+    /** Tapping a "done" notification while the app is open: go to that result. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val hash = intent.getStringExtra(JobService.EXTRA_HASH) ?: return
+        if (port != 0) web.loadUrl("http://127.0.0.1:$port/$hash") else pendingHash = hash
     }
 
     private fun color(id: Int) = ContextCompat.getColor(this, id)
@@ -137,7 +149,8 @@ class MainActivity : AppCompatActivity() {
                 val p = Python.getInstance().getModule("airag.android_bridge").callAttr("start", dataDir, zone).toInt()
                 runOnUiThread {
                     port = p
-                    web.loadUrl("http://127.0.0.1:$p/")
+                    web.loadUrl("http://127.0.0.1:$p/$pendingHash")
+                    pendingHash = ""
                 }
             } catch (e: Throwable) {
                 runOnUiThread { splashText.text = getString(R.string.start_failed, e.message ?: e.toString()) }
@@ -145,8 +158,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        isInForeground = false
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+        isInForeground = true
         Bridge.onResume(this)
     }
 

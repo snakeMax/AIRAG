@@ -20,7 +20,7 @@ MASK = "••••"
 DEFAULT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 
-SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults")
+SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage")
 
 GENERAL_SCHEMA: dict = {
     "app": [
@@ -54,6 +54,14 @@ GENERAL_SCHEMA: dict = {
         {"key": "dates", "label": "Time range", "type": "select", "default": "any", "options": ["any", "week", "month", "year"]},
         {"key": "translate_to", "label": "Translate into", "type": "hidden", "default": ""},
         {"key": "save_rich", "label": "Save articles with pictures and the explainer", "type": "bool", "default": False},
+    ],
+    # token and cost tracking (Settings -> Usage)
+    "usage": [
+        {"key": "monthly_budget", "label": "Monthly budget ($)", "type": "number", "default": 5, "min": 0, "max": 10000, "step": 1,
+         "help": "Shown as a bar in Settings -> Usage. 0 = no budget."},
+        {"key": "tell_model", "label": "Tell the AI when the budget is nearly used", "type": "bool", "default": True,
+         "help": "When 70% is used, the AI is asked to search less and write shorter answers."},
+        {"key": "stop_at_budget", "label": "Stop new searches when the budget is used up", "type": "bool", "default": False},
     ],
     "library": [
         {"key": "folders", "label": "Folders", "type": "hidden", "default": []},
@@ -164,6 +172,7 @@ def _base_defaults() -> dict:
         "fetch": field_defaults(GENERAL_SCHEMA["fetch"]),
         "research": field_defaults(GENERAL_SCHEMA["research"]),
         "defaults": field_defaults(GENERAL_SCHEMA["defaults"]),
+        "usage": field_defaults(GENERAL_SCHEMA["usage"]),
     }
 
 

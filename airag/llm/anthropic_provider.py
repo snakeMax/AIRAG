@@ -6,7 +6,7 @@ from typing import AsyncIterator, List
 import httpx
 
 from . import register
-from .base import LLMError, LLMProvider, http_timeout, short_error, strip_think
+from .base import LLMError, LLMProvider, http_timeout, report_usage, short_error, strip_think
 
 
 @register
@@ -59,6 +59,8 @@ class Anthropic(LLMProvider):
                 if r.status_code >= 400:
                     raise LLMError("Anthropic " + short_error(r.status_code, r.text))
                 data = r.json()
+                u = data.get("usage") or {}
+                report_usage(u.get("input_tokens"), u.get("output_tokens"))
                 return strip_think("".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"))
         raise LLMError("Anthropic request failed")
 
@@ -80,7 +82,11 @@ class Anthropic(LLMProvider):
                             d = json.loads(line[5:].strip())
                         except ValueError:
                             continue
-                        if d.get("type") == "content_block_delta" and d.get("delta", {}).get("type") == "text_delta":
+                        if d.get("type") == "message_start":
+                            report_usage(((d.get("message") or {}).get("usage") or {}).get("input_tokens"))
+                        elif d.get("type") == "message_delta" and d.get("usage"):
+                            report_usage(None, d["usage"].get("output_tokens"))
+                        elif d.get("type") == "content_block_delta" and d.get("delta", {}).get("type") == "text_delta":
                             yield d["delta"].get("text", "")
                         elif d.get("type") == "error":
                             raise LLMError(f"Anthropic: {d.get('error', {}).get('message', d)}")

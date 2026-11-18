@@ -72,3 +72,30 @@ def test_cancel_queued_reaches_listener():
         return got
     got = asyncio.run(go())
     assert got[-1]["type"] == "cancelled"
+
+
+def test_kinds_run_side_by_side_and_hooks():
+    async def go():
+        runs.RUNS.clear()
+        runs._order.clear()
+        calls = []
+        runs.on_change(lambda: calls.append(len(runs.active())))
+        gate = asyncio.Event()
+
+        async def slow(emit):
+            await gate.wait()
+        s = runs.start("s1", "search", "auto", slow)
+        x = runs.start("x-s0", "explain", "explainer", slow, kind="explainer", ref="s0")
+        await asyncio.sleep(0.05)
+        assert s.status == "running" and x.status == "running"     # different kinds don't wait for each other
+        assert runs.find("explainer", "s0") is x
+        gate.set()
+        await asyncio.sleep(0.05)
+        assert {r["id"] for r in runs.recent()} >= {"s1", "x-s0"}
+        again = runs.start("x-s0", "explain", "explainer", slow, kind="explainer", ref="s0")   # rebuild replaces it
+        await asyncio.sleep(0.05)
+        assert runs.RUNS["x-s0"] is again
+        runs._hooks.clear()
+        return calls
+    calls = asyncio.run(go())
+    assert calls and calls[-1] == 0

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - unreleased
+
+- **Usage tab**: tokens and cost per AI model this month, with a monthly budget bar (default $5). Exact token counts from Anthropic, OpenAI-compatible APIs and Ollama (estimated otherwise); prices from OpenRouter's public list, updated daily, with built-in prices as a fallback. Optional: tell the AI when 70% of the budget is used, and stop new searches when it's used up
+- **OpenRouter**: new AI provider. One key for hundreds of models; the default `openrouter/auto` picks the best model for each request
+- **Keeps working in the background**: on Android, a notification with a Cancel button keeps searches and explainers running after the app is closed, and a second notification opens the result when it's done (asks once to allow background running). On the PC, closing the window while something runs hides it until the work is done
+- **Activity bar and dot**: a slim bar under the top bar shows what's running in the background (tap to open, ✕ to cancel), and a dot on the History button shows something is running or finished
+- **Explainers build in the background**: closing the explainer window doesn't stop it; the Interactive button shows a spinner, and clicking it again shows the one being built. Cancel button while building
+
 ## [0.3.0] - 2026-11-18
 
 First release with the Android app (same version, same release as the Windows installer).

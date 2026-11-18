@@ -6,6 +6,12 @@ from typing import AsyncIterator, List
 import httpx
 
 
+def report_usage(input_tokens=None, output_tokens=None) -> None:
+    """Providers call this with the exact token counts their API returned."""
+    from ..usage import report
+    report(input_tokens, output_tokens)
+
+
 class LLMError(Exception):
     """A user-facing problem with the AI provider (bad key, unreachable, ...)."""
 

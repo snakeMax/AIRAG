@@ -6,7 +6,7 @@ from typing import AsyncIterator, List
 import httpx
 
 from . import register
-from .base import LLMError, LLMProvider, http_timeout, short_error, strip_think
+from .base import LLMError, LLMProvider, http_timeout, report_usage, short_error, strip_think
 
 
 @register
@@ -79,7 +79,9 @@ class Ollama(LLMProvider):
                 raise LLMError(f"The model '{self.model}' isn't downloaded in Ollama. Pick or download one in Settings → AI model.")
             if r.status_code >= 400:
                 raise LLMError("Ollama " + short_error(r.status_code, r.text))
-            return strip_think(r.json().get("message", {}).get("content", ""))
+            data = r.json()
+            report_usage(data.get("prompt_eval_count"), data.get("eval_count"))
+            return strip_think(data.get("message", {}).get("content", ""))
         raise self._unreachable()
 
     async def stream(self, system, user, max_tokens=4096) -> AsyncIterator[str]:
@@ -107,6 +109,7 @@ class Ollama(LLMProvider):
                         if piece:
                             yield piece
                         if d.get("done"):
+                            report_usage(d.get("prompt_eval_count"), d.get("eval_count"))
                             break
         except httpx.ConnectError:
             raise self._unreachable()
@@ -128,6 +131,7 @@ class Ollama(LLMProvider):
                     if piece:
                         yield piece
                     if d.get("done"):
+                        report_usage(d.get("prompt_eval_count"), d.get("eval_count"))
                         break
 
     async def list_models(self) -> List[str]:

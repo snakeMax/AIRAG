@@ -33,7 +33,18 @@ LENGTHS = {"auto": "", "short": "Keep it short: about 200-400 words.", "medium":
 
 
 def use(settings: dict) -> None:
-    _custom.set(dict(settings.get("prompts") or {}))
+    c = dict(settings.get("prompts") or {})
+    try:
+        from .usage import budget_note
+        c["_budget"] = budget_note(settings)
+    except Exception:
+        c["_budget"] = ""
+    _custom.set(c)
+
+
+def _budget() -> str:
+    note = _custom.get().get("_budget") or ""
+    return "\n" + note if note else ""
 
 
 def _extra(*keys: str) -> str:
@@ -99,7 +110,7 @@ def plan(query: str, use_web: bool = True, use_library: bool = False) -> Tuple[s
         "- If the question depends on recent information, put the current year in one query.\n"
         "- Search queries are short (2-8 words), like a person would type into a search engine."
         + "\n" + DATE_NOTE
-    ) + _extra("planner_instructions")
+    ) + _extra("planner_instructions") + _budget()
     scope = "web search" + (" and the user's own local files (notes, documents)" if use_library else "")
     if not use_web:
         scope = "ONLY the user's own local files (notes, documents) - no web"

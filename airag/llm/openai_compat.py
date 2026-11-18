@@ -8,7 +8,7 @@ from typing import AsyncIterator, List
 import httpx
 
 from . import register
-from .base import LLMError, LLMProvider, http_timeout, short_error, strip_think
+from .base import LLMError, LLMProvider, http_timeout, report_usage, short_error, strip_think
 
 
 class _OpenAIBase(LLMProvider):
@@ -48,6 +48,8 @@ class _OpenAIBase(LLMProvider):
                 body["response_format"] = {"type": "json_object"}
         if stream:
             body["stream"] = True
+            if not compat:
+                body["stream_options"] = {"include_usage": True}   # token counts in the last chunk
         return body
 
     async def complete(self, system, user, max_tokens=2048, json_mode=False) -> str:
@@ -65,7 +67,10 @@ class _OpenAIBase(LLMProvider):
                     continue  # retry without temperature / response_format
                 if r.status_code >= 400:
                     raise LLMError(f"{self.label} " + short_error(r.status_code, r.text))
-                msg = r.json()["choices"][0]["message"]
+                data = r.json()
+                u = data.get("usage") or {}
+                report_usage(u.get("prompt_tokens"), u.get("completion_tokens"))
+                msg = data["choices"][0]["message"]
                 return strip_think(msg.get("content") or "")
         raise LLMError(f"{self.label} request failed")
 
@@ -90,6 +95,8 @@ class _OpenAIBase(LLMProvider):
                             d = json.loads(data)
                         except ValueError:
                             continue
+                        if d.get("usage"):
+                            report_usage(d["usage"].get("prompt_tokens"), d["usage"].get("completion_tokens"))
                         choices = d.get("choices") or []
                         if choices:
                             piece = (choices[0].get("delta") or {}).get("content")
@@ -140,6 +147,38 @@ class DeepSeek(_OpenAIBase):
          "help": "deepseek-chat (fast) or deepseek-reasoner (slower, thinks first)."},
         {"key": "base_url", "label": "API URL", "type": "url", "default": "https://api.deepseek.com/v1"},
     ]
+
+
+@register
+class OpenRouter(_OpenAIBase):
+    """One key for hundreds of models. The default model, openrouter/auto, lets OpenRouter pick
+    the best model for each request."""
+    name = "openrouter"
+    label = "OpenRouter"
+    requires_key = True
+    supports_json_mode = True
+    supports_vision = True
+    fields = [
+        {"key": "api_key", "label": "API key", "type": "secret", "default": "", "env": "OPENROUTER_API_KEY",
+         "help": "From openrouter.ai/keys. One key works for Claude, GPT, Gemini, DeepSeek, Llama and more."},
+        {"key": "model", "label": "Model", "type": "model", "default": "openrouter/auto",
+         "help": "openrouter/auto picks the best model for each request automatically. "
+                 "Or load the list and pick one (models ending in :free cost nothing but have low limits)."},
+        {"key": "base_url", "label": "API URL", "type": "url", "default": "https://openrouter.ai/api/v1"},
+    ]
+
+    def vision_content(self, text, image_urls):
+        return OpenAI.vision_content(self, text, image_urls)
+
+    def _headers(self) -> dict:
+        h = super()._headers()
+        h["HTTP-Referer"] = "https://github.com/snakeMax/AIRAG"   # shows the app's name on openrouter.ai
+        h["X-Title"] = "AIRAG"
+        return h
+
+    async def list_models(self) -> List[str]:
+        models = await super().list_models()
+        return ["openrouter/auto"] + [m for m in models if m != "openrouter/auto"]
 
 
 @register

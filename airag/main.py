@@ -76,6 +76,8 @@ async def _startup() -> None:
         asyncio.create_task(ollama_manager.ensure_running(s["llm"]["providers"]["ollama"].get("base_url") or ollama_manager.DEFAULT_URL))
     if s["app"].get("check_updates", True):
         asyncio.create_task(updater.check())
+    from . import usage
+    asyncio.create_task(usage.refresh_prices())     # model prices for the cost tracker, at most daily
     if not paths.ANDROID and s["app"].get("pclink_enabled"):
         from . import pclink
         await asyncio.to_thread(pclink.autostart)
@@ -193,6 +195,7 @@ def schema():
         "library": config.GENERAL_SCHEMA["library"],
         "prompts": config.GENERAL_SCHEMA["prompts"],
         "defaults": config.GENERAL_SCHEMA["defaults"],
+        "usage": config.GENERAL_SCHEMA["usage"],
         "default_article_prompt": prompts_mod.ARTICLE_RULES,
         "languages": languages.public_list(),
         "version": __version__,
@@ -801,8 +804,11 @@ class ResearchReq(BaseModel):
 async def research(req: ResearchReq):
     """Starts a search (or queues it behind a running one) and streams its progress.
     Closing the stream doesn't stop the search: /api/research/{id}/stream picks it up again."""
-    from . import runs
+    from . import runs, usage
     settings = config.load()
+    if usage.over_budget(settings):
+        raise HTTPException(402, "Your monthly AI budget is used up. Raise it or turn off "
+                                 "'Stop new searches when the budget is used up' in Settings -> Usage.")
     holder: dict = {}
 
     async def emit(ev: dict) -> None:
@@ -819,6 +825,26 @@ async def research(req: ResearchReq):
     return _follow(holder["run"])
 
 
+@app.get("/api/usage")
+async def usage_summary():
+    from . import usage
+    await usage.refresh_prices()
+    return usage.summary(config.load())
+
+
+@app.post("/api/usage/reset")
+def usage_reset():
+    from . import usage
+    usage.reset_month()
+    return {"ok": True}
+
+
+@app.post("/api/usage/prices")
+async def usage_prices():
+    from . import usage
+    return {"updated": await usage.refresh_prices(force=True)}
+
+
 def _follow(run) -> StreamingResponse:
     from . import runs
 
@@ -832,7 +858,7 @@ def _follow(run) -> StreamingResponse:
 @app.get("/api/research/active")
 def research_active():
     from . import runs
-    return {"items": runs.active()}
+    return {"items": runs.active(), "recent": runs.recent()}
 
 
 @app.get("/api/research/{rid}/stream")
@@ -901,6 +927,35 @@ class InteractiveReq(BaseModel):
     id: str
     force: bool = False
     ui_lang: Optional[str] = None
+
+
+@app.post("/api/interactive/start")
+async def interactive_start(req: InteractiveReq):
+    """Builds the explainer as a background job. Returns the finished page right away when it's
+    already built, otherwise the job id to follow (the same job if one is already running)."""
+    from . import history as hist, runs
+    from .interactive import generate
+    rec = hist.get(req.id)
+    if not rec or rec.get("outcome") != "article":
+        raise HTTPException(404, "Article not found")
+    running = runs.find("explainer", req.id)
+    if running and not running.finished:
+        return {"job": running.id, "running": True}
+    if rec.get("interactive_html") and not req.force:
+        return {"html": rec["interactive_html"], "interactive": rec.get("interactive")}
+    settings = config.load()
+
+    async def go(emit) -> None:
+        prompts_mod.use(settings)
+        await emit({"type": "step", "id": "explainer", "status": "running"})
+        try:
+            res = await generate(settings, req.id, req.ui_lang, req.force)
+        except (ValueError, LLMError) as e:
+            await emit({"type": "error", "message": str(e)})
+            return
+        await emit({"type": "done", "id": req.id, "html": res["html"], "interactive": res.get("interactive")})
+    run = runs.start(f"x-{req.id}", rec.get("query", ""), "explainer", go, kind="explainer", ref=req.id)
+    return {"job": run.id, "running": False}
 
 
 @app.post("/api/interactive")

@@ -10,6 +10,7 @@ import { openDrawer, closeDrawer, refreshRecent } from "./history.js";
 import { closeSummary } from "./summary.js";
 import { chipHtml, openDatePicker, emptyRange, hasRange } from "./dates.js";
 import { initSpeech } from "./speech.js";
+import { initActivity, markSeen } from "./activity.js";
 
 const state = {
   mode: "auto",
@@ -51,7 +52,12 @@ function route() {
       return;
     }
   }
-  if (hash.startsWith("#/view/")) { openRecord(decodeURIComponent(hash.slice(7))); return; }
+  if (hash.startsWith("#/view/")) {
+    const [id, extra] = hash.slice(7).split("?");
+    if (extra === "explainer") history.replaceState(null, "", `#/view/${id}`);
+    openRecord(decodeURIComponent(id), extra === "explainer");
+    return;
+  }
   if (hash.startsWith("#/run/")) { attachRun(decodeURIComponent(hash.slice(6))); return; }
   if (hash.startsWith("#/saved/")) { openSaved(decodeURIComponent(hash.slice(8))); return; }
   if (hash.startsWith("#/settings")) { showHome(); openSettings(hash.split("/")[2] || "general"); history.replaceState(null, "", "#/"); return; }
@@ -135,7 +141,7 @@ function wire() {
   }
   $("#engineLine").onclick = () => openSettings("model");
   $("#settingsBtn").onclick = () => openSettings();
-  $("#historyBtn").onclick = () => openDrawer();
+  $("#historyBtn").onclick = () => { markSeen(); openDrawer(); };
   $("#drawerClose").onclick = closeDrawer;
   $("#scrim").onclick = () => { closeDrawer(); closeSummary(); };
   $("#themeBtn").onclick = () => setAppearance({ theme: effectiveTheme() === "dark" ? "light" : "dark" });
@@ -170,6 +176,7 @@ async function boot() {
   hydrateIcons();
   wire();
   initSpeech(info?.mode === "desktop");
+  initActivity();
   setRunHooks({ go, openSettings, showView, refreshRecent, defaults: () => state.settings?.defaults });
   setSettingsHooks({ onSaved: (s, langChanged) => {
     state.settings = s;

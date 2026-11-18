@@ -520,3 +520,24 @@ html, body { overflow-x: hidden; }
 .h-item .icon-btn + .icon-btn { margin-left: -6px; }
 .recent-item.running { border-style: dashed; }
 .spinner.sm { width: 16px; height: 16px; border-width: 2px; flex: none; }
+.budget-bar { height: 10px; border-radius: 6px; background: var(--border); overflow: hidden; margin: 10px 0 4px; }
+.budget-bar span { display: block; height: 100%; border-radius: 6px; background: var(--good, #2f9e5b); transition: width .4s; }
+.budget-bar.warn span { background: var(--mid); }
+.budget-bar.bad span { background: var(--bad); }
+.usage-big { font-size: 28px; font-weight: 650; letter-spacing: -.02em; }
+.table-wrap { overflow-x: auto; margin-top: 12px; }
+.usage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.usage-table th { text-align: left; font-weight: 600; color: var(--text-3); padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.usage-table td { padding: 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.usage-table td:not(:first-child), .usage-table th:not(:first-child) { text-align: right; white-space: nowrap; }
+.activity-bar { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--accent-soft); border-bottom: 1px solid var(--border); font-size: 13px; }
+.activity-bar .act-main { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.activity-bar .act-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; }
+.activity-bar .act-x { color: var(--text-3); white-space: nowrap; }
+.icon-btn.sm { width: 28px; height: 28px; }
+#historyBtn { position: relative; }
+#historyBtn.has-dot::after { content: ""; position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 2px var(--bg); }
+#historyBtn.dot-busy::after { background: var(--accent); animation: dotPulse 1.4s ease-in-out infinite; }
+@keyframes dotPulse { 50% { opacity: .35; } }
+#interBtn.busy { border-style: dashed; }
+.inter-wait .muted.sm { font-size: 12px; margin-top: 6px; }
