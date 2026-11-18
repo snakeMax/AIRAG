@@ -1009,13 +1009,14 @@ class RewriteApplyReq(BaseModel):
     id: str
     old: str
     new: str
+    instructions: str = ""
 
 
 @app.post("/api/rewrite/apply")
 def rewrite_apply(req: RewriteApplyReq):
     from . import rewrite
     try:
-        return {"article": rewrite.apply(config.load(), req.id, req.old, req.new)}
+        return {"article": rewrite.apply(config.load(), req.id, req.old, req.new, req.instructions)}
     except ValueError as e:
         raise HTTPException(400, str(e))
 

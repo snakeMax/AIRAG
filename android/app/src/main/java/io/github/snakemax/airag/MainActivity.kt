@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -45,6 +46,13 @@ class MainActivity : AppCompatActivity() {
     }
     val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         speech?.onPermission(granted)
+    }
+    // <input type="file"> in the web UI (e.g. Analyze image on Home): WebView needs the app to open the picker
+    private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val uris = WebChromeClient.FileChooserParams.parseResult(res.resultCode, res.data)
+        fileCallback?.onReceiveValue(uris)
+        fileCallback = null
     }
     private var speech: Speech? = null
     private var audioBridge: AudioBridge? = null
@@ -106,7 +114,20 @@ class MainActivity : AppCompatActivity() {
                     splash.visibility = View.GONE
                 }
             }
-            webChromeClient = WebChromeClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>,
+                                               params: FileChooserParams): Boolean {
+                    fileCallback?.onReceiveValue(null)
+                    fileCallback = callback
+                    return try {
+                        filePicker.launch(params.createIntent())
+                        true
+                    } catch (e: Exception) {
+                        fileCallback = null
+                        false
+                    }
+                }
+            }
         }
         speech = Speech(this, web).also { web.addJavascriptInterface(it, "AIRAGNative") }
         audioBridge = AudioBridge(this, web).also { web.addJavascriptInterface(it, "AIRAGAudio") }

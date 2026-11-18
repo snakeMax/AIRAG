@@ -36,6 +36,16 @@ def test_rewrite_finds_the_paragraph():
     assert locate(md, "volcanoes erupt") is None
 
 
+def test_rewrite_apply_is_kept_in_the_answers():
+    from airag import config, rewrite
+    history.save({"id": "rw1", "query": "q", "outcome": "article", "article": "# H\n\nOld text [1].\n"}, 50)
+    rewrite.apply(config.load(), "rw1", "Old text [1].", "New text [1].", "simpler")
+    rec = history.get("rw1")
+    assert "New text [1]." in rec["article"] and "Old text" not in rec["article"]
+    last = rec["thread"][-1]
+    assert last["mode"] == "rewrite" and last["q"] == "simpler" and last["a"] == "New text [1]." and last["added"]
+
+
 def test_followup_uses_the_calculator(monkeypatch):
     from tests import mock
     mock.install()

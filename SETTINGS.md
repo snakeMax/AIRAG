@@ -125,11 +125,12 @@ Before building, a quick web search finds code for similar simulations to learn 
 ---
 
 ## Research toolbar
-Tools for a finished article or results page. On a computer it's a small bar at the bottom of the page; on a phone, tap the round button with three lines (they turn upright while the menu is open).
+Tools for a finished article or results page. On a computer it's a small bar at the bottom of the page; on a phone, tap the round button with three lines (they turn upright while the menu is open). The phone menu starts with the question box.
 
 ### Follow-up
 Opens a box to ask about the article; tap the microphone to speak instead.
-- **Where answers go:** a Follow-ups panel beside the article (a sheet from the bottom on phones), cited with the article's source numbers.
+- **Where answers go:** the Answers panel beside the article, cited with the article's source numbers. On phones it sits above the round button; the menu folds away while an answer comes in, and when you open the menu again the answers shrink to make room instead of being covered. The list button (with the number of answers) reopens the panel.
+- **Elaborate…:** under every answer, asks the AI to explain it in more depth and connect it to the article and its sources.
 - **Add to article:** adds an answer to the article as a new section.
 - **Questions that don't fit the article:** the AI doesn't search for them. It answers briefly only if it already knows, to save tokens.
 - **Tools:** the AI may use the tools allowed for the standard agent (see [What the AI may use](#what-the-ai-may-use-tools)), for example the calculator for maths. The tools it used show as small labels above the answer.
@@ -141,7 +142,7 @@ Run on the whole article, or on the text you selected. Results go to the Follow-
 - **Fact-check:** checks claims against the sources (and the web, if Web search is allowed).
 
 ### Rewrite
-Select a paragraph, then Rewrite. Say how it should change (or speak it), and the new version appears **next to the old one**. Nothing changes until you press *Replace in article*; *Copy* takes the new text without changing the article.
+Select a paragraph, then Rewrite. Say how it should change (or speak it), and the new version appears **next to the old one**. Nothing changes until you press *Replace in article*; *Copy* takes the new text without changing the article. A replaced paragraph is listed in the Answers panel (old text quoted above the new), where *Elaborate…* explains it.
 
 ### Calculate
 Select a formula or sum. The AI turns it into plain maths and the calculator solves it exactly; the result stays in a small card until you close it. *Elaborate…* explains how the answer was found and how it relates to the article and its sources. Selecting text in the result card does the same.
@@ -150,7 +151,8 @@ Select a formula or sum. The AI turns it into plain maths and the calculator sol
 Copies all sources as **APA**, **MLA** or **BibTeX**, or downloads them (a .bib file for BibTeX).
 
 ### Selected text: Ask about this, Fact-check, Rewrite, Calculate, Copy with source, Voice
-Selecting text in an article shows a small menu.
+Selecting text in an article shows a small menu (below the selection on phones, so it doesn't cover the phone's own Copy bar).
+- **The selected text is remembered:** phones drop a selection on the next tap, so AIRAG keeps the text marked and shows it above the question box ("About …"). Every toolbar action uses it until you press ✕ next to it, select something else, or tap elsewhere in the article.
 - **Copy with source:** copies the quote with its sources in your citation style.
 - **Calculate:** only appears when the selection looks like maths.
 - **Voice (microphone):** say what to do with the selected text. A question becomes a follow-up; "fact-check this" runs a fact-check, and so on.

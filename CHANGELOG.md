@@ -36,6 +36,9 @@
 - **Analyze image**: the AI model looks at a picture or screenshot (formulas are solved, other pictures described). On Home (button, paste or drop), on pictures in articles (press and hold / right-click), and on Android by sharing a picture to AIRAG. Needs a model that can see pictures
 - **Usage tab redesign**: switch between dollars and tokens, what's left of the budget, today's use, a daily chart, the month at this pace, and what local (Ollama) use would have cost on a paid model
 - **Explainers can be data charts**: line or bar charts of numbers from the article and its sources (prices, stock values, measurements), each point labelled with its source
+- **Selected text is remembered** (phones drop selections on the next tap): it stays marked and shows as "About …" above the question box, and every toolbar action uses it until cleared
+- **Elaborate…** on every answer, and replaced paragraphs are listed in the Answers panel so you can see what changed and ask about it
+- **Phone layout**: answers sit above the round button; the menu folds away while an answer comes in, and the answers shrink to make room when it's opened again
 - **Microphone animation**: the mic button grows, bobs and glows in your accent colour (bright red with grey palettes) with a ring spinning around it while it listens
 - **Explainers build in the background**: closing the explainer window doesn't stop it; the Interactive button shows a spinner, and clicking it again shows the one being built. Cancel button while building
 

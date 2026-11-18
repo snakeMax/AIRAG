@@ -28,6 +28,9 @@ MODES = {
     "elaborate": "Explain step by step how the calculation result was reached from the original formula, what each "
                  "part means, and how it relates to the article. Look through the sources (search_sources) for "
                  "related information the article doesn't use yet, and mention it if relevant.",
+    "explain": "Elaborate on the selected text (an earlier answer or a rewritten passage of the article): explain it "
+               "in more depth, how it was reached, and how it connects to the rest of the article and the sources. Add "
+               "relevant facts from the sources the article doesn't use yet, cited with their numbers.",
     "voice": "The reader spoke a request. Work out what they want - a follow-up question, a fact-check, a comparison, "
              "a timeline, reading something aloud, a calculation - and do it, using a tool when one fits.",
 }

@@ -13,28 +13,32 @@ import { speak } from "./tts.js";
 
 let hooks = { getRun: () => null, reload: () => {}, citeStyle: () => "apa", act: () => {} };
 const phone = () => matchMedia("(max-width: 720px)").matches;
-const S = { R: null, open: false, panel: false, busy: null, calc: null, lastSel: null };
+const S = { R: null, open: false, panel: false, busy: null, calc: null, ctx: null };
 
 export function initToolbar(x) {
   hooks = { ...hooks, ...x };
   document.body.insertAdjacentHTML("beforeend", `
+    <div class="rt-stack" id="rtStack">
+    <aside class="rt-panel" id="rtPanel" hidden aria-label="${h(t("rt.thread"))}">
+      <div class="rt-panel-head"><h3>${h(t("rt.thread"))}</h3><button type="button" class="icon-btn" id="rtPanelX" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
+      <div class="rt-thread" id="rtThread"></div>
+    </aside>
     <nav class="rt-dock" id="rtDock" hidden aria-label="${h(t("rt.label"))}">
-      <form class="rt-ask" id="rtAsk" hidden><input type="text" id="rtAskInput" autocomplete="off" placeholder="${h(t("rt.askPh"))}" aria-label="${h(t("rt.askPh"))}">
+      <div class="rt-ctx" id="rtCtx" hidden><span class="rt-ctx-l">${h(t("rt.about"))}</span><span class="rt-ctx-t" id="rtCtxText"></span>
+        <button type="button" class="rt-ctx-x" id="rtCtxX" aria-label="${h(t("rt.clearSel"))}" title="${h(t("rt.clearSel"))}">${icon("x")}</button></div>
+      <form class="rt-ask" id="rtAsk" hidden><button type="button" class="rt-hist" data-rt="thread" hidden title="${h(t("rt.threadTip"))}" aria-label="${h(t("rt.threadTip"))}">${icon("list")}<b></b></button><input type="text" id="rtAskInput" autocomplete="off" placeholder="${h(t("rt.askPh"))}" aria-label="${h(t("rt.askPh"))}">
         <span class="rt-mic"></span><button type="submit" class="rt-send" aria-label="${h(t("rt.send"))}">${icon("send")}</button></form>
       <div class="rt-row">
         <button type="button" class="rt-main" data-rt="ask">${icon("chat")}<span>${h(t("rt.followup"))}</span></button>
         <span class="rt-sep" aria-hidden="true"></span>
         ${tool("compare", "columns")}${tool("timeline", "timeline")}${tool("factcheck", "checkCircle")}${tool("rewrite", "edit")}
         ${tool("calc", "calc")}${tool("cite", "quote")}
-        <button type="button" class="rt-x" data-rt="thread" title="${h(t("rt.thread"))}" aria-label="${h(t("rt.thread"))}">${icon("list")}<span class="rt-x-l">${h(t("rt.thread"))}</span></button>
+        <button type="button" class="rt-x rt-thread-btn" data-rt="thread" title="${h(t("rt.threadTip"))}" aria-label="${h(t("rt.threadTip"))}">${icon("list")}</button>
         <button type="button" class="rt-x" data-rt="collapse" title="${h(t("rt.collapse"))}" aria-label="${h(t("rt.collapse"))}">${icon("chevDown")}</button>
       </div>
     </nav>
+    </div>
     <button type="button" class="rt-fab" id="rtFab" hidden aria-label="${h(t("rt.label"))}" aria-expanded="false"><span class="rt-burger"><i></i><i></i><i></i></span></button>
-    <aside class="rt-panel" id="rtPanel" hidden aria-label="${h(t("rt.thread"))}">
-      <div class="rt-panel-head"><h3>${h(t("rt.thread"))}</h3><button type="button" class="icon-btn" id="rtPanelX" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
-      <div class="rt-thread" id="rtThread"></div>
-    </aside>
     <div class="rt-sel" id="rtSel" hidden role="toolbar" aria-label="${h(t("rt.selLabel"))}"></div>
     <div class="rt-calc" id="rtCalc" hidden role="status"></div>`);
   const dock = $("#rtDock");
@@ -42,11 +46,17 @@ export function initToolbar(x) {
   $("#rtFab").onclick = () => setOpen(!S.open);
   $("#rtPanelX").onclick = () => showPanel(false);
   $("#rtAsk").onsubmit = e => { e.preventDefault(); const q = $("#rtAskInput").value.trim(); if (q) { ask("ask", q, selText()); $("#rtAskInput").value = ""; } };
+  $("#rtCtxX").onclick = clearCtx;
   const mic = micButton($("#rtAskInput"), text => { if (text.trim()) ask("voice", text, selText()); $("#rtAskInput").value = ""; });
   if (mic) $(".rt-mic", dock).replaceWith(mic); else $(".rt-mic", dock).remove();
   document.addEventListener("selectionchange", onSelection);
   document.addEventListener("pointerdown", e => {
-    if (!e.target.closest("#rtSel, #rtCalc, .rt-dock, .rt-panel")) hideSel();
+    if (e.target.closest("#rtSel, #rtCalc, .rt-dock, .rt-panel, .rt-fab, dialog")) return;
+    hideSel();
+    if (e.target.closest("#aBody, .results")) {
+      // Android clears the highlight on every tap, so only forget the text if no new selection follows
+      setTimeout(() => { if (getSelection()?.isCollapsed) clearCtx(); }, 450);
+    }
   });
   addEventListener("resize", layout);
   hookImages();
@@ -56,11 +66,13 @@ const tool = (k, ic) => `<button type="button" class="rt-tool" data-rt="${k}" ti
 
 /** Shown for a finished article or results page; hidden everywhere else. */
 export function showToolbar(R) {
+  if (R !== S.R) { clearCtx(); const th = $("#rtThread"); if (th) th.dataset.for = ""; }
   S.R = R;
   const on = !!(R && R.finished && R.id && !R.cancelled && !R.error);
   $("#rtDock").hidden = !on || phone();
   $("#rtFab").hidden = !on || !phone();
   if (!on) { setOpen(false); showPanel(false); hideSel(); return; }
+  if (S.panel) showPanel(true);
   $("#rtDock").querySelectorAll("[data-rt=rewrite],[data-rt=calc]").forEach(b => (b.hidden = R.outcome !== "article"));
   layout();
 }
@@ -82,6 +94,7 @@ function setOpen(open) {
   $("#rtFab").setAttribute("aria-expanded", String(open));
   if (phone()) { $("#rtDock").hidden = !open; $("#rtDock").classList.add("as-sheet"); }
   if (open && phone()) openAsk(false);
+  if (phone() && S.panel) requestAnimationFrame(() => { const th = $("#rtThread"); th.scrollTop = th.scrollHeight; });
 }
 
 function openAsk(focus = true) {
@@ -91,10 +104,31 @@ function openAsk(focus = true) {
   if (focus) setTimeout(() => $("#rtAskInput").focus(), 30);
 }
 
+// ---------------------------------------------------------------- remembered selection
+// Phones drop the text selection on the next tap, so the selected text is remembered (and kept visibly
+// marked) until it's cleared with ✕, replaced by a new selection, or the reader taps elsewhere in the article.
+function setCtx(text, range) {
+  S.ctx = { text, range: range ? range.cloneRange() : null };
+  try { if (S.ctx.range && window.Highlight) CSS.highlights.set("rt-ctx", new Highlight(S.ctx.range)); } catch { /* old browser */ }
+  $("#rtCtxText").textContent = "“" + (text.length > 140 ? text.slice(0, 140) + "…" : text) + "”";
+  $("#rtCtx").hidden = false;
+  $("#rtAskInput").placeholder = t("rt.askAboutPh");
+}
+
+function clearCtx() {
+  S.ctx = null;
+  try { CSS.highlights?.delete("rt-ctx"); } catch { /* old browser */ }
+  const c = $("#rtCtx");
+  if (c) c.hidden = true;
+  const i = $("#rtAskInput");
+  if (i) i.placeholder = t("rt.askPh");
+}
+
 function selText() {
   const sel = getSelection();
-  const txt = sel && !sel.isCollapsed ? sel.toString().trim() : "";
-  return txt || S.lastSel || "";
+  const node = sel?.anchorNode?.parentElement;
+  const live = sel && !sel.isCollapsed && node?.closest("#aBody, .results, .rt-answer") ? sel.toString().trim() : "";
+  return live || S.ctx?.text || "";
 }
 
 function onDockClick(e) {
@@ -123,8 +157,9 @@ function onSelection() {
     if (!node?.closest("#aBody, .results, .rt-answer") && !inCalc) return;
     const text = sel.toString().trim();
     if (text.length < 2) return;
-    S.lastSel = text;
-    showSel(sel.getRangeAt(0).getBoundingClientRect(), text, !!inCalc);
+    const range = sel.getRangeAt(0);
+    if (!inCalc) setCtx(text, range);
+    showSel(range.getBoundingClientRect(), text, !!inCalc);
   }, 180);
 }
 
@@ -148,15 +183,19 @@ function showSel(rect, text, inCalc) {
   box.hidden = false;
   const w = box.offsetWidth, hgt = box.offsetHeight;
   let x = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), innerWidth - w - 8);
-  let y = rect.top - hgt - 10;
-  if (y < 60) y = rect.bottom + 10;
+  // on touch screens the phone's own Copy / Share bar sits above the selection, so go below it
+  const touch = matchMedia("(pointer: coarse)").matches;
+  let y = touch ? rect.bottom + 34 : rect.top - hgt - 10;
+  if (!touch && y < 60) y = rect.bottom + 10;
+  if (y + hgt > innerHeight - 8) y = Math.max(60, rect.top - hgt - 10);
   box.style.left = x + "px";
   box.style.top = y + "px";
+  box.onpointerdown = e => { if (e.target.closest("[data-sel]")) e.preventDefault(); };   // keeps the selection
   box.onclick = e => {
     const b = e.target.closest("[data-sel]");
     if (!b) return;
     const k = b.dataset.sel;
-    if (k === "ask") { openAsk(); if (phone()) setOpen(true); $("#rtAskInput").placeholder = t("rt.askAboutPh"); }
+    if (k === "ask") { if (!S.ctx) setCtx(text, null); if (phone()) setOpen(true); openAsk(); }
     else if (k === "factcheck") ask("factcheck", "", text);
     else if (k === "rewrite") rewrite(text);
     else if (k === "calc") calculate(text, rect);
@@ -170,6 +209,7 @@ function hideSel() { const b = $("#rtSel"); if (b) b.hidden = true; }
 // ---------------------------------------------------------------- thread panel
 function showPanel(on) {
   S.panel = on;
+  if (on && phone() && S.open) setOpen(false);   // phones: the answer gets the room, the menu folds away
   $("#rtPanel").hidden = !on;
   document.body.classList.toggle("rt-panel-open", on && !phone());
   if (on && S.R && $("#rtThread").dataset.for !== S.R.id) loadThread();
@@ -188,10 +228,19 @@ async function drawThread(el, id) {
   if (el.dataset.for !== id) return;
   el.innerHTML = items.length ? items.map((it, i) => entryHtml(it, i)).join("") : `<p class="muted rt-empty">${h(t("rt.empty"))}</p>`;
   el.querySelectorAll(".rt-answer").forEach((a, i) => fill(a, items[i].a));
+  countAnswers(items.length);
   wireEntries();
+  el.scrollTop = el.scrollHeight;
 }
 
-const MODE_LABEL = m => t(m === "ask" || m === "voice" ? "rt.followup" : "rt." + m);
+const MODE_LABEL = m => t(m === "ask" || m === "voice" ? "rt.followup" : m === "explain" ? "rt.explain" : "rt." + m);
+
+function countAnswers(n) {
+  const b = $(".rt-hist");
+  if (!b) return;
+  b.hidden = !n;
+  $("b", b).textContent = n ? String(n) : "";
+}
 
 function entryHtml(it, i) {
   return `<div class="rt-entry" data-i="${i}"><div class="rt-q"><span class="rt-mode">${h(MODE_LABEL(it.mode))}</span>${h(it.q)}</div>
@@ -202,6 +251,7 @@ function entryHtml(it, i) {
 
 const footHtml = (it, i) => (S.R?.outcome === "article" && !it.added && it.a
   ? `<button type="button" class="link-btn" data-add="${i}">${icon("plus")}${h(t("rt.addToArticle"))}</button>` : "")
+  + (it.a ? `<button type="button" class="link-btn" data-explain><em>${h(t("rt.elaborate"))}</em></button>` : "")
   + (it.a ? `<button type="button" class="link-btn" data-speak>${icon("speak")}${h(t("tts.listen"))}</button>` : "");
 
 function fill(el, md) {
@@ -217,12 +267,16 @@ function wireEntries() {
     catch (e) { toast(e.message, 4000); b.disabled = false; }
   }));
   $$("#rtThread [data-speak]").forEach(b => (b.onclick = () => speak(b.closest(".rt-entry").querySelector(".rt-answer").innerText, uiLang())));
+  // elaborate on an answer that's open (or a rewrite that replaced article text)
+  $$("#rtThread [data-explain]").forEach(b => (b.onclick = () =>
+    ask("explain", t("rt.elaborateQ2"), b.closest(".rt-entry").querySelector(".rt-answer").innerText.slice(0, 3000))));
 }
 
 let askCtrl = null;
 /** Runs a follow-up (or a toolbar action) and streams the answer into the thread panel. */
 export async function ask(mode, question, selection = "", extra = null) {
   if (!S.R) return;
+  if (phone()) setOpen(false);      // fold the menu away so the answer is visible (the question stays in the answer)
   showPanel(true);
   const el = $("#rtThread");
   await loadThread();
@@ -246,6 +300,7 @@ export async function ask(mode, question, selection = "", extra = null) {
       else if (ev.type === "done") { fill(out, ev.entry.a || md); }
     }, ctrl.signal);
     $(".rt-entry-foot", entry).innerHTML = footHtml({ a: md }, i);
+    countAnswers(el.querySelectorAll(".rt-entry").length);
     wireEntries();
   } catch (e) {
     if (e.name !== "AbortError") out.innerHTML = `<p class="status-line err">${h(e.message)}</p>`;
@@ -325,9 +380,11 @@ function rewrite(text) {
   $("#rwCopy", d).onclick = () => copy(result.new).then(() => toast(t("art.copied")));
   $("#rwReplace", d).onclick = async () => {
     try {
-      await api("/api/rewrite/apply", { method: "POST", body: { id: S.R.id, old: result.old, new: result.new } });
+      await api("/api/rewrite/apply", { method: "POST", body: { id: S.R.id, old: result.old, new: result.new, instructions: ins.value } });
       d.close();
       toast(t("rw.done"));
+      clearCtx();
+      S.panel = true;          // the reloaded article opens with the answers showing the rewrite (with Elaborate)
       hooks.reload(S.R.id);
     } catch (e) { toast(e.message, 4500); }
   };

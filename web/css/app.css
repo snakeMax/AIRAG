@@ -616,8 +616,19 @@ html, body { overflow-x: hidden; }
 .rt-thread { overflow-y: auto; padding: 0 16px 120px; display: flex; flex-direction: column; gap: 18px; }
 @media (min-width: 1300px) { body.rt-panel-open .rt-dock { left: calc((100vw - 424px) / 2); }
   body.rt-panel-open .run { margin-right: 424px; margin-left: max(0px, calc(100vw - 424px - 1180px)); } }
+/* computers: the stack doesn't exist for layout; the dock and the panel are placed on their own */
+.rt-stack { display: contents; }
+/* phones: answers and the open menu share one column above the round button, like a flex box -
+   the answers shrink (and scroll) to make room for the menu, so neither covers the other */
 @media (max-width: 720px) {
-  .rt-panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: 62vh; animation-name: rt-sheet-in; }
+  .rt-stack { display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; position: fixed; z-index: 45;
+    left: 8px; right: 8px; top: 64px; bottom: calc(84px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .rt-stack > * { pointer-events: auto; }
+  .rt-panel { position: static; width: auto; height: auto; max-height: 64vh; min-height: 0; flex: 0 1 auto; animation-name: rt-sheet-in; }
+  .rt-thread { padding-bottom: 16px; min-height: 0; }
+  .rt-dock.as-sheet { position: static; flex: none; transform: none; left: auto; right: auto; bottom: auto; }
+  .rt-dock.as-sheet .rt-thread-btn { display: none; }
+  .rt-fab { z-index: 46; }
 }
 .rt-entry { border-bottom: 1px solid var(--border); padding-bottom: 14px; }
 .rt-q { font-weight: 600; font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
@@ -691,9 +702,8 @@ html, body { overflow-x: hidden; }
 .effort-seg button { position: relative; z-index: 1; height: 34px; border: 0; background: transparent; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-2); cursor: pointer; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
 .effort-seg button[aria-checked=true] { color: var(--accent-text, #fff); }
 @media (prefers-reduced-motion: reduce) { .effort-seg i { transition: none; } }
-.rt-x-l { display: none; }
-.rt-dock.as-sheet [data-rt=thread] { grid-column: 1 / -1; height: 46px; display: flex; gap: 8px; justify-content: center; align-items: center; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-2); }
-.rt-dock.as-sheet .rt-x-l { display: inline; }
+/* phones: the ask box is always at the top of the menu, so the Follow-up and list buttons aren't needed there */
+.rt-dock.as-sheet .rt-main, .rt-dock.as-sheet .rt-thread-btn { display: none !important; }
 /* analyze image */
 .img-chip { cursor: pointer; }
 .img-chip-ic svg { width: 15px; height: 15px; display: block; }
@@ -704,3 +714,16 @@ html, body { overflow-x: hidden; }
 .img-ask-out { border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; min-height: 120px; max-height: 50vh; overflow: auto; font-size: 14.5px; }
 @media (max-width: 720px) { .img-ask { grid-template-columns: 1fr; } .img-ask-pic, .img-ask-pic img { max-height: 32vh; } }
 #view-home.drop-on .search-box, #view-home.drop-on .home-search { outline: 2px dashed var(--accent); outline-offset: 6px; }
+
+/* the remembered selection: stays marked after the phone drops its own highlight */
+::highlight(rt-ctx) { background-color: color-mix(in srgb, var(--accent) 26%, transparent); }
+.rt-ctx { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 12px; font-size: 13px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); min-width: 0; }
+.rt-ctx-l { color: var(--text-3); font-weight: 600; flex: none; }
+.rt-ctx-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-style: italic; }
+.rt-ctx-x { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--text-3); cursor: pointer; }
+.rt-ctx-x svg { width: 14px; height: 14px; }
+.rt-hist { flex: none; display: flex; align-items: center; gap: 3px; height: 34px; padding: 0 8px; border: 0; border-radius: 9px; background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text-2); font: inherit; font-size: 12px; cursor: pointer; margin-left: -8px; }
+.rt-hist svg { width: 15px; height: 15px; }
+@media (min-width: 721px) { .rt-hist { display: none; } }
+.rt-ctx { width: 0; min-width: 100%; box-sizing: border-box; }   /* fills the bar without widening it */

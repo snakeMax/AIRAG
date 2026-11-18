@@ -7,6 +7,7 @@ shown side by side, and only replaced when the reader chooses Replace.
 from __future__ import annotations
 
 import re
+import time
 from typing import AsyncIterator, Optional, Tuple
 
 from . import history, languages, prompts
@@ -77,7 +78,7 @@ async def rewrite(settings: dict, rid: str, selection: str, instructions: str,
     yield {"type": "done", "old": old, "new": out}
 
 
-def apply(settings: dict, rid: str, old: str, new: str) -> str:
+def apply(settings: dict, rid: str, old: str, new: str, instructions: str = "") -> str:
     rec = history.get(rid)
     if not rec or rec.get("outcome") != "article":
         raise ValueError("Article not found")
@@ -87,5 +88,9 @@ def apply(settings: dict, rid: str, old: str, new: str) -> str:
     rec.setdefault("edits", []).append({"old": old, "new": new})
     rec["edits"] = rec["edits"][-20:]
     rec["article"] = md.replace(old, new.strip(), 1)
+    # keep it in the answers thread, so the reader can see what changed and ask to elaborate on it
+    rec.setdefault("thread", []).append({"q": instructions.strip() or "Rewrite", "mode": "rewrite", "selection": old[:500],
+                                         "a": new.strip(), "added": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
+    rec["thread"] = rec["thread"][-40:]
     history.save(rec, int(settings["app"].get("history_limit", 300)))
     return rec["article"]

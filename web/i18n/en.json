@@ -725,7 +725,7 @@
  "rt.calcTip": "Solve the selected formula or sum",
  "rt.cite": "Cite",
  "rt.citeTip": "Copy the sources as APA, MLA or BibTeX",
- "rt.thread": "Follow-ups",
+ "rt.thread": "Answers",
  "rt.collapse": "Make smaller",
  "rt.selLabel": "Actions for the selected text",
  "rt.askThis": "Ask about this",
@@ -825,5 +825,10 @@
  "img.other": "Another picture",
  "img.badFile": "That file couldn't be opened as a picture.",
  "img.noVision": "The selected AI model can't look at pictures. Choose a vision model in Settings, or use an image-to-text or maths-scanner app.",
- "img.apps": "Tip: an image-to-text or maths-scanner app can turn the picture into text you can paste into AIRAG."
+ "img.apps": "Tip: an image-to-text or maths-scanner app can turn the picture into text you can paste into AIRAG.",
+ "rt.threadTip": "Show earlier answers",
+ "rt.about": "About",
+ "rt.clearSel": "Stop using the selected text",
+ "rt.explain": "Elaborate",
+ "rt.elaborateQ2": "Elaborate on this: explain it in more depth and how it connects to the article and its sources."
 }
