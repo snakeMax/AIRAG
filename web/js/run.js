@@ -12,6 +12,7 @@ import { exportHtml } from "./export.js";
 import { pinButton, togglePinSource } from "./pins.js";
 import { showToolbar, hideToolbar } from "./toolbar.js";
 import { downloadSummary } from "./summaryfile.js";
+import { openRegenerate, setRegenHooks } from "./regenerate.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -338,6 +339,8 @@ $("#runMain").addEventListener("click", e => {
   else if (act === "more-sources" && R.id && R.finished) startResearch(R.query, R.outcome === "article" ? "article" : "results", R.library, null, R.dates, null, false, R.id);
   else if (act === "export-html") exportHtml(R, $("article.article"));
   else if (act === "save") openSavePop(b, R);
+  else if (act === "regenerate") openRegenerate(R);
+  else if (act === "versions") openRegenerate(R, true);
   else if (act === "tr-original") {
     restoreTranslation(R, b.dataset.kind);
     if (b.dataset.kind === "article") { renderArticleBody(R, true); renderArticleSide(R); showTrNote(R); }
@@ -442,20 +445,7 @@ function renderArticle(R) {
       <h1 class="a-title" id="aTitle">${h(R.query)}</h1>
       <p class="a-dek" id="aDek"></p>
       <div class="a-byline"><span class="avatar">A</span><div><div class="by-name">${h(t("art.by"))}</div><div class="muted">${h(fmtDate(R.created, uiLang()))} · ${h(R.model)}<span id="aStats"></span></div></div>
-        <div class="a-actions">
-          <button class="btn sm" data-act="sum-article">${icon("sparkle")}${h(t("sum.button"))}</button>
-          <button class="btn sm has-tip" data-act="interactive" id="interBtn" aria-disabled="true"><span class="lbl row" style="gap:7px">${icon("play")}${h(t("inter.button"))}</span><span class="tip-text" id="interTip">${h(t("inter.checking"))}</span></button>
-          <button class="btn sm ghost" data-act="results">${icon("list")}${h(t("art.results"))}</button>
-          <button class="btn sm ghost" data-act="more-sources" ${R.savedFile ? "hidden" : ""} title="${h(t("more.tip"))}">${icon("search")}${h(t("more.button"))}</button>
-          <button class="btn sm" data-act="save" id="saveBtn" disabled title="${h(t("save.tip"))}">${icon("download")}${h(t("save.button"))}</button>
-          <button class="btn sm ghost" data-act="copy">${icon("copy")}${h(t("art.copy"))}</button>
-          <button class="btn sm ghost" data-act="translate-article" id="trArtBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>
-          ${ttsAvailable() ? `<button class="btn sm ghost" data-act="listen" id="ttsBtn" title="${h(t("tts.tip"))}">${icon("speak")}${h(t("tts.listen"))}</button>
-            <button class="btn sm ghost" data-act="listen-stop" id="ttsStop" hidden title="${h(t("tts.stop"))}">${icon("stop")}</button>` : ""}
-          <button class="btn sm ghost" data-act="pin" id="pinBtn" ${R.savedFile ? "hidden" : ""} title="${h(t("pin.tip"))}">${icon("pin")}<span>${h(t(R.pinned ? "pin.unpin" : "pin.pin"))}</span></button>
-          <button class="btn sm ghost" data-act="export-html" title="${h(t("exp.tip"))}">${icon("html")}${h(t("exp.button"))}</button>
-          <button class="btn sm ghost" data-act="sum-file" title="${h(t("sumfile.tip"))}">${icon("download")}${h(t("sumfile.button"))}</button>
-        </div></div>
+        <div class="a-actions" id="aActions">${articleActions(R)}</div></div>
       ${hero ? `<figure class="a-hero" data-img><img src="${h(hero.src)}" alt="${h(hero.title)}" referrerpolicy="no-referrer" ${imgOnErr}>
         <figcaption>${h(hero.title)}${hero.title ? " · " : ""}<a href="${h(safeUrl(hero.page_url))}" target="_blank" rel="noopener noreferrer">${h(hero.credit)}</a></figcaption></figure>` : ""}
       <div id="trNoteArt"></div>
@@ -469,6 +459,81 @@ function renderArticle(R) {
   renderArticleSide(R);
   updateInteractiveButton(R);
 }
+
+// Article tools in fold-out groups (Explainer always on its own). Every button exists once; on phones the
+// Rewrite / Sources groups and Pin sit in a "More" sheet, and each menu opens as a bottom sheet.
+function articleActions(R) {
+  const chev = `<svg class="a-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
+  const item = (act, ic, label, desc = "", extra = "") =>
+    `<button type="button" class="a-item" data-act="${act}" ${extra}>${icon(ic)}<span class="a-item-t">${h(label)}${desc ? `<small>${h(desc)}</small>` : ""}</span></button>`;
+  const head = label => `<div class="a-menu-head"><b>${h(label)}</b><button type="button" class="icon-btn" data-group-close aria-label="${h(t("common.close"))}">${icon("x")}</button></div>`;
+  const group = (key, ic, label, items) => `<div class="a-group" data-group="${key}">
+      <button type="button" class="btn sm ghost a-gbtn" data-group-toggle aria-expanded="false" aria-haspopup="true">${icon(ic)}<span class="a-glong">${h(label)}</span><span class="a-gshort">${h(t("grp." + key + "Short"))}</span>${chev}</button>
+      <div class="a-menu" role="menu">${head(label)}${items}</div></div>`;
+  return `<button class="btn sm primary has-tip" data-act="interactive" id="interBtn" aria-disabled="true"><span class="lbl row" style="gap:7px">${icon("play")}${h(t("inter.button"))}</span><span class="tip-text" id="interTip">${h(t("inter.checking"))}</span></button>
+    ${ttsAvailable() ? `<button class="btn sm ghost" data-act="listen" id="ttsBtn" title="${h(t("tts.tip"))}">${icon("speak")}${h(t("tts.listen"))}</button>
+      <button class="btn sm ghost" data-act="listen-stop" id="ttsStop" hidden title="${h(t("tts.stop"))}">${icon("stop")}</button>` : ""}
+    ${group("export", "download", t("grp.export"),
+      item("export-html", "html", t("exp.button"), "", `title="${h(t("exp.tip"))}"`)
+      + item("copy", "copy", t("art.copy"))
+      + item("sum-file", "download", t("sumfile.button"), t("sumfile.desc"), `title="${h(t("sumfile.tip"))}"`)
+      + item("save", "download", t("save.button"), t("save.desc"), `id="saveBtn" disabled title="${h(t("save.tip"))}"`))}
+    <button type="button" class="btn sm ghost a-more-btn" data-more-toggle aria-expanded="false">${icon("more")}<span>${h(t("grp.more"))}</span></button>
+    <div class="a-more">${head(t("grp.more"))}
+      ${group("rewrite", "edit", t("grp.rewrite"),
+        item("regenerate", "refresh", t("regen.button"), t("regen.desc"))
+        + item("versions", "history", t("regen.versions"))
+        + item("translate-article", "globe", t("tr.button"), "", `id="trArtBtn" title="${h(t("tr.tip"))}"`)
+        + item("sum-article", "sparkle", t("sum.button")))}
+      ${group("sources", "search", t("grp.sources"),
+        (R.savedFile ? "" : item("more-sources", "search", t("more.button"), "", `title="${h(t("more.tip"))}"`))
+        + item("results", "list", t("art.results"))
+        + item("again", "refresh", t("run.again"), "", `title="${h(t("run.againTip"))}"`))}
+      <button class="btn sm ghost" data-act="pin" id="pinBtn" ${R.savedFile ? "hidden" : ""} title="${h(t("pin.tip"))}">${icon("pin")}<span>${h(t(R.pinned ? "pin.unpin" : "pin.pin"))}</span></button>
+    </div>
+    <div class="a-scrim" data-group-close></div>`;
+}
+
+function syncGroups() {
+  $$("[data-group-toggle]").forEach(b => b.setAttribute("aria-expanded", String(b.closest(".a-group").classList.contains("open"))));
+  const bar = $(".a-actions");
+  $$("[data-more-toggle]").forEach(b => b.setAttribute("aria-expanded", String(!!bar?.classList.contains("more-open"))));
+  document.body.classList.toggle("a-sheet-open", !!$(".a-group.open, .a-actions.more-open"));
+  // computers: open a menu upwards when it would run under the bottom of the window (or the toolbar there)
+  const m = $(".a-group.open > .a-menu");
+  if (m && matchMedia("(min-width: 721px)").matches) {
+    m.classList.remove("up");
+    const r = m.getBoundingClientRect();
+    if (r.bottom > innerHeight - 96 && r.top - r.height - 50 > 0) m.classList.add("up");
+  }
+}
+
+function closeGroups() {
+  $$(".a-group.open").forEach(g => g.classList.remove("open"));
+  $(".a-actions")?.classList.remove("more-open");
+  syncGroups();
+}
+
+// opening and closing the groups (a click on an item runs it through the normal data-act handler first)
+document.addEventListener("click", e => {
+  const tog = e.target.closest("[data-group-toggle]");
+  if (tog) {
+    const g = tog.closest(".a-group"), was = g.classList.contains("open");
+    $$(".a-group.open").forEach(x => x.classList.remove("open"));
+    g.classList.toggle("open", !was);
+    syncGroups();
+    return;
+  }
+  if (e.target.closest("[data-more-toggle]")) {
+    const bar = $(".a-actions"), open = !bar.classList.contains("more-open");
+    closeGroups();
+    bar.classList.toggle("more-open", open);
+    syncGroups();
+    return;
+  }
+  if (e.target.closest("[data-group-close], .a-menu [data-act], .a-more [data-act]") || !e.target.closest(".a-actions")) closeGroups();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeGroups(); });
 
 function updateInteractiveButton(R) {
   const b = $("#interBtn"), tip = $("#interTip");
@@ -725,6 +790,8 @@ export function toolbarAction(ev) {
   else if (ev.action === "copy" && ev.text) copyText(ev.text).then(() => toast(t("art.copied")));
   else if (ev.action === "pin" && R.id && !R.pinned) togglePin(R);
 }
+
+setRegenHooks({ reload: id => reloadRecord(id), current: () => RUN.current });
 
 /** Reloads an article after the toolbar changed it (rewrite, answer added). */
 export function reloadRecord(id) {

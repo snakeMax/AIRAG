@@ -14,6 +14,11 @@
 - **Budget stop covers all AI work** (follow-ups, rewrites, explainers, summaries, translations, image analysis), not only searches; work already running finishes
 - **Fewer resources**: pressing a button twice no longer starts the same job twice; at most 30 tasks can wait; streamed text uses much less memory; a few small leaks fixed (PC-link connections, notification and lock-out lists, summary cache)
 - **Adding files to My library** skips files that are already there and never overwrites a different file with the same name
+- **Article tools grouped**: Explainer and Listen stay, the rest are in *Export options*, *Rewrite* and *Sources* menus; on phones one row of four big buttons (Explainer, Listen, Export, More) with menus that slide up from the bottom
+- **Regenerate article**: write the article again from the same sources, your way (typed or spoken instructions, quick choices, keep your edits, shorter or longer), or just a clearer version
+- **Version history**: every change to an article keeps the previous version; Undo, Compare and Restore (last 20 kept, nothing is deleted)
+- **All AI tools run as background jobs** (follow-ups, rewrites, translations, summaries, image questions, calculations): they show in the activity bar and on Android in the notification, and keep going when you leave the article
+- **Selection menu stays open when you open the toolbar** on phones; it docks to the top edge instead
 - **Reopened saved articles go back in History**, so the toolbar works on them (Settings → Library to turn off)
 
 ## [0.4.0] - 2026-11-18

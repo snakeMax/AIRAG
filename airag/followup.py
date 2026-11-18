@@ -165,8 +165,11 @@ async def add_to_article(settings: dict, rid: str, index: int) -> dict:
             problem.append("No such answer")
         elif not thread[index].get("added"):       # pressing twice doesn't add it twice
             t = thread[index]
-            rec["article"] = (rec.get("article") or "").rstrip() + f"\n\n## {t['q'][:120]}\n\n{t['a']}\n"
+            before = rec.get("article") or ""
+            rec["article"] = before.rstrip() + f"\n\n## {t['q'][:120]}\n\n{t['a']}\n"
             t["added"] = True
+            from . import versions
+            versions.note_change(rec, before, "answer", t["q"][:120])
     rec = history.update(rid, add)
     if rec is None or problem:
         raise ValueError(problem[0] if problem else "Article not found")

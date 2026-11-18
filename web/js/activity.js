@@ -24,7 +24,10 @@ export function markSeen() { writeSeen(Date.now() / 1000); draw(); }
 export function pokeJobs() { clearTimeout(timer); timer = setTimeout(poll, 150); }
 
 export const jobFor = (kind, ref) => JOBS.items.find(j => j.kind === kind && j.ref === ref);
-export const jobHref = j => j.kind === "explainer" ? `#/view/${encodeURIComponent(j.ref)}?explainer` : `#/run/${encodeURIComponent(j.id)}`;
+const TOOL_KINDS = ["followup", "rewrite", "image", "translate", "summary", "calc", "regenerate"];
+export const jobHref = j => j.kind === "explainer" ? `#/view/${encodeURIComponent(j.ref)}?explainer`
+  : TOOL_KINDS.includes(j.kind) ? (j.ref ? `#/view/${encodeURIComponent(j.ref)}` : location.hash || "#/")
+  : `#/run/${encodeURIComponent(j.id)}`;
 
 async function poll() {
   clearTimeout(timer);
@@ -47,12 +50,15 @@ function chime() {
   const fresh = JOBS.recent.filter(j => !known?.has(j.id));
   if (known) {
     const j = fresh.find(x => x.status !== "cancelled");
-    if (j) play(j.status === "error" ? "task_failed" : j.kind === "explainer" ? "explainer_done" : "search_done");
+    // quick tools finish quietly; searches, explainers and regenerations chime; a failure always does
+    const loud = fresh.find(x => x.status === "error" || (x.status === "done" && !TOOL_KINDS.slice(0, -1).includes(x.kind)));
+    if (j && loud) play(loud.status === "error" ? "task_failed" : loud.kind === "explainer" ? "explainer_done" : "search_done");
   }
   known = new Set(JOBS.recent.map(j => j.id));
 }
 
-const what = j => t(j.kind === "explainer" ? "act.explainer" : j.kind === "more" ? "act.more" : "act.search", { q: j.query });
+const what = j => t(j.kind === "explainer" ? "act.explainer" : j.kind === "more" ? "act.more"
+  : TOOL_KINDS.includes(j.kind) ? "act." + j.kind : "act.search", { q: j.query });
 
 function draw() {
   const bar = $("#activityBar"), btn = $("#historyBtn");

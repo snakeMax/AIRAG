@@ -99,6 +99,19 @@ Makes one HTML file of the article. See [Saving and exporting](#saving-and-expor
 ### Download summary
 Saves a small file with just the summary and the sources' links. See [Saving and exporting](#saving-and-exporting).
 
+### How the article tools are grouped
+- **Computer:** *Explainer* and *Listen* are buttons of their own. *Export options* (Export web page, Copy as Markdown, Download summary, Save), *Rewrite* (Regenerate article, Version history, Translate, Summarize) and *Sources* (Locate more sources, Search results, Search again) open small menus. *Pin* stays a button.
+- **Phone:** one row of four big buttons: *Explainer*, *Listen*, *Export* and *More*. Menus open as a sheet from the bottom of the screen; tap outside or ✕ to close.
+- A group whose buttons you've all hidden (Settings → Tools) disappears.
+
+### Regenerate article
+Writes the whole article again **from the same sources** (no new search). Type or say what should be different, or tap a quick choice (Simpler, Shorter, More detail…). *Skip, just improve it* writes a clearer version without instructions. Uses about as many tokens as writing the article once, and runs in the background like a search.
+- **More options → Keep my edits** (on by default): paragraphs you rewrote and answers you added stay as they are.
+- **More options → Length:** same, shorter or longer.
+
+### Version history
+Every change to an article (regenerating, rewriting a paragraph, adding an answer, Locate more sources) keeps the previous version. *Undo last change* steps back one version; *Restore* jumps to any version; *Compare* shows a version next to the current article. Undo and Restore never delete anything. The last 20 versions per article are kept; they're deleted with the article. Free.
+
 ### On sources: Summarize, Save page, Pin
 - **Summarize:** sums up that one page.
 - **Save page:** keeps a light copy of it in My library.

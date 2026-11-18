@@ -91,6 +91,8 @@ def apply(settings: dict, rid: str, old: str, new: str, instructions: str = "") 
             return
         rec["edits"] = (rec.get("edits") or [])[-19:] + [{"old": old, "new": new}]
         rec["article"] = md.replace(old, new.strip(), 1)
+        from . import versions
+        versions.note_change(rec, md, "rewrite", instructions.strip() or "Rewrite")
         # keep it in the answers thread, so the reader can see what changed and ask to elaborate on it
         rec["thread"] = (rec.get("thread") or [])[-39:] + [{
             "q": instructions.strip() or "Rewrite", "mode": "rewrite", "selection": old[:500], "a": new.strip(),

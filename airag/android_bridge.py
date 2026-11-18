@@ -70,19 +70,27 @@ def _jobs_changed() -> None:
     items = runs.active()
     running = [j for j in items if j["status"] == "running"] or items
 
+    names = {"explainer": "Explainer", "more": "More sources", "regenerate": "Regenerating", "followup": "Answering",
+             "rewrite": "Rewriting", "image": "Analyzing image", "translate": "Translating", "summary": "Summarizing",
+             "calc": "Calculating"}
+
     def line(j: dict) -> str:
-        what = {"explainer": "Explainer", "more": "More sources"}.get(j["kind"], "Search")
+        what = names.get(j["kind"], "Search")
         state = "running" if j["status"] == "running" else f"queued ({j['position']} ahead)"
         return f"{what} {state}: {j['query'][:60]}"
     title = ""
     if running:
         j = running[0]
-        title = {"explainer": "Building explainer: ", "more": "Finding more sources: "}.get(j["kind"], "Researching: ") + j["query"][:80]
+        title = ({"explainer": "Building explainer", "more": "Finding more sources"}.get(j["kind"]) or names.get(j["kind"])
+                 or "Researching") + ": " + j["query"][:80]
     b = _bridge()
     # the expanded notification lists every job, running or waiting
     b.jobsChanged(len(items), title, "\n".join(line(j) for j in items[:8]))
     for j in runs.recent():
         if j["id"] in _notified or j["status"] == "cancelled":
+            continue
+        if j["kind"] in runs.TOOL_KINDS and j["status"] != "error":
+            _notified.add(j["id"])           # quick tools: only a failure gets its own notification
             continue
         _notified.add(j["id"])
         if len(_notified) > 500:         # only recent jobs matter; don't grow for ever in a long-running app

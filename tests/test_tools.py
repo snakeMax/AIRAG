@@ -62,3 +62,25 @@ def test_followup_uses_the_calculator(monkeypatch):
     assert any("80 / 10 = 8" in e.get("text", "") for e in evs if e["type"] == "tool_result")
     assert evs[-1]["type"] == "done" and "factor of 8" in evs[-1]["entry"]["a"]
     assert history.get("fu1")["thread"][-1]["tools"] == ["Calculator"]
+
+
+def test_ai_tools_run_as_background_jobs():
+    """Follow-ups (and every other AI tool) are queued jobs that show in the activity list; the page still gets
+    the answer streamed, and the job finishes even if nobody is listening."""
+    import json
+    from fastapi.testclient import TestClient
+    from tests import mock
+    mock.install()
+    from airag import runs
+    from airag.main import app
+    history.save({"id": "fu2", "query": "hummingbird wing beats", "outcome": "article", "article": "# H\n\nText [1].",
+                  "article_sources": [{"n": 1, "url": "https://a.org", "title": "A", "domain": "a.org"}],
+                  "sources": []}, 100)
+    with TestClient(app, base_url="http://127.0.0.1") as c:
+        c.get("/")
+        r = c.post("/api/followup", json={"id": "fu2", "question": "How many times faster is the fastest?", "mode": "ask"})
+        events = [json.loads(line) for line in r.text.splitlines() if line.strip()]
+        assert events[-1]["type"] == "done" and "factor of 8" in events[-1]["entry"]["a"]
+        job = next(j for j in runs.recent() if j["kind"] == "followup" and j["ref"] == "fu2")
+        assert job["status"] == "done"
+        assert runs._group("followup") == "tool" and runs._group("regenerate") == "search"

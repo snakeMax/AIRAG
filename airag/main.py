@@ -938,6 +938,40 @@ async def usage_prices():
     return {"updated": await usage.refresh_prices(force=True)}
 
 
+def _job(gen_factory, kind: str, title: str, ref: str = "") -> StreamingResponse:
+    """Every AI tool runs as a background job: queued when needed, shown in the activity bar / History /
+    Android notification, and it finishes even if the page or app is closed. The page gets the same event
+    stream as before (it follows the job)."""
+    from . import runs
+    import uuid
+    try:
+        run = runs.start(f"{kind}-{uuid.uuid4().hex[:10]}", (title or kind)[:160], kind, gen_factory, kind=kind, ref=ref or "")
+    except runs.TooManyJobs as e:
+        raise HTTPException(429, str(e))
+    return _follow(run)
+
+
+async def _job_result(coro_factory, kind: str, title: str, ref: str = "") -> dict:
+    """A short AI job whose answer the page waits for (a calculation, a few translated lines)."""
+    from . import runs
+    import uuid
+    box: dict = {}
+
+    async def go(emit) -> None:
+        box["result"] = await coro_factory()
+        await emit({"type": "done"})
+    try:
+        run = runs.start(f"{kind}-{uuid.uuid4().hex[:10]}", (title or kind)[:160], kind, go, kind=kind, ref=ref or "")
+    except runs.TooManyJobs as e:
+        raise HTTPException(429, str(e))
+    async for ev in runs.follow(run):
+        if ev.get("type") == "error":
+            raise HTTPException(400, ev.get("message") or "It didn't work")
+        if ev.get("type") == "cancelled":
+            raise HTTPException(409, "Cancelled")
+    return box.get("result") or {}
+
+
 def _follow(run) -> StreamingResponse:
     from . import runs
 
@@ -996,7 +1030,7 @@ async def followup_route(req: FollowupReq):
         async for ev in followup.answer(settings, req.id, req.question[:2000], req.mode, req.selection[:4000],
                                         req.ui_lang, extra):
             await emit(ev)
-    return _ndjson(run)
+    return _job(run, "followup", req.question or req.mode, req.id)
 
 
 @app.get("/api/followup/{rid}")
@@ -1026,12 +1060,13 @@ class CalcReq(BaseModel):
 async def tools_calculate(req: CalcReq):
     """The Calculate button: the selection becomes an expression, the calculator solves it (no long AI answer)."""
     from . import followup
-    try:
-        return await followup.calculate(config.load(), req.text)
-    except LLMError as e:
-        raise HTTPException(502, str(e))
-    except (ValueError, asyncio.TimeoutError) as e:
-        raise HTTPException(400, f"Couldn't calculate that: {e or 'it took too long'}")
+
+    async def calc() -> dict:
+        try:
+            return await followup.calculate(config.load(), req.text)
+        except (ValueError, asyncio.TimeoutError) as e:
+            raise ValueError(f"Couldn't calculate that: {e or 'it took too long'}")
+    return await _job_result(calc, "calc", req.text[:80])
 
 
 class RewriteReq(BaseModel):
@@ -1049,7 +1084,66 @@ async def rewrite_route(req: RewriteReq):
     async def run(emit):
         async for ev in rewrite.rewrite(settings, req.id, req.selection, req.instructions, req.ui_lang):
             await emit(ev)
-    return _ndjson(run)
+    return _job(run, "rewrite", req.instructions or req.selection[:80], req.id)
+
+
+class RegenerateReq(BaseModel):
+    id: str
+    instructions: str = ""
+    keep_edits: bool = True
+    length: str = "same"          # same | shorter | longer
+    ui_lang: Optional[str] = None
+
+
+@app.post("/api/regenerate")
+async def regenerate_route(req: RegenerateReq):
+    """Regenerate article: a background job (queued with searches); the old text stays in the version history."""
+    from .regenerate import regenerate
+    settings = config.load()
+    prompts_mod.use(settings)
+    if req.length not in ("same", "shorter", "longer"):
+        raise HTTPException(400, "Unknown length")
+
+    async def run(emit):
+        async for ev in regenerate(settings, req.id, req.instructions[:1500], req.keep_edits, req.length, req.ui_lang):
+            await emit(ev)
+    title = req.instructions.strip() or (history.get(req.id) or {}).get("query", "")
+    return _job(run, "regenerate", title, req.id)
+
+
+@app.get("/api/versions/{rid}")
+def versions_list(rid: str):
+    from . import versions
+    return versions.listing(rid)
+
+
+@app.get("/api/versions/{rid}/{n}")
+def versions_get(rid: str, n: int):
+    from . import versions
+    v = versions.get(rid, n)
+    if not v:
+        raise HTTPException(404, "No such version")
+    return {"n": v["n"], "article": v["article"], "kind": v["kind"], "note": v.get("note", ""), "at": v["at"]}
+
+
+class VersionReq(BaseModel):
+    n: int = 0
+
+
+@app.post("/api/versions/{rid}/restore")
+def versions_restore(rid: str, req: VersionReq):
+    from . import versions
+    if not versions.restore(rid, req.n):
+        raise HTTPException(404, "No such version")
+    return versions.listing(rid)
+
+
+@app.post("/api/versions/{rid}/undo")
+def versions_undo(rid: str):
+    from . import versions
+    if not versions.undo(rid):
+        raise HTTPException(400, "There's nothing to undo")
+    return versions.listing(rid)
 
 
 class RewriteApplyReq(BaseModel):
@@ -1112,7 +1206,7 @@ async def analyze_image(req: ImageReq):
             raise ValueError("The model gave no answer for the picture. It may not support images: try a vision "
                              "model, or an image-to-text / maths-scanner app.")
         await emit({"type": "done"})
-    return _ndjson(run)
+    return _job(run, "image", req.question or "Analyze image", req.id or "")
 
 
 class AgentToolsReq(BaseModel):
@@ -1168,16 +1262,16 @@ async def translate_article(req: TranslateReq):
         async for piece in translate.article(settings, req.markdown, req.lang, req.id):
             await emit({"type": "token", "text": piece})
         await emit({"type": "done"})
-    return _ndjson(run)
+    return _job(run, "translate", req.lang, req.id or "")
 
 
 @app.post("/api/translate/items")
 async def translate_items(req: TranslateReq):
     from . import translate
-    try:
+
+    async def go() -> dict:
         return {"items": await translate.items(config.load(), req.items, req.lang)}
-    except Exception as e:
-        raise _err(e)
+    return await _job_result(go, "translate", req.lang)
 
 
 class SummaryReq(BaseModel):
@@ -1196,7 +1290,7 @@ async def summarize_route(req: SummaryReq):
         async for piece in summarize(settings, req.kind, req.query, req.payload, req.ui_lang):
             await emit({"type": "token", "text": piece})
         await emit({"type": "done"})
-    return _ndjson(run)
+    return _job(run, "summary", req.query)
 
 
 class InteractiveReq(BaseModel):
@@ -1240,13 +1334,12 @@ async def interactive_start(req: InteractiveReq):
 
 @app.post("/api/interactive")
 async def interactive_route(req: InteractiveReq):
+    """Older route (kept for old pages): builds the explainer as a background job and waits for it."""
     from .interactive import generate
     settings = config.load()
     prompts_mod.use(settings)
-    try:
-        return await generate(settings, req.id, req.ui_lang, req.force)
-    except (ValueError, LLMError) as e:
-        raise _err(e)
+    return await _job_result(lambda: generate(settings, req.id, req.ui_lang, req.force), "explainer",
+                             (history.get(req.id) or {}).get("query", ""), req.id)
 
 
 # history
@@ -1345,11 +1438,11 @@ async def wiki_describe(req: WikiReq):
     text, _ = guard.clean(page.text if page.ok else info["name"], s)
     prompts_mod.use(s)
     lang = languages.answer_language(s, req.ui_lang, info["name"])
-    try:
+
+    async def go() -> dict:
         about = await get_llm(s).complete(*prompts_mod.describe_wiki(info["name"], text, lang), max_tokens=120)
-    except LLMError as e:
-        raise HTTPException(502, str(e))
-    return {"about": " ".join(about.split())[:240]}
+        return {"about": " ".join(about.split())[:240]}
+    return await _job_result(go, "summary", info["name"])
 
 
 class PinSourceReq(BaseModel):

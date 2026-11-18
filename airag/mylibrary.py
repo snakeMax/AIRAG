@@ -184,7 +184,13 @@ def _back_to_history(rec: dict) -> None:
         cur = history.get(rec["id"])
         if cur:
             if rec.get("edited_outside"):       # keep the answers thread and anything else History knows
-                history.update(rec["id"], {k: rec[k] for k in ("article", "title", "article_sources", "sources") if k in rec})
+                from . import versions
+
+                def take(cur: dict) -> None:
+                    before, before_src = cur.get("article") or "", cur.get("article_sources")
+                    cur.update({k: rec[k] for k in ("article", "title", "article_sources", "sources") if k in rec})
+                    versions.note_change(cur, before, "edit", "Edited outside AIRAG", before_src)
+                history.update(rec["id"], take)
             return
         entry = {k: v for k, v in rec.items() if k not in ("saved_file", "edited_outside")}
         entry.update({"outcome": "article", "status": "done"})

@@ -433,9 +433,12 @@ class Research:
         changed = {k: v for k, v in record.items() if k != "article" and v != rec.get(k)}
 
         def merge(cur: dict) -> None:
+            before, before_src = cur.get("article") or "", cur.get("article_sources")
             cur.update(changed)
             if addendum:
-                cur["article"] = (cur.get("article") or "").rstrip() + "\n\n" + addendum + "\n"
+                cur["article"] = before.rstrip() + "\n\n" + addendum + "\n"
+                from . import versions
+                versions.note_change(cur, before, "more", "More sources", before_src)
         try:
             saved = history.update(self.id, merge)
             if saved is not None:

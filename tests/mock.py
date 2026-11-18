@@ -122,6 +122,11 @@ class MockLLM(LLMProvider):
             text = "Most hummingbirds flap 10-80 times a second [1]."
             yield text
             return
+        if "THIS IS A NEW VERSION" in user:          # Regenerate article
+            text = ARTICLE.replace("Most hummingbirds", "Put simply, most hummingbirds", 1)
+            for i in range(0, len(text), 40):
+                yield text[i:i + 40]
+            return
         text = ARTICLE if "research journalist" in system else "**Bottom line:** 10-80 beats per second.\n\n- Smaller birds beat faster [1]\n- Giant hummingbird: 10-15 [2]"
         for i in range(0, len(text), 40):
             await asyncio.sleep(0.005)

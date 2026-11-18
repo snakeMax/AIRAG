@@ -91,13 +91,22 @@ def prune(limit: int) -> int:
         try:
             f.unlink()
             n += 1
+            _forget_versions(f.stem)
         except OSError:
             pass
     return n
 
 
+def _forget_versions(rid: str) -> None:
+    from . import versions
+    versions.forget(rid)
+
+
 def clear() -> int:
-    return prune(0) + _unlink_all()
+    from . import versions
+    n = prune(0) + _unlink_all()
+    versions.forget_all()
+    return n
 
 
 def _unlink_all() -> int:
@@ -130,6 +139,7 @@ def delete(rid: str) -> bool:
     p = HISTORY_DIR / f"{rid}.json"
     if p.exists():
         p.unlink()
+        _forget_versions(rid)
         return True
     return False
 

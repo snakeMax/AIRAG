@@ -16,7 +16,10 @@ from typing import Callable, Dict, List, Optional
 log = logging.getLogger("airag.runs")
 
 MAX_PARALLEL = 1          # default jobs at a time per kind: keeps the AI provider's rate limits and the phone's battery happy
-LIMITS = {"search": 1, "explainer": 1}
+LIMITS = {"search": 1, "explainer": 1, "tool": 2}
+# AI tools on an article (follow-ups, rewrites, summaries, translations, image analysis, calculations):
+# queued in their own group, two at a time; they show in the activity bar like searches
+TOOL_KINDS = ("followup", "rewrite", "image", "translate", "summary", "calc")
 MAX_WAITING = 30          # running + waiting jobs at most, so a stuck button can't queue up paid work
 KEEP_FINISHED = 600       # seconds a finished search stays here (after that it's only in history)
 
@@ -95,7 +98,8 @@ def _cleanup() -> None:
             _order.remove(rid)
 
 
-GROUPS = {"more": "search"}   # "Locate more sources" searches the web too: it waits in the search queue
+GROUPS = {"more": "search", "regenerate": "search", **{k: "tool" for k in TOOL_KINDS}}
+# "Locate more sources" and "Regenerate" write the article like a search does: they wait in the search queue
 
 
 def _group(kind: str) -> str:
