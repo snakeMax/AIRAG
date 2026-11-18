@@ -96,6 +96,9 @@ Keeps the article at the top of the home page. See [Pinned articles and sources]
 ### Export web page
 Makes one HTML file of the article. See [Saving and exporting](#saving-and-exporting).
 
+### Download summary
+Saves a small file with just the summary and the sources' links. See [Saving and exporting](#saving-and-exporting).
+
 ### On sources: Summarize, Save page, Pin
 - **Summarize:** sums up that one page.
 - **Save page:** keeps a light copy of it in My library.
@@ -383,6 +386,9 @@ The folders to search when *My library* is ticked. Your **personal folder** (whe
 ### Also search the web when My library is ticked
 Off: answers only from your own files.
 
+### Reopened saved articles go back in History
+On (default): opening a saved article puts it back in History if it had dropped out, so follow-ups and the other toolbar tools work on it.
+
 ### File types
 Comma-separated extensions AIRAG may read.
 
@@ -478,6 +484,7 @@ On articles, *Listen*, *Pause*, *Resume* and *Stop* control the reading.
 
 ### Save (articles)
 Saves a Markdown file to *My library → Articles*, plus a small `.airag.json` copy so it opens in AIRAG again. Saved articles appear under *Saved* in History.
+- **Editing the .md:** you can change the saved Markdown file in any editor (Obsidian, Notepad...). Next time you open the article in AIRAG, it's read from your edited file, and a note says so. Keep the "Sources" list at the bottom as it is, so the source numbers still work.
 
 ### Save articles with pictures and the explainer (Settings → Defaults)
 Also keeps pictures and the interactive explainer in the saved copy, so they work offline. This makes larger files.
@@ -489,6 +496,18 @@ One HTML file in *My library → Exports* that opens in any browser, offline, wi
 - pictures.
 
 If the summary or explainer doesn't exist yet, it's made first, which uses tokens.
+
+The exported page also carries a hidden data copy of the article (plain data, it never runs), so AIRAG can open the page again exactly.
+
+### Download summary
+A small Markdown file in *My library → Summaries* with only the summary and the sources' links. On articles (next to Export web page) and in the Summarize panel (also for search results and single sources). An existing summary is reused; if there isn't one yet, it's made first, which uses tokens.
+
+### Open with AIRAG
+Opens a file as an article, **without the AI** (no tokens). The article goes into History, so the toolbar works on it.
+- **What it opens:** Markdown and text files (`.md`, `.txt`), saved articles (`.airag.json`) and web pages exported from AIRAG (`.html`). Other web pages open as their readable text. Up to 20 MB.
+- **Computer:** right-click a file → *Open with* → AIRAG (the installer adds AIRAG to that list but never makes it the default app). Or use *Open a file* at the top of *Saved* in History. The portable zip version has only the *Open a file* button.
+- **Phone:** open the file in a file manager and pick *Open in AIRAG*, or share the file to AIRAG.
+- **Safety:** an interactive explainer is only loaded from files in your own My library; from anywhere else it's left out, and links that aren't web addresses are removed.
 
 ### Backup / import (Settings → System)
 Exports your settings and history to one file, and imports them again. API keys are only included if you tick that option.

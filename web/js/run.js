@@ -11,6 +11,7 @@ import { ttsAvailable, speak, pause as ttsPause, resume as ttsResume, stop as tt
 import { exportHtml } from "./export.js";
 import { pinButton, togglePinSource } from "./pins.js";
 import { showToolbar, hideToolbar } from "./toolbar.js";
+import { downloadSummary } from "./summaryfile.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -205,7 +206,11 @@ function finish(R) {
   if (ph) { ph.className = "ph-icon " + (R.error ? "err" : "ok"); ph.innerHTML = icon(R.error ? "warn" : "check"); }
   const pt = $(".ph-title");
   if (pt) pt.textContent = t("run.researchFor", { q: R.query });
-  if (!R.error) {
+  if (R.openedFile) {          // opened with AIRAG from a file: no research steps to show
+    if (pt) pt.textContent = t("open.from", { name: R.openedFile });
+    setSub(t("open.noAI"));
+    $("#progress")?.classList.add("collapsed");
+  } else if (!R.error) {
     const all = Object.values(R.sources);
     setSub(t("run.summary", { steps: R.steps.length, found: all.length, read: all.filter(s => s.relevance != null).length,
       secs: R.elapsed ?? Math.round((Date.now() - R.t0) / 100) / 10 }));
@@ -349,13 +354,14 @@ $("#runMain").addEventListener("click", e => {
     render: () => renderResults(R),
     setBusy: on => { const x = $("#trResBtn"); if (x) { x.disabled = on; x.innerHTML = on ? `<span class="spinner sm"></span>${h(t("tr.working"))}` : `${icon("globe")}${h(t("tr.button"))}`; } },
   });
-  else if (act === "sum-article") openSummary({ kind: "article", query: R.query, payload: { markdown: stripThink(R.md) }, label: $("#aTitle")?.textContent || R.query, key: `a:${R.id}` });
+  else if (act === "sum-article") openSummary({ kind: "article", query: R.query, payload: { markdown: stripThink(R.md) }, label: $("#aTitle")?.textContent || R.query, key: `a:${R.id}`, sources: R.articleSources });
+  else if (act === "sum-file") downloadSummary({ kind: "article", query: R.query, payload: { markdown: stripThink(R.md) }, label: $("#aTitle")?.textContent || R.query, key: `a:${R.id}` }, R.articleSources, b);
   else if (act === "sum-results") {
     const items = (R.results?.items || []).filter(s => s.relevance != null).slice(0, 12);
-    openSummary({ kind: "results", query: R.query, payload: { items }, label: t("res.title"), key: `r:${R.id}` });
+    openSummary({ kind: "results", query: R.query, payload: { items }, label: t("res.title"), key: `r:${R.id}`, sources: items });
   } else if (act === "sum-source") {
     const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
-    if (s) openSummary({ kind: "source", query: R.query, payload: { url: s.url }, label: s.title || s.url, key: `s:${s.url}` });
+    if (s) openSummary({ kind: "source", query: R.query, payload: { url: s.url }, label: s.title || s.url, key: `s:${s.url}`, sources: [s] });
   } else if (act === "pin-source") {
     const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
     if (s) togglePinSource(s, R.query, b);
@@ -448,6 +454,7 @@ function renderArticle(R) {
             <button class="btn sm ghost" data-act="listen-stop" id="ttsStop" hidden title="${h(t("tts.stop"))}">${icon("stop")}</button>` : ""}
           <button class="btn sm ghost" data-act="pin" id="pinBtn" ${R.savedFile ? "hidden" : ""} title="${h(t("pin.tip"))}">${icon("pin")}<span>${h(t(R.pinned ? "pin.unpin" : "pin.pin"))}</span></button>
           <button class="btn sm ghost" data-act="export-html" title="${h(t("exp.tip"))}">${icon("html")}${h(t("exp.button"))}</button>
+          <button class="btn sm ghost" data-act="sum-file" title="${h(t("sumfile.tip"))}">${icon("download")}${h(t("sumfile.button"))}</button>
         </div></div>
       ${hero ? `<figure class="a-hero" data-img><img src="${h(hero.src)}" alt="${h(hero.title)}" referrerpolicy="no-referrer" ${imgOnErr}>
         <figcaption>${h(hero.title)}${hero.title ? " · " : ""}<a href="${h(safeUrl(hero.page_url))}" target="_blank" rel="noopener noreferrer">${h(hero.credit)}</a></figcaption></figure>` : ""}
@@ -753,6 +760,7 @@ export async function openSaved(file) {
     return showNotFound(e);
   }
   showRecord(rec);
+  if (rec.edited_outside) toast(t("open.reread"), 5000);   // the .md was edited after saving (e.g. in Obsidian)
 }
 
 function showNotFound(e) {
@@ -769,6 +777,7 @@ function showRecord(rec) {
     images: rec.images || [], md: rec.article || "", articleSources: rec.article_sources || [], related: rec.related || [],
     results: rec.results || null, suggestions: rec.suggestions || null, elapsed: rec.elapsed, interactive: rec.interactive || null,
     savedPath: rec.saved_path || null, savedFile: rec.saved_file || null, interactiveHtml: rec.interactive_html || "",
+    openedFile: rec.opened_file || null,
     pinned: !!rec.pinned,
   });
   (rec.sources || []).forEach(s => (R.sources[s.id] = s));
@@ -785,5 +794,6 @@ function showRecord(rec) {
   else if (rec.outcome === "suggestions" && R.suggestions) renderSuggestions(R);
   else if (rec.outcome === "error") { R.error = rec.error || "?"; renderError(R); }
   finish(R);
-  setSub(`${fmtDate(rec.created, uiLang())} · ${rec.model} · ${t("run.found", { n: Object.keys(R.sources).length })} · ${rec.elapsed ?? "?"}s`);
+  setSub(R.openedFile ? `${fmtDate(rec.created, uiLang())} · ${t("open.noAI")}`
+    : `${fmtDate(rec.created, uiLang())} · ${rec.model} · ${t("run.found", { n: Object.keys(R.sources).length })} · ${rec.elapsed ?? "?"}s`);
 }

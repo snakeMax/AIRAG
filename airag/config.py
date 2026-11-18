@@ -68,7 +68,7 @@ GENERAL_SCHEMA: dict = {
             ("summarize", "Summarize"), ("interactive", "Interactive explainer"), ("results", "Search results"),
             ("more_sources", "Locate more sources"), ("save", "Save"), ("copy", "Copy as Markdown"),
             ("translate", "Translate with AI"), ("listen", "Listen (read aloud)"), ("pin", "Pin article"),
-            ("export", "Export web page"), ("source_summarize", "Summarize (on sources)"),
+            ("export", "Export web page"), ("summary_file", "Download summary"), ("source_summarize", "Summarize (on sources)"),
             ("source_save", "Save page (on sources)"), ("source_pin", "Pin source (on sources)"))
     ],
     # sound effects (Settings -> Appearance -> Customize audio); edited by its own panel
@@ -107,6 +107,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "personal_folder", "label": "", "type": "hidden", "default": ""},
         {"key": "web_too", "label": "Also search the web when 'My library' is ticked", "type": "bool", "default": True,
          "help": "Turn off to answer only from your own files."},
+        {"key": "reopen_to_history", "label": "Reopened saved articles go back in History", "type": "bool", "default": True,
+         "help": "So follow-ups and the other toolbar tools work on them."},
         {"key": "extensions", "label": "File types", "type": "text",
          "default": ".md, .markdown, .txt, .text, .rst, .org, .tex, .pdf, .docx, .odt, .html, .htm, .csv, .json, .log",
          "help": "Comma separated."},

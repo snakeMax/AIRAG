@@ -10,6 +10,7 @@ const SELECTORS = {
   listen: "#ttsBtn,#ttsStop",
   pin: "#pinBtn",
   export: "[data-act=export-html]",
+  summary_file: "[data-act=sum-file],#sheet [data-file]",
   source_summarize: "[data-act=sum-source]",
   source_save: "[data-act=save-source]",
   source_pin: "[data-act=pin-source]",

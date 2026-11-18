@@ -46,6 +46,25 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Open with AIRAG: Markdown, saved articles (.airag.json), exported web pages, text files -->
+            <intent-filter android:label="@string/open_with">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="text/markdown" />
+                <data android:mimeType="text/x-markdown" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+            <intent-filter android:label="@string/open_with">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/markdown" />
+                <data android:mimeType="text/x-markdown" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
             <!-- Share a picture or screenshot to AIRAG to have the AI model analyze it -->
             <intent-filter android:label="@string/share_analyze">
                 <action android:name="android.intent.action.SEND" />

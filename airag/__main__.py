@@ -7,6 +7,7 @@
     --no-open       don't open a window/tab on start (tray/server modes)
     --install-browser               download the headless browser and exit (used by the installer)
     --version
+    AIRAG.exe <file>                open a Markdown file, saved article or exported web page (Open with AIRAG)
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ def main() -> None:
     p.add_argument("--install-browser", action="store_true")
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--version", action="store_true")
+    p.add_argument("file", nargs="?", help="a .md, .airag.json or exported .html file to open")
     args = p.parse_args()
 
     if args.version:
@@ -54,7 +56,7 @@ def main() -> None:
 
     from .desktop import launch
     launch(mode=args.mode, port=args.port, host=args.host, open_ui=not args.no_open,
-           wait_pid=args.wait_pid, verbose=args.verbose)
+           wait_pid=args.wait_pid, verbose=args.verbose, open_path=args.file)
 
 
 if __name__ == "__main__":

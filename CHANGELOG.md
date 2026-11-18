@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1] - unreleased
+
+- **Download summary**: a small Markdown file with only the summary and the sources' links, saved in My library/Summaries. On articles and in the Summarize panel (also for results and single sources); reuses an existing summary
+- **Open with AIRAG**: Markdown and text files, saved articles (.airag.json) and exported web pages open as an article without the AI, with their sources. Windows: AIRAG is in the *Open with* list (never the default app); Android: open files from a file manager or share them to AIRAG; everywhere: *Open a file* in the Saved tab
+- **Exported web pages** carry a data copy of the article, so AIRAG opens them again exactly
+- **Saved articles you edit** (e.g. in Obsidian) are read from your edited .md when reopened
+- **Reopened saved articles go back in History**, so the toolbar works on them (Settings → Library to turn off)
+
 ## [0.4.0] - 2026-11-18
 
 - **Usage tab**: tokens and cost per AI model this month, with a monthly budget bar (default $5). Exact token counts from Anthropic, OpenAI-compatible APIs and Ollama (estimated otherwise); prices from OpenRouter's public list, updated daily, with built-in prices as a fallback. Optional: tell the AI when 70% of the budget is used, and stop new searches when it's used up

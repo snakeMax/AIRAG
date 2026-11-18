@@ -830,5 +830,22 @@
  "rt.about": "About",
  "rt.clearSel": "Stop using the selected text",
  "rt.explain": "Elaborate",
- "rt.elaborateQ2": "Elaborate on this: explain it in more depth and how it connects to the article and its sources."
+ "rt.elaborateQ2": "Elaborate on this: explain it in more depth and how it connects to the article and its sources.",
+ "f.buttons.summary_file": "Download summary",
+ "f.library.reopen_to_history": "Reopened saved articles go back in History",
+ "h.library.reopen_to_history": "So follow-ups and the other toolbar tools work on them.",
+ "sumfile.button": "Download summary",
+ "sumfile.tip": "A small file with the summary and the sources' links (saved in My library/Summaries)",
+ "sumfile.working": "Making the summary…",
+ "sumfile.doneTitle": "Summary saved",
+ "sumfile.done": "Saved {name} ({size}) in My library/Summaries.",
+ "sumfile.open": "Open file",
+ "open.button": "Open a file",
+ "open.hint": "Markdown or text, a saved article (.airag.json) or an exported web page",
+ "open.opened": "Opened without the AI",
+ "open.tooBig": "That file is too big to open (over 20 MB).",
+ "open.unreadable": "That file couldn't be read.",
+ "open.reread": "Updated from your changes to the saved .md file",
+ "open.from": "Opened from {name}",
+ "open.noAI": "Opened from a file, without the AI"
 }

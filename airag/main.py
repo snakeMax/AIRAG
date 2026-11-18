@@ -45,7 +45,7 @@ app.state.loopback_only = True
 # and every API call must carry it, so other websites open in the browser can't use the API.
 SESSION_TOKEN = secrets.token_urlsafe(24)
 SESSION_COOKIE = "airag_session"
-OPEN_PATHS = {"/", "/api/app/ping", "/api/app/show", "/favicon.ico"}
+OPEN_PATHS = {"/", "/api/app/ping", "/api/app/show", "/api/app/open-path", "/favicon.ico"}
 
 
 @app.middleware("http")
@@ -122,6 +122,52 @@ def app_info():
 def app_show():
     appctl.show()
     return {"ok": True}
+
+
+class OpenPathReq(BaseModel):
+    path: str
+
+
+@app.post("/api/app/open-path")
+def app_open_path(req: OpenPathReq, request: Request):
+    """Open with AIRAG while AIRAG is already running. Only AIRAG's own launcher knows the key (it's in the
+    private runtime file), so other programs and websites can't make AIRAG read files."""
+    given = request.headers.get("x-airag-launch") or ""
+    if not secrets.compare_digest(given.encode(), appctl.launch_key.encode()):
+        raise HTTPException(403, "Not allowed")
+    from . import openfile, mylibrary
+    try:
+        name, text = openfile.read_path(req.path)
+        lib = mylibrary.folder(config.load()).resolve()
+        trusted = lib in Path(req.path).resolve().parents
+        openfile.queue(openfile.open_file(name, text, trusted)["id"])
+    except Exception as e:
+        openfile.errors.append(str(e))
+    appctl.show()
+    return {"ok": True}
+
+
+@app.get("/api/app/inbox")
+def app_inbox():
+    """A file handed over by the operating system (Open with AIRAG), for the page to show."""
+    from . import openfile
+    return openfile.take()
+
+
+class OpenFileReq(BaseModel):
+    name: str
+    text: str
+
+
+@app.post("/api/open-file")
+def open_file(req: OpenFileReq):
+    """A file the reader picked in AIRAG (or shared to it on Android). Opened without the AI."""
+    from . import openfile
+    try:
+        rec = openfile.open_file(req.name, req.text)
+    except openfile.NotOpenable as e:
+        raise HTTPException(400, str(e))
+    return {"id": rec["id"]}
 
 
 class RestartReq(BaseModel):
@@ -1232,12 +1278,33 @@ async def export_html_route(req: ExportReq):
 class ExportOpenReq(BaseModel):
     name: str
     reveal: bool = False
+    kind: str = "export"          # export | summary
+
+
+class SummaryFileReq(BaseModel):
+    title: str = ""
+    query: str = ""
+    summary: str
+    sources: List[dict] = []
+    created: str = ""
+
+
+@app.post("/api/summary-file")
+def summary_file(req: SummaryFileReq):
+    """Download summary: a small Markdown file with the summary and the sources' links, in My library/Summaries."""
+    from . import mylibrary
+    if not req.summary.strip():
+        raise HTTPException(400, "There's no summary to save yet.")
+    p = mylibrary.save_summary(config.load(), req.title[:200], req.query[:500], req.summary[:200_000],
+                               req.sources[:100], req.created[:40])
+    return {"name": p.name, "size": p.stat().st_size, "path": str(p)}
 
 
 @app.post("/api/export/open")
 def export_open(req: ExportOpenReq):
     from . import export_html
-    p = export_html.find(config.load(), req.name)
+    from . import mylibrary
+    p = mylibrary.find_summary(config.load(), req.name) if req.kind == "summary" else export_html.find(config.load(), req.name)
     if not p:
         raise HTTPException(404, "Export not found")
     _open_path(p, reveal=req.reveal)

@@ -5,9 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.provider.OpenableColumns
 import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
+import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import kotlin.concurrent.thread
 
@@ -17,6 +19,7 @@ import kotlin.concurrent.thread
  */
 class ShareBridge(private val activity: MainActivity, private val web: WebView) {
     @Volatile private var pending: String? = null
+    @Volatile private var pendingFile: String? = null
 
     /** The web UI asks for the shared picture once it has loaded (or when told one arrived). */
     @JavascriptInterface
@@ -26,9 +29,22 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
         return p
     }
 
+    /** A Markdown file, saved article or web page opened with AIRAG: {"name": ..., "text": ...} as JSON. */
+    @JavascriptInterface
+    fun takeFile(): String {
+        val p = pendingFile ?: ""
+        pendingFile = null
+        return p
+    }
+
     fun handle(intent: Intent?) {
-        if (intent?.action != Intent.ACTION_SEND) return
-        if (intent.type?.startsWith("image/") != true) return
+        if (intent == null) return
+        if (intent.action == Intent.ACTION_VIEW && intent.data != null) return openDocument(intent.data!!)
+        if (intent.action != Intent.ACTION_SEND) return
+        if (intent.type?.startsWith("image/") != true) {
+            streamOf(intent)?.let { openDocument(it) }
+            return
+        }
         val uri: Uri = streamOf(intent) ?: return
         thread(name = "airag-share") {
             val data = try { encode(uri) } catch (e: Throwable) { null } ?: return@thread
@@ -36,6 +52,39 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
             activity.runOnUiThread { web.evaluateJavascript("window.dispatchEvent(new Event('airag-share'))", null) }
         }
     }
+
+    /** Reads a text file (up to 20 MB) and hands it to the page, which opens it without the AI. */
+    private fun openDocument(uri: Uri) {
+        thread(name = "airag-open") {
+            val json = try {
+                var name = "file.md"
+                activity.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { c ->
+                    if (c.moveToFirst()) {
+                        c.getString(0)?.let { name = it }
+                        if (!c.isNull(1) && c.getLong(1) > MAX_FILE) throw IllegalArgumentException("too big")
+                    }
+                }
+                val bytes = activity.contentResolver.openInputStream(uri)?.use { input ->
+                    val out = ByteArrayOutputStream()
+                    val buf = ByteArray(64 * 1024)
+                    while (true) {
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.write(buf, 0, n)
+                        if (out.size() > MAX_FILE) throw IllegalArgumentException("too big")
+                    }
+                    out.toByteArray()
+                } ?: return@thread
+                JSONObject().put("name", name).put("text", String(bytes, Charsets.UTF_8)).toString()
+            } catch (e: Throwable) {
+                JSONObject().put("name", "").put("error", if (e.message == "too big") "big" else "read").toString()
+            }
+            pendingFile = json
+            activity.runOnUiThread { web.evaluateJavascript("window.dispatchEvent(new Event('airag-share'))", null) }
+        }
+    }
+
+    private companion object { const val MAX_FILE = 20L * 1024 * 1024 }
 
     @Suppress("DEPRECATION")
     private fun streamOf(intent: Intent): Uri? =

@@ -34,7 +34,7 @@ export function closeSummary() {
   if ($("#drawer").hidden) $("#scrim").hidden = true;
 }
 
-export async function openSummary({ kind, query, payload, label, key }) {
+export async function openSummary({ kind, query, payload, label, key, sources }) {
   ctrl?.abort();
   const sheet = $("#sheet");
   sheet.hidden = false;
@@ -47,12 +47,15 @@ export async function openSummary({ kind, query, payload, label, key }) {
       <div class="prose" id="sumText"><div class="row muted"><span class="spinner sm"></span>${h(t("sum.working"))}</div></div>
     </div></div>
     <div class="drawer-foot"><button class="btn sm" data-copy>${icon("copy")}${h(t("art.copy"))}</button>
-      <button class="btn sm ghost" data-redo>${icon("refresh")}${h(t("sum.again"))}</button></div>`;
+      <button class="btn sm ghost" data-redo>${icon("refresh")}${h(t("sum.again"))}</button>
+      <button class="btn sm ghost" data-file title="${h(t("sumfile.tip"))}">${icon("download")}${h(t("sumfile.button"))}</button></div>`;
   sheet.querySelector("[data-close]").onclick = closeSummary;
   let text = cache.get(key) || "";
   const out = () => $("#sumText");
   sheet.querySelector("[data-copy]").onclick = () => navigator.clipboard.writeText(stripThink(text)).then(() => toast(t("art.copied")));
-  sheet.querySelector("[data-redo]").onclick = () => { cache.delete(key); openSummary({ kind, query, payload, label, key }); };
+  sheet.querySelector("[data-redo]").onclick = () => { cache.delete(key); openSummary({ kind, query, payload, label, key, sources }); };
+  sheet.querySelector("[data-file]").onclick = e => import("./summaryfile.js")
+    .then(m => m.downloadSummary({ kind, query, payload, label, key }, sources || [], e.currentTarget));
   if (text) { out().innerHTML = render(stripThink(text)); return; }
   const c = new AbortController();
   ctrl = c;

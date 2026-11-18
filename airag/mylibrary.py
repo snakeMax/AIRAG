@@ -17,6 +17,7 @@ from . import paths
 
 ARTICLES_SUBDIR = "Articles"
 SOURCES_SUBDIR = "Sources"
+SUMMARIES_SUBDIR = "Summaries"
 SAVED_SUFFIX = ".airag.json"     # full copy of a saved article, so AIRAG can show it again without the AI
 MAX_IMAGE_BYTES = 800_000
 MAX_IMAGES = 8
@@ -141,9 +142,89 @@ def load_saved(settings: dict, name: str) -> dict:
     if f.parent != d or not f.name.endswith(SAVED_SUFFIX) or not f.is_file():
         raise FileNotFoundError("Saved article not found")
     rec = json.loads(f.read_text(encoding="utf-8"))
+    md_file = f.with_name(f.name[: -len(SAVED_SUFFIX)] + ".md")
     rec["saved_file"] = f.name
-    rec["saved_path"] = str(f.with_name(f.name[: -len(SAVED_SUFFIX)] + ".md"))
+    rec["saved_path"] = str(md_file)
+    rec["edited_outside"] = _reread_markdown(rec, f, md_file)
+    if settings["library"].get("reopen_to_history", True) and rec.get("id"):
+        _back_to_history(rec)
     return rec
+
+
+def _reread_markdown(rec: dict, json_file: Path, md_file: Path) -> bool:
+    """If the .md was changed after saving (e.g. edited in Obsidian), the article is read from it again and the
+    AIRAG copy is updated to match."""
+    import json
+    from . import openfile
+    try:
+        if not md_file.is_file() or md_file.stat().st_mtime <= json_file.stat().st_mtime + 1:
+            return False
+        new = openfile.parse_markdown(md_file.read_text(encoding="utf-8", errors="replace"), md_file.name)
+    except (OSError, ValueError):
+        return False
+    if new["article"].strip() == (rec.get("article") or "").strip() and new["title"] == rec.get("title"):
+        return False
+    rec["article"], rec["title"] = new["article"], new["title"]
+    if new["article_sources"]:
+        old = {s.get("n"): s for s in rec.get("article_sources") or []}
+        rec["article_sources"] = [{**old.get(s["n"], {}), **s} for s in new["article_sources"]]
+        rec["sources"] = rec["article_sources"]
+    keep = {k: v for k, v in rec.items() if k not in ("saved_file", "saved_path", "edited_outside")}
+    try:
+        json_file.write_text(json.dumps(keep, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+    return True
+
+
+def _back_to_history(rec: dict) -> None:
+    """Reopening a saved article puts it back in History (if it had dropped out), so the toolbar works on it."""
+    from . import history
+    try:
+        cur = history.get(rec["id"])
+        if cur and not rec.get("edited_outside"):
+            return
+        entry = {k: v for k, v in rec.items() if k not in ("saved_file", "edited_outside")}
+        entry.update({"outcome": "article", "status": "done"})
+        if cur:                      # keep the answers thread and anything else History knows
+            entry = {**cur, **{k: entry[k] for k in ("article", "title", "article_sources", "sources") if k in entry}}
+        history.save(entry)
+    except Exception:
+        pass
+
+
+def summary_markdown(title: str, query: str, summary: str, sources: List[dict], when: str = "") -> str:
+    """A small, plain file: the summary and the sources' links. Opens anywhere (and in AIRAG)."""
+    summary = re.sub(r"<think>.*?</think>", "", summary or "", flags=re.S).strip()
+    day = (when or dt.date.today().isoformat())[:10]
+    lines = ["---", f"title: {_yaml(title)}", f"search: {_yaml(query)}", f"created: {day}", "kind: summary",
+             "source: AIRAG", "---", "", f"# {title}", "", summary, ""]
+    rows = []
+    for i, s in enumerate(sources or [], 1):
+        url = str(s.get("url") or "")
+        if not url.startswith(("http://", "https://")):
+            continue
+        name = str(s.get("title") or s.get("domain") or url).replace("]", ")").replace("\n", " ")[:200]
+        rows.append(f"{s.get('n') or i}. [{name}]({url})")
+    if rows:
+        lines += ["## Sources", ""] + rows + [""]
+    lines += ["*Summary written by AI with AIRAG. Check the sources before relying on it.*", ""]
+    return "\n".join(lines)
+
+
+def save_summary(settings: dict, title: str, query: str, summary: str, sources: List[dict], when: str = "") -> Path:
+    d = ensure(settings) / SUMMARIES_SUBDIR
+    d.mkdir(parents=True, exist_ok=True)
+    day = (when or dt.date.today().isoformat())[:10]
+    target = d / f"{day} {_safe_name(title or query or 'Summary')} (summary).md"
+    target.write_text(summary_markdown(title, query, summary, sources, when), encoding="utf-8")
+    return target
+
+
+def find_summary(settings: dict, name: str) -> Optional[Path]:
+    d = (ensure(settings) / SUMMARIES_SUBDIR).resolve()
+    p = (d / Path(name).name).resolve()
+    return p if p.parent == d and p.suffix == ".md" and p.is_file() else None
 
 
 def source_markdown(page, query: str = "") -> str:

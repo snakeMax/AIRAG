@@ -17,6 +17,7 @@ import { initActivity, markSeen } from "./activity.js";
 import { loadPins, openPinned, setPinHooks } from "./pins.js";
 import { initToolbar } from "./toolbar.js";
 import { initImageAsk, updateImageButton, pickImage } from "./imageask.js";
+import { initOpenFile } from "./openfile.js";
 
 const state = {
   mode: "auto",
@@ -196,6 +197,7 @@ async function boot() {
   initActivity();
   setPinHooks({ showView, defaultView: () => state.settings?.defaults?.pinned_view });
   initImageAsk({ vision: () => !!state.status?.vision });
+  initOpenFile();
   $("#imgAskBtn").onclick = pickImage;
   $(".img-chip-ic").innerHTML = icon("eye");
   initToolbar({ getRun: () => RUN.current, reload: reloadRecord, act: toolbarAction,

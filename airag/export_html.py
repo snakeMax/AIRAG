@@ -101,13 +101,15 @@ def build(rec: dict, body_html: str, title: str, include_explainer: bool = True,
 <iframe sandbox="allow-scripts" referrerpolicy="no-referrer" srcdoc="{frame}" title="Interactive explainer"></iframe>
 </section>"""
     made = dt.date.today().isoformat()
+    from .openfile import data_block
+    data = data_block(rec)        # lets AIRAG open this page again exactly (plain data, never run)
     return f"""<!DOCTYPE html>
 <html lang="{html.escape(lang)}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; frame-src 'self' about: data:; script-src 'unsafe-inline'">
 <title>{html.escape(title)}</title>
 <style>{css}</style></head>
-<body><main class="x-page">
+<body>{data}<main class="x-page">
 {summary}{soup.decode()}
 {explainer}
 <footer class="x-foot">Written by AI with AIRAG {html.escape(__version__)} from the sources listed above, exported {made}.

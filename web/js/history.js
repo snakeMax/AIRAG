@@ -3,6 +3,7 @@ import { $, $$, h, icon, api, fmtAgo } from "./util.js";
 import { t, uiLang } from "./i18n.js";
 import { jobHref } from "./activity.js";
 import { pinnedCards } from "./pins.js";
+import { pickFile } from "./openfile.js";
 
 const outcomeIcon = o => ({ article: "doc", results: "list", suggestions: "bulb" }[o] || "search");
 const outcomeLabel = o => t("outcome." + (o || "search"));
@@ -24,13 +25,21 @@ export async function loadSaved() {
   const el = $("#historyList");
   try {
     const { items } = await api("/api/mylibrary/saved");
-    if (!items.length) { el.innerHTML = `<div class="h-empty">${h(t("saved.empty"))}</div>`; return; }
-    el.innerHTML = items.map(it => `
+    const opener = `<button type="button" class="h-item h-open" id="openFileBtn">${icon("folder")}
+        <div style="min-width:0"><div class="h-q">${h(t("open.button"))}</div><div class="h-d">${h(t("open.hint"))}</div></div></button>`;
+    if (!items.length) { el.innerHTML = opener + `<div class="h-empty">${h(t("saved.empty"))}</div>`; wireOpener(); return; }
+    el.innerHTML = opener + items.map(it => `
       <a class="h-item" href="#/saved/${encodeURIComponent(it.file)}">${icon(it.rich ? "palette" : "doc")}
         <div style="min-width:0"><div class="h-q">${h(it.title || it.query)}</div>
         <div class="h-d">${h(fmtAgo(it.created, uiLang()))}${it.rich ? ` · ${h(t("saved.rich"))}` : ""}${it.title !== it.query ? ` · "${h(it.query)}"` : ""}</div></div></a>`).join("");
     $$(".h-item", el).forEach(a => a.addEventListener("click", closeDrawer));
+    wireOpener();
   } catch (e) { el.innerHTML = `<div class="h-empty">${h(e.message)}</div>`; }
+}
+
+function wireOpener() {
+  const b = $("#openFileBtn");
+  if (b) b.onclick = () => { closeDrawer(); pickFile(); };
 }
 export function closeDrawer() { $("#drawer").hidden = true; if ($("#sheet").hidden) $("#scrim").hidden = true; }
 

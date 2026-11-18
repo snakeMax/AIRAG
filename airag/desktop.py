@@ -9,6 +9,7 @@ import json
 import logging
 import logging.handlers
 import os
+from pathlib import Path
 import socket
 import sys
 import threading
@@ -96,7 +97,8 @@ def read_running() -> Optional[dict]:
 def write_runtime(port: int, mode: str) -> None:
     try:
         paths.RUNTIME_FILE.write_text(json.dumps({"pid": os.getpid(), "port": port, "mode": mode,
-                                                  "version": __version__}), encoding="utf-8")
+                                                  "version": __version__, "launch_key": appctl.launch_key}),
+                                      encoding="utf-8")
     except OSError:
         pass
 
@@ -290,9 +292,29 @@ def run_desktop(url: str, minimized: bool = False) -> bool:
         return False
 
 
+def _open_at_start(path: str) -> None:
+    """Open with AIRAG when AIRAG wasn't running: the page picks the file up once it has loaded."""
+    from . import openfile
+    try:
+        name, text = openfile.read_path(path)
+        openfile.queue(openfile.open_file(name, text, trusted=_in_my_library(path))["id"])
+    except Exception as e:
+        log.warning("couldn't open %s: %s", path, e)
+        openfile.errors.append(str(e))
+
+
+def _in_my_library(path: str) -> bool:
+    from . import mylibrary
+    try:
+        return mylibrary.folder(config.load()).resolve() in Path(path).resolve().parents
+    except Exception:
+        return False
+
+
 # main entry
 def launch(mode: Optional[str] = None, port: Optional[int] = None, host: str = "127.0.0.1",
-           open_ui: bool = True, wait_pid: Optional[int] = None, verbose: bool = False) -> None:
+           open_ui: bool = True, wait_pid: Optional[int] = None, verbose: bool = False,
+           open_path: Optional[str] = None) -> None:
     setup_logging(verbose)
     if wait_pid:
         wait_for_pid(wait_pid)
@@ -305,6 +327,12 @@ def launch(mode: Optional[str] = None, port: Optional[int] = None, host: str = "
     existing = read_running()
     if existing:
         log.info("AIRAG already running on port %s - showing it", existing["port"])
+        if open_path:      # Open with AIRAG: hand the file to the running app
+            try:
+                httpx.post(f"http://127.0.0.1:{existing['port']}/api/app/open-path", json={"path": os.path.abspath(open_path)},
+                           headers={"x-airag-launch": existing.get("launch_key", "")}, timeout=10)
+            except Exception as e:
+                log.warning("couldn't hand the file to the running AIRAG: %s", e)
         try:
             httpx.post(f"http://127.0.0.1:{existing['port']}/api/app/show", timeout=3)
         except Exception:
@@ -312,6 +340,8 @@ def launch(mode: Optional[str] = None, port: Optional[int] = None, host: str = "
         return
 
     _acquire_mutex()
+    if open_path:
+        _open_at_start(open_path)
     port = port if port is not None else choose_port(int(settings["app"].get("port") or 0))
     server = ServerThread(port, host)
     server.start()

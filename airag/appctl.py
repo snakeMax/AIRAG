@@ -18,6 +18,9 @@ log = logging.getLogger("airag.app")
 
 mode: str = "server"      # desktop | browser | server
 port: int = 0
+# proves that an "open this file" request comes from AIRAG's own launcher (kept in the private runtime file)
+import secrets as _secrets
+launch_key: str = _secrets.token_urlsafe(24)
 url: str = ""
 show_hook: Optional[Callable[[], None]] = None
 quit_hook: Optional[Callable[[], None]] = None

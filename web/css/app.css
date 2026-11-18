@@ -728,3 +728,4 @@ html, body { overflow-x: hidden; }
 .rt-hist svg { width: 15px; height: 15px; }
 @media (min-width: 721px) { .rt-hist { display: none; } }
 .rt-ctx { width: 0; min-width: 100%; box-sizing: border-box; }   /* fills the bar without widening it */
+.h-open { width: 100%; text-align: left; border: 1px dashed var(--border); background: transparent; font: inherit; color: inherit; cursor: pointer; margin-bottom: 6px; }
