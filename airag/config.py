@@ -165,8 +165,10 @@ GENERAL_SCHEMA: dict = {
         {"key": "user_agent", "label": "User agent", "type": "text", "default": DEFAULT_UA},
     ],
     "research": [
-        {"key": "explainer_examples", "label": "Explainers: look up code examples first", "type": "bool", "default": True,
-         "help": "Before building an interactive explainer, a quick web search finds code for similar simulations to learn from."},
+        {"key": "explainer_local_examples", "label": "Explainers: learn from code in My library", "type": "bool", "default": True,
+         "help": "JavaScript in your own library files that matches the explainer can be used as a reference. Nothing is fetched from the web."},
+        {"key": "explainer_web_examples", "label": "Explainers: look up code examples on the web", "type": "bool", "default": False,
+         "help": "Only used when your search itself is about programming. Code from the web can hide instructions or mistakes, so it's off by default."},
         {"key": "use_pinned", "label": "Use pinned sources in searches", "type": "bool", "default": True,
          "help": "Pinned pages that match the question are read from their saved copy (no download) and can be cited."},
         {"key": "max_rounds", "label": "Max search rounds", "type": "number", "default": 3, "min": 1, "max": 6, "step": 1,

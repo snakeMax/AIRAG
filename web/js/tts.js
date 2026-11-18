@@ -1,11 +1,12 @@
 // Read aloud (text to speech). Phone app: Android's voices through window.AIRAGAudio.
 // Browsers and the PC window: the Web Speech API (speechSynthesis).
-// Text is read one paragraph at a time, so it can be paused and resumed where it stopped.
+// Text is read one sentence at a time, and the spoken word is tracked, so Pause + Resume carries on from the
+// word where it stopped (Stop starts over).
 const Native = window.AIRAGAudio;
 const Web = window.speechSynthesis;
 let S = { voice: "female", rate: 1.0 };
 let voiceList = [];
-let job = null;   // { parts, i, onState, lang }
+let job = null;   // { parts, i, pos, onState, lang }  pos = where in parts[i] the current word starts
 let seq = 0;
 
 export function setSpeech(s) { if (s) S = s; }
@@ -62,17 +63,29 @@ window.airagTts = ev => {   // called by the Android app
     return;
   }
   if (!job || ev.id !== job.id) return;
-  if (ev.type === "done") next();
+  if (ev.type === "range") job.pos = (job.base || 0) + (Number(ev.detail) || 0);
+  else if (ev.type === "done") next();
   else if (ev.type === "error") { const j = job; job = null; j.onState("error"); }
 };
 
 function splitText(text) {
   const out = [];
-  for (const para of text.split(/\n{2,}|(?<=[.!?])\s+(?=[A-ZÆØÅÄÖÜ0-9"“])/)) {
-    const p = para.replace(/\s+/g, " ").trim();
-    if (!p) continue;
-    if (p.length <= 900) out.push(p);
-    else for (let i = 0; i < p.length; i += 900) out.push(p.slice(i, i + 900));
+  for (const line of text.split(/\n+/)) {
+    // sentences: after . ! ? (and the CJK ones) followed by a space or the end
+    for (const s of line.split(/(?<=[.!?。!?])\s+/)) {
+      const p = s.replace(/\s+/g, " ").trim();
+      if (!p) continue;
+      if (p.length <= 400) { out.push(p); continue; }
+      // a very long "sentence" (lists, tables): break at commas/spaces near 400 characters
+      let rest = p;
+      while (rest.length > 400) {
+        let cut = Math.max(rest.lastIndexOf(", ", 400), rest.lastIndexOf(" ", 400));
+        if (cut < 100) cut = 400;
+        out.push(rest.slice(0, cut + 1).trim());
+        rest = rest.slice(cut + 1);
+      }
+      if (rest.trim()) out.push(rest.trim());
+    }
   }
   return out;
 }
@@ -80,12 +93,18 @@ function splitText(text) {
 function next() {
   if (!job) return;
   job.i++;
+  job.pos = 0;
   if (job.i >= job.parts.length) { const j = job; job = null; j.onState("ended"); return; }
   say();
 }
 
 function say() {
-  const part = job.parts[job.i];
+  // after a pause, carry on from the start of the word that was being spoken
+  const full = job.parts[job.i];
+  let from = Math.max(0, Math.min(job.pos || 0, full.length - 1));
+  while (from > 0 && /\S/.test(full[from - 1])) from--;
+  job.base = from;
+  const part = full.slice(from);
   job.id = `tts${++seq}`;
   const v = pick(job.lang);
   if (Native?.ttsSpeak) {
@@ -97,6 +116,7 @@ function say() {
   u.lang = v?.lang || job.lang || "";
   u.rate = Number(S.rate) || 1;
   const id = job.id;
+  u.onboundary = e => { if (job?.id === id && e.name !== "sentence") job.pos = job.base + (e.charIndex || 0); };
   u.onend = () => { if (job?.id === id) next(); };
   u.onerror = e => { if (job?.id === id && e.error !== "interrupted" && e.error !== "canceled") { job = null; } };
   Web.speak(u);
@@ -106,7 +126,7 @@ function say() {
 export async function speak(text, lang, onState = () => {}) {
   stop();
   if (!voiceList.length) await loadVoices();
-  job = { parts: splitText(text), i: 0, onState, lang };
+  job = { parts: splitText(text), i: 0, pos: 0, onState, lang };
   if (!job.parts.length) { job = null; return; }
   onState("playing");
   say();
@@ -125,7 +145,7 @@ export function resume() {
   if (!job || !job.paused) return;
   job.paused = false;
   job.onState("playing");
-  say();   // starts again from the paragraph that was being read
+  say();   // carries on from the word where it was paused
 }
 
 export function stop() {

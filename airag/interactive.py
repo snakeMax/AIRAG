@@ -6,6 +6,7 @@ misbehaving generated page can't reach AIRAG's API, the network or the disk.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Optional
 
 from . import history, languages, prompts
@@ -69,6 +70,40 @@ def clean_html(text: str) -> str:
     else:
         t = f"<!DOCTYPE html><html>{safe_head}<body>{t}</body></html>"
     return t
+
+
+# web code lookups only when the search itself is about programming (code from the web can carry prompt
+# injection or subtle bugs, so it's never fetched just to "learn" for a normal explainer)
+_CODE_TOPIC = re.compile(r"\b(code|coding|program(ming)?|javascript|typescript|python|java|c\+\+|c#|html|css|"
+                         r"algorithm|api|sql|regex|function|library|framework|canvas|webgl|d3\.js|chart\.js)\b", re.I)
+
+
+def code_related(query: str) -> bool:
+    return bool(_CODE_TOPIC.search(query or ""))
+
+
+def local_examples(settings: dict, idea: str, limit: int = 2500) -> str:
+    """JavaScript from the reader's own My library files that matches the explainer idea (no web access).
+    Only code-looking lines from script/web files are passed on, as untrusted reference."""
+    from .library import LIBRARY
+    try:
+        hits = LIBRARY.search([idea[:200] + " javascript function canvas"], limit=6, per_file_chars=4000)
+    except Exception:
+        return ""
+    out, size = [], 0
+    for hit in hits:
+        path = str(hit.get("path") or "")
+        if not re.search(r"\.(js|mjs|ts|html?|md|txt)$", path, re.I):
+            continue
+        lines = [ln for ln in str(hit.get("excerpt") or "").splitlines()
+                 if re.search(r"[;{}()=]|=>|function |const |let ", ln)]
+        code = "\n".join(lines)[:1500]
+        if len(code) > 200:
+            out.append(f"From your file {Path(path).name}:\n{code}")
+            size += len(code)
+            if size > limit:
+                break
+    return "\n\n".join(out)
 
 
 async def code_examples(settings: dict, idea: str, pages: int = 2) -> str:
@@ -138,7 +173,11 @@ async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool
     lang = languages.answer_language(settings, ui_lang, rec["query"])
     level = str(settings.get("prompts", {}).get("explainer_level") or "medium")
     examples = ""
-    if settings.get("research", {}).get("explainer_examples", True) and info.get("idea"):
+    research = settings.get("research", {})
+    if info.get("idea") and research.get("explainer_local_examples", True):
+        examples = local_examples(settings, info["idea"])
+    if (info.get("idea") and research.get("explainer_web_examples", False) and code_related(rec.get("query", ""))
+            and not examples):
         examples = await code_examples(settings, info["idea"])
     raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang, level,
                                                   examples, source_figures(rec)),

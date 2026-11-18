@@ -849,5 +849,12 @@
  "open.from": "Opened from {name}",
  "open.noAI": "Opened from a file, without the AI",
  "h.usage.stop_at_budget": "Searches, follow-ups, rewrites, explainers, summaries, translations and image analysis. Work that's already running finishes.",
- "inter.navBlocked": "The explainer tried to open a web page, so it was stopped. Explainers stay offline."
+ "inter.navBlocked": "The explainer tried to open a web page, so it was stopped. Explainers stay offline.",
+ "rt.askShort": "Ask",
+ "rt.copyShort": "Copy + source",
+ "rt.voice": "Voice",
+ "f.research.explainer_local_examples": "Explainers: learn from code in My library",
+ "h.research.explainer_local_examples": "JavaScript in your own library files that matches the explainer can be used as a reference. Nothing is fetched from the web.",
+ "f.research.explainer_web_examples": "Explainers: look up code examples on the web",
+ "h.research.explainer_web_examples": "Only used when your search itself is about programming. Code from the web can hide instructions or mistakes, so it's off by default."
 }

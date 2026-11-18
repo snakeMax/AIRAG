@@ -53,11 +53,14 @@ export function initToolbar(x) {
   document.addEventListener("selectionchange", onSelection);
   document.addEventListener("pointerdown", e => {
     if (e.target.closest("#rtSel, #rtCalc, .rt-dock, .rt-panel, .rt-fab, dialog")) return;
-    hideSel();
-    if (e.target.closest("#aTitle, #aDek, #aBody, .results")) {
-      // Android clears the highlight on every tap, so only forget the text if no new selection follows
-      setTimeout(() => { if (getSelection()?.isCollapsed) clearCtx(); }, 450);
-    }
+    // dragging a selection handle also starts with a touch: only close the menu (and forget the text) if
+    // there's no selection a moment later
+    const inText = e.target.closest("#aTitle, #aDek, #aBody, .results");
+    setTimeout(() => {
+      if (!getSelection()?.isCollapsed) return;
+      hideSel();
+      if (inText) clearCtx();
+    }, 450);
   });
   addEventListener("resize", layout);
   hookImages();
@@ -168,44 +171,74 @@ function onSelection() {
 
 const looksLikeMath = s => /[0-9a-z]\s*[=+\-*/^×÷²³√]\s*[0-9a-z(]/i.test(s) || /\b(solve|integral|derivative|sqrt|equation|formula)\b/i.test(s);
 
+// The menu follows the selection as it's changed (handles dragged) without being rebuilt, so its buttons stay
+// steady. On touch screens it docks to the top or bottom edge, away from the selection, so it never sits where
+// a selection handle is dragged (dragging onto it used to select the whole page).
 function showSel(rect, text, inCalc) {
   const box = $("#rtSel");
-  const elaborate = S.calc && (inCalc || S.calc.formula === text);
+  S.selText = text;
+  S.selRect = rect;
+  const elaborate = !!(S.calc && (inCalc || S.calc.formula === text));
   const article = S.R.outcome === "article";
-  const btn = (k, ic, label, extra = "") => `<button type="button" data-sel="${k}" ${extra}>${icon(ic)}<span>${h(label)}</span></button>`;
-  box.innerHTML = btn("ask", "chat", t("rt.askThis"))
-    + btn("factcheck", "checkCircle", t("rt.factcheck"))
-    + (article ? btn("rewrite", "edit", t("rt.rewrite")) : "")
-    + (elaborate ? `<button type="button" data-sel="elaborate"><em>${h(t("rt.elaborate"))}</em></button>`
-      : looksLikeMath(text) ? btn("calc", "calc", t("rt.calc")) : "")
-    + btn("copycite", "quote", t("rt.copyCite"))
-    + `<span class="rt-sel-mic"></span>`;
-  const voice = micButton(document.createElement("input"), said => { if (said.trim()) ask("voice", said, text); });
-  if (voice) { voice.classList.add("rt-voice"); voice.title = t("rt.voiceTip"); $(".rt-sel-mic", box).replaceWith(voice); }
-  else $(".rt-sel-mic", box).remove();
+  const math = !elaborate && looksLikeMath(text);
+  const sig = [article, elaborate, math].join();
+  if (box.hidden || box.dataset.sig !== sig) {
+    const short = matchMedia("(pointer: coarse)").matches;      // docked bar on phones: short labels
+    const btn = (k, ic, label) => `<button type="button" data-sel="${k}">${icon(ic)}<span>${h(label)}</span></button>`;
+    box.innerHTML = btn("ask", "chat", t(short ? "rt.askShort" : "rt.askThis"))
+      + btn("factcheck", "checkCircle", t("rt.factcheck"))
+      + (article ? btn("rewrite", "edit", t("rt.rewrite")) : "")
+      + (elaborate ? `<button type="button" data-sel="elaborate">${icon("sparkle")}<span><em>${h(t("rt.elaborate"))}</em></span></button>`
+        : math ? btn("calc", "calc", t("rt.calc")) : "")
+      + btn("copycite", "quote", t(short ? "rt.copyShort" : "rt.copyCite"))
+      + `<span class="rt-sel-mic"></span>`;
+    const voice = micButton(document.createElement("input"), said => { if (said.trim()) ask("voice", said, S.selText); });
+    if (voice) {
+      voice.classList.add("rt-voice");
+      voice.title = t("rt.voiceTip");
+      if (short) voice.insertAdjacentHTML("beforeend", `<span>${h(t("rt.voice"))}</span>`);
+      $(".rt-sel-mic", box).replaceWith(voice);
+    } else $(".rt-sel-mic", box).remove();
+    box.dataset.sig = sig;
+    const n = box.children.length;      // even rows: up to 4 in one row, otherwise two rows
+    box.style.setProperty("--cols", String(n <= 4 ? n : Math.ceil(n / 2)));
+  }
   box.hidden = false;
-  const w = box.offsetWidth, hgt = box.offsetHeight;
-  let x = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), innerWidth - w - 8);
-  // on touch screens the phone's own Copy / Share bar sits above the selection, so go below it
-  const touch = matchMedia("(pointer: coarse)").matches;
-  let y = touch ? rect.bottom + 34 : rect.top - hgt - 10;
-  if (!touch && y < 60) y = rect.bottom + 10;
-  if (y + hgt > innerHeight - 8) y = Math.max(60, rect.top - hgt - 10);
-  box.style.left = x + "px";
-  box.style.top = y + "px";
+  placeSel(box, rect);
   box.onpointerdown = e => { if (e.target.closest("[data-sel]")) e.preventDefault(); };   // keeps the selection
   box.onclick = e => {
     const b = e.target.closest("[data-sel]");
     if (!b) return;
-    const k = b.dataset.sel;
+    const k = b.dataset.sel, text = S.selText || selText();
     if (k === "ask") { if (!S.ctx) setCtx(text, null); if (phone()) setOpen(true); openAsk(); }
     else if (k === "factcheck") ask("factcheck", "", text);
     else if (k === "rewrite") rewrite(text);
-    else if (k === "calc") calculate(text, rect);
+    else if (k === "calc") calculate(text, S.selRect);
     else if (k === "elaborate") elaborate();
     else if (k === "copycite") copyWithSource(text);
     hideSel();
   };
+}
+
+function placeSel(box, rect) {
+  const touch = matchMedia("(pointer: coarse)").matches;
+  box.classList.toggle("docked", touch);
+  if (touch) {
+    // the half of the screen the selection isn't in; above the round menu button at the bottom
+    const below = (rect.top + rect.bottom) / 2 < innerHeight * 0.55;
+    box.style.left = box.style.right = "";
+    box.style.top = below ? "" : "64px";
+    box.style.bottom = below ? "calc(88px + env(safe-area-inset-bottom))" : "";
+    return;
+  }
+  box.style.bottom = "";
+  const w = box.offsetWidth, hgt = box.offsetHeight;
+  const x = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), innerWidth - w - 8);
+  let y = rect.top - hgt - 10;
+  if (y < 60) y = rect.bottom + 10;
+  if (y + hgt > innerHeight - 8) y = Math.max(60, rect.top - hgt - 10);
+  box.style.left = x + "px";
+  box.style.top = y + "px";
 }
 function hideSel() { const b = $("#rtSel"); if (b) b.hidden = true; }
 
@@ -447,6 +480,9 @@ function hookImages() {
   const menu = (el, x, y) => {
     const box = $("#rtSel");
     box.innerHTML = `<button type="button" data-img>${icon("eye")}<span>${h(t("rt.analyzeImage"))}</span></button>`;
+    box.dataset.sig = "image";
+    box.classList.remove("docked");
+    box.style.bottom = "";
     box.hidden = false;
     box.style.left = Math.min(x, innerWidth - 200) + "px";
     box.style.top = Math.max(60, y - 56) + "px";

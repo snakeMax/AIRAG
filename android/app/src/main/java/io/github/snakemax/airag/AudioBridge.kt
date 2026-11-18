@@ -50,6 +50,8 @@ class AudioBridge(private val activity: MainActivity, private val web: WebView) 
                     @Deprecated("old API") override fun onError(id: String) = send("error", id, "error")
                     override fun onError(id: String, code: Int) = send("error", id, "error$code")
                     override fun onStop(id: String, interrupted: Boolean) = send("stopped", id)
+                    // the word being spoken (start offset in the text), so Resume can carry on from it
+                    override fun onRangeStart(id: String, start: Int, end: Int, frame: Int) = send("range", id, start.toString())
                 })
                 waiting.toList().forEach { it() }
                 waiting.clear()
@@ -93,7 +95,7 @@ class AudioBridge(private val activity: MainActivity, private val web: WebView) 
     fun ttsStop() { activity.runOnUiThread { tts?.stop() } }
 
     private fun send(type: String, id: String, error: String = "") {
-        val payload = JSONObject().put("type", type).put("id", id).put("error", error).toString()
+        val payload = JSONObject().put("type", type).put("id", id).put("error", error).put("detail", error).toString()
         web.post { web.evaluateJavascript("window.airagTts && window.airagTts($payload)", null) }
     }
 

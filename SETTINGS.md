@@ -130,8 +130,11 @@ When the article or its sources give related numbers (prices or stock values ove
 ### Explainer detail (Settings → Prompts)
 **Simple**, **medium** (default) or **detailed**. Detailed makes richer simulations but uses more tokens.
 
-### Look up code examples first (Settings → Research)
-Before building, a quick web search finds code for similar simulations to learn from. On by default; turn off to skip that search.
+### Learn from code in My library (Settings → Research)
+On (default): JavaScript in your own My library files that matches the explainer is used as a reference. Nothing is fetched from the web.
+
+### Look up code examples on the web (Settings → Research)
+Off (default). When on, it's still only used when your search itself is about programming. Code from the web can hide instructions aimed at the AI or contain mistakes, so normal explainers never fetch it.
 
 ---
 
