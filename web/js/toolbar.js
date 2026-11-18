@@ -94,7 +94,9 @@ function layout() {
 
 function setOpen(open) {
   S.open = open;
-  if (open) hideSel();
+  // the selection menu stays; on phones it moves to the top edge while the menu sheet is open at the bottom
+  const sel = $("#rtSel");
+  if (sel && !sel.hidden && S.selRect) requestAnimationFrame(() => placeSel(sel, S.selRect));
   $("#rtFab").classList.toggle("open", open);
   $("#rtFab").setAttribute("aria-expanded", String(open));
   if (phone()) { $("#rtDock").hidden = !open; $("#rtDock").classList.add("as-sheet"); }
@@ -224,8 +226,9 @@ function placeSel(box, rect) {
   const touch = matchMedia("(pointer: coarse)").matches;
   box.classList.toggle("docked", touch);
   if (touch) {
-    // the half of the screen the selection isn't in; above the round menu button at the bottom
-    const below = (rect.top + rect.bottom) / 2 < innerHeight * 0.55;
+    // the half of the screen the selection isn't in; above the round menu button at the bottom. While the
+    // menu sheet is open (it fills the bottom), always the top edge
+    const below = !S.open && (rect.top + rect.bottom) / 2 < innerHeight * 0.55;
     box.style.left = box.style.right = "";
     box.style.top = below ? "" : "64px";
     box.style.bottom = below ? "calc(88px + env(safe-area-inset-bottom))" : "";
