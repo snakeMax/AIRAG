@@ -14,6 +14,7 @@
 - **Budget stop covers all AI work** (follow-ups, rewrites, explainers, summaries, translations, image analysis), not only searches; work already running finishes
 - **Fewer resources**: pressing a button twice no longer starts the same job twice; at most 30 tasks can wait; streamed text uses much less memory; a few small leaks fixed (PC-link connections, notification and lock-out lists, summary cache)
 - **Adding files to My library** skips files that are already there and never overwrites a different file with the same name
+- **Unsave and Saved articles window**: a saved article shows *Saved*, and its Export menu has **Unsave** (keeps it in History, with Undo). *Manage saved articles* (home page, Saved tab, article menu) unsaves several at once and has **Recently removed** for 30 days with Restore. Delete/unsave buttons in History lists are now visible on phones
 - **Much better at finding information for medical and scientific questions**:
   - Bot-check pages ("Checking your browser", captchas) are recognised instead of being judged as empty pages; in tests up to 7 of 16 pages were bot checks from PubMed Central
   - Research papers on blocked sites (PubMed Central, PubMed, ScienceDirect, The Lancet, JAMA, ResearchGate, DOI links…) are read through Europe PMC: full text when open access, otherwise the abstract
