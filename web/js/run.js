@@ -248,7 +248,9 @@ function stepLabel(ev) {
 }
 
 const favHtml = s => (s.local ? `<span class="fav-lib">${icon("folder")}</span>` : `<img src="${favicon(s.domain)}" alt="" loading="lazy">`);
-const srcDomain = s => (s.local ? `${t("src.library")} · ${s.site_name || ""}` : s.domain);
+const VIA_NOTE = { abstract: "via.abstract", europepmc: "via.europepmc", snippet: "via.snippet" };
+const srcDomain = s => (s.local ? `${t("src.library")} · ${s.site_name || ""}`
+  : s.domain + (VIA_NOTE[s.via] ? ` · ${t(VIA_NOTE[s.via])}` : s.blocked ? ` · ${t("via.blocked")}` : ""));
 
 const renderSourceSide = rafThrottle(R => {
   if (RUN.current !== R || (R.outcome === "article" && R.articleSources.length)) return;

@@ -49,10 +49,13 @@ class DuckDuckGo(SearchBackend):
                 try:
                     raw = await asyncio.to_thread(run)
                     break
-                except Exception:  # rate limit or network error
+                except Exception as e:  # rate limit or network error. DuckDuckGo also answers "No results found"
+                    # when it's throttling a program, even for ordinary searches: try the plain-HTML route below.
+                    if "no results" in str(e).lower():
+                        break
                     await asyncio.sleep(1.0 + attempt)
-        if raw is None:
-            from . import ddg_html  # plain-HTML fallback
+        if not raw:
+            from . import ddg_html  # plain-HTML fallback (and Mojeek when DuckDuckGo is limiting requests)
             kw = self._kw()
             return await ddg_html.search(query, n, kw["region"], kw["safesearch"], recent)
         out = []

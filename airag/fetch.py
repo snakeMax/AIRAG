@@ -42,10 +42,52 @@ class Page:
     images: List[dict] = field(default_factory=list)
     via: str = "http"
     binary: bool = False
+    blocked: bool = False          # the site refused a program (403, bot check, captcha)
+
+
+# bot checks and "access denied" pages that some sites show instead of the page. They must never reach the AI as
+# if they were the page (it would rightly call them irrelevant and the real source would be lost).
+_WALL = re.compile(
+    r"checking (if the site connection is secure|your browser)|just a moment\.\.\.|verify(ing)? (that )?you are (a )?human|"
+    r"are you a robot|captcha|enable javascript and cookies to continue|attention required!? ?\| ?cloudflare|"
+    r"access (to this page has been )?denied|request unsuccessful\. incapsula|pardon our interruption|"
+    r"unusual traffic from your (computer|network)|press (&|and) hold|please wait while we verify|ddos protection by|"
+    r"your request has been blocked|bot detection|automated (access|requests)", re.I)
+
+# sites that blocked a program recently: their other pages are read last (or replaced), not wasted on
+_blocked_sites: "OrderedDict[str, float]" = OrderedDict()
+BLOCK_MEMORY = 6 * 3600
+
+
+def looks_blocked(text: str, title: str = "") -> bool:
+    """A bot-check / access-denied page instead of the real one (short text with a telltale phrase)."""
+    t = (text or "").strip()
+    if len(t) > 4000:
+        return False
+    return bool(_WALL.search(title or "") or _WALL.search(t[:4000]))
+
+
+def note_blocked(url: str) -> None:
+    import time
+    from urllib.parse import urlparse
+    host = (urlparse(url).hostname or "").lower()
+    if host:
+        _blocked_sites[host] = time.time()
+        _blocked_sites.move_to_end(host)
+        while len(_blocked_sites) > 300:
+            _blocked_sites.popitem(last=False)
+
+
+def recently_blocked(url: str) -> bool:
+    import time
+    from urllib.parse import urlparse
+    host = (urlparse(url).hostname or "").lower()
+    at = _blocked_sites.get(host)
+    return bool(at and time.time() - at < BLOCK_MEMORY)
 
 
 # public API
-async def fetch_page(url: str, cfg: dict) -> Page:
+async def fetch_page(url: str, cfg: dict, title: str = "") -> Page:
     global _cache_chars
     from . import offline
     if offline.blocked():
@@ -65,6 +107,8 @@ async def fetch_page(url: str, cfg: dict) -> Page:
             return page
     if mode in ("auto", "http"):
         page = await _fetch_http(url, cfg)
+        if page.ok and looks_blocked(page.text, page.title):     # try the browser / WebView next
+            page = Page(url, final_url=page.final_url, error="The site showed a bot check instead of the page", blocked=True)
     want_browser = mode == "browser" or (
         mode == "auto" and page is not None and not page.binary
         and (not page.ok or len(page.text) < 500) and browser_available())
@@ -74,9 +118,18 @@ async def fetch_page(url: str, cfg: dict) -> Page:
             page = bp
     elif ANDROID and page is not None and not page.binary and (not page.ok or len(page.text) < 500):
         wp = await _fetch_webview(url, cfg)   # pages that block plain requests or need JavaScript
-        if wp.ok and len(wp.text) > len(page.text):
+        if wp.ok and len(wp.text) > len(page.text) and not looks_blocked(wp.text, wp.title):
             page = wp
     assert page is not None
+    if page.ok and looks_blocked(page.text, page.title):
+        page = Page(url, final_url=page.final_url, error="The site showed a bot check instead of the page", blocked=True)
+    if not page.ok and (page.blocked or page.error.startswith("HTTP 4")):
+        note_blocked(url)
+        from . import scholarly
+        if scholarly.is_scholarly(url):        # research papers: the same paper from Europe PMC's open service
+            alt = await scholarly.rescue(url, title, float(cfg.get("timeout") or 15))
+            if alt is not None:
+                page = alt
     _cache[url] = page
     _cache_chars += len(page.text)
     while _cache_chars > _CACHE_CHARS and len(_cache) > 1:
@@ -103,7 +156,7 @@ async def _fetch_http(url: str, cfg: dict) -> Page:
                                      headers=headers, max_redirects=8) as c:
             async with c.stream("GET", url) as r:
                 if r.status_code >= 400:
-                    return Page(url, error=f"HTTP {r.status_code}")
+                    return Page(url, error=f"HTTP {r.status_code}", blocked=r.status_code in (401, 403, 429, 503))
                 ctype = r.headers.get("content-type", "").lower()
                 final = str(r.url)
                 if any(x in ctype for x in ("image/", "video/", "audio/", "zip", "octet-stream")):

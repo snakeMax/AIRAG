@@ -14,6 +14,13 @@
 - **Budget stop covers all AI work** (follow-ups, rewrites, explainers, summaries, translations, image analysis), not only searches; work already running finishes
 - **Fewer resources**: pressing a button twice no longer starts the same job twice; at most 30 tasks can wait; streamed text uses much less memory; a few small leaks fixed (PC-link connections, notification and lock-out lists, summary cache)
 - **Adding files to My library** skips files that are already there and never overwrites a different file with the same name
+- **Much better at finding information for medical and scientific questions**:
+  - Bot-check pages ("Checking your browser", captchas) are recognised instead of being judged as empty pages; in tests up to 7 of 16 pages were bot checks from PubMed Central
+  - Research papers on blocked sites (PubMed Central, PubMed, ScienceDirect, The Lancet, JAMA, ResearchGate, DOI links…) are read through Europe PMC: full text when open access, otherwise the abstract
+  - Pages that can't be opened no longer use up the reading budget: others are read in their place; their search snippets are judged as low-trust sources
+  - Sources are judged per part of the question (a page that answers the dosing part counts even if it says nothing about bradycardia), and evidence of the usual or opposite effect counts as an answer
+  - Searches stay short; DuckDuckGo's "No results found" when it throttles is retried through other routes instead of losing the search
+  - Slightly more pages read by default (8 per round / 20 in total; phone 5 / 14 over 3 rounds)
 - **Guarded execution** (Settings → System, on by default): a running task keeps the settings it started with; small changes (how much to read) apply from its next step, the rest from the next task. Clearing the cache, the library index or History waits until running tasks finish or are cancelled. Deleting an article cancels its task first
 - **More file types**: My library and Open with AIRAG read Word, PowerPoint (with speaker notes), Excel (every sheet as a table), OpenDocument, RTF, CSV, JSON and SQLite databases (read-only): text, tables and web links. Nothing in a file is run. Older .doc/.xls/.ppt files say to save them in the newer format
 - **Save dialog**: tags (type them, or *Suggest tags* with the AI), which translations to keep, pictures and the explainer. Tags go in the Markdown file's properties, so Obsidian sees them too

@@ -360,8 +360,9 @@ Pages from these start with a higher trust score (+2), so they're more likely to
 
 ### Results per query / Pages read per round / Max pages read in total
 - **Results per query:** how many search results are considered for each search.
-- **Pages read per round:** how many of them are opened and read in each round.
-- **Max pages read in total:** a hard limit for the whole search.
+- **Pages read per round:** how many of them are opened and read in each round (default 8; phone 5). Pages that can't be opened (the site blocks programs, shows a bot check, or fails) don't count: the next results are read in their place, up to two extra tries per round. Other pages from a site that just blocked AIRAG are tried last.
+- **Max pages read in total:** a hard limit for the whole search (default 20; phone 14 over 3 rounds). Only pages that were actually read count.
+- New in 0.4.1: if you never changed these, the new defaults are used.
 
 Reading is the main token cost.
 
@@ -399,6 +400,12 @@ How long to wait for each page, and how many are downloaded at once.
 
 ### Read YouTube videos (on) / YouTube retries (1)
 A YouTube video's title, channel, description and, when YouTube allows it, its captions are read so the video can be used as a source. Videos show a preview card in the source list. *Retries* sets how often to try again when YouTube doesn't answer. If YouTube changes its pages, AIRAG says so separately from ordinary errors.
+
+### Blocked pages, bot checks and research papers (automatic)
+- **Bot checks** ("Checking your browser", Cloudflare "Just a moment…", captchas, "Access denied") are recognised and treated as pages that couldn't be read; they are never sent to the AI as if they were the page (no tokens wasted). On PC with the optional browser installed, and on the phone, the page is tried once more in a real browser first.
+- **Research papers** that a site won't show to a program (PubMed Central, PubMed, journal sites such as ScienceDirect, The Lancet, JAMA, AHA journals, ResearchGate, DOI links…) are read through **Europe PMC**, the free public database of biomedical papers: the full text when the paper is open access, otherwise its abstract. The source list says "full text via Europe PMC" or "abstract only".
+- **Other blocked pages:** their search-result descriptions are judged together in one small AI call. Useful ones are used as low-trust sources marked "search snippet only".
+- **Searches** are kept short (long ones are cut to their first words and retried), a few run at a time, and when DuckDuckGo throttles AIRAG (it answers "No results found" even for ordinary searches) the plain DuckDuckGo page and then Mojeek are used instead.
 
 ### User agent
 How AIRAG identifies itself to websites. Only change this if a site you need refuses to load.

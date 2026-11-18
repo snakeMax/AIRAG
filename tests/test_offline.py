@@ -55,9 +55,9 @@ def test_offline_search_reads_no_web(monkeypatch):
     calls = []
     real = fetch.fetch_page
 
-    async def spy(url, cfg):
+    async def spy(url, cfg, title=""):
         calls.append(url)
-        return await real(url, cfg)
+        return await real(url, cfg, title)
     monkeypatch.setattr(pipeline, "fetch_page", spy)
     history.save({"id": "off-h2", "query": "hummingbird wing beats", "title": "Hummingbird wing beats",
                   "outcome": "article", "article": "# Hummingbird wing beats\n\nHummingbird wing beats are fast: "

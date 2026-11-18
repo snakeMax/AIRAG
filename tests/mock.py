@@ -80,6 +80,9 @@ class MockLLM(LLMProvider):
                                "summary": "Reports wingbeat frequencies measured with high-speed cameras.",
                                "findings": [{"claim": "Ruby-throated hummingbirds beat ~53 times/s", "evidence": "53 beats per second",
                                              "directness": "direct"}]})
+        if "judge search-result snippets" in system:
+            return json.dumps({"items": [{"n": 1, "relevance": 6, "coverage": 2, "summary": "States a wingbeat range.",
+                                          "findings": [{"claim": "Wingbeats of 50 per second", "evidence": "50 per second"}]}]})
         if "search strategist" in system:
             return '{"gaps":"species coverage","queries":["giant hummingbird wingbeat frequency"]}'
         if "nothing reliable" in system:
@@ -144,13 +147,13 @@ class MockSearch(SearchBackend):
     async def text(self, q, n=10, recent=""):
         doms = ["nature.com", "allaboutbirds.org", "reddit.com", "pubmed.ncbi.nlm.nih.gov", "audubon.org"]
         return [SearchResult(f"Hummingbird flight study {i}", f"https://{doms[(i + len(q)) % 5]}/{q.replace(' ', '-')}/page{i}",
-                             "Measured wingbeat frequency…") for i in range(3)]
+                             "Measured wingbeat frequency with high-speed cameras: most species beat their wings 10-80 times per second…") for i in range(3)]
 
     async def images(self, q, n=10):
         return []
 
 
-async def fake_fetch(url, cfg):
+async def fake_fetch(url, cfg, title=""):
     return fetch.Page(url, final_url=url, ok=True, title="Wingbeat frequency in hummingbirds",
                       text=(url + " hummingbird wingbeat frequency text. ") * 30)
 

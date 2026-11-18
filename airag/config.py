@@ -181,8 +181,9 @@ GENERAL_SCHEMA: dict = {
         {"key": "max_rounds", "label": "Max search rounds", "type": "number", "default": 3, "min": 1, "max": 6, "step": 1,
          "help": "Round 1 = direct searches, round 2 = related/indirect searches, 3+ = gap-filling searches."},
         {"key": "results_per_query", "label": "Results per query", "type": "number", "default": 8, "min": 3, "max": 20, "step": 1},
-        {"key": "sources_per_round", "label": "Pages read per round", "type": "number", "default": 6, "min": 1, "max": 20, "step": 1},
-        {"key": "max_sources_total", "label": "Max pages read in total", "type": "number", "default": 16, "min": 2, "max": 60, "step": 1},
+        {"key": "sources_per_round", "label": "Pages read per round", "type": "number", "default": 8, "min": 1, "max": 20, "step": 1,
+         "help": "Pages that can't be opened (blocked sites, bot checks) don't count: others are read in their place."},
+        {"key": "max_sources_total", "label": "Max pages read in total", "type": "number", "default": 20, "min": 2, "max": 60, "step": 1},
         {"key": "llm_concurrency", "label": "Parallel AI calls", "type": "number", "default": 3, "min": 1, "max": 10, "step": 1,
          "help": "Use 1 for small local models."},
         {"key": "passage_chars", "label": "Text per page sent to AI (chars)", "type": "number", "default": 3500, "min": 800, "max": 20000, "step": 100},
@@ -221,8 +222,8 @@ def defaults() -> dict:
         d["search"]["image_backend"] = "none"
         d["fetch"]["max_concurrency"] = 3
         d["fetch"]["fetcher"] = "http"
-        d["research"].update({"sources_per_round": 4, "max_sources_total": 10, "llm_concurrency": 2,
-                              "max_rounds": 2, "max_images": 4})
+        d["research"].update({"sources_per_round": 5, "max_sources_total": 14, "llm_concurrency": 2,
+                              "max_rounds": 3, "max_images": 4})
         d["app"]["history_limit"] = 100
     return d
 
@@ -438,6 +439,11 @@ def load(with_env: bool = True) -> dict:
         raw["research"]["skip_domains"] = old_skip.replace("youtube.com, ", "")
     if raw.get("research", {}).get("article_max_tokens") == 4096:
         raw["research"]["article_max_tokens"] = 8192   # old default, too low for reasoning models
+    res = raw.get("research", {})
+    old = (4, 10, 2) if paths.ANDROID else (6, 16, 3)        # 0.4.1: read a bit more (blocked pages are replaced)
+    if (res.get("sources_per_round"), res.get("max_sources_total"), res.get("max_rounds")) == old:
+        res.update({"sources_per_round": 5, "max_sources_total": 14, "max_rounds": 3} if paths.ANDROID
+                   else {"sources_per_round": 8, "max_sources_total": 20})
     lib = raw.get("library", {})
     if lib.get("extensions") == ".md, .markdown, .txt, .text, .rst, .org, .tex, .pdf, .docx, .odt, .html, .htm, .csv, .json, .log":
         lib["extensions"] = ".md, .markdown, .txt, .text, .rst, .org, .tex, .log, .pdf, .docx, .odt, .rtf, .pptx, .odp, .html, .htm, .csv, .tsv, .json, .xlsx, .ods, .db, .sqlite"    # 0.4.1: more file types; only when the list was never changed

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import json
 import re
 import time
 from pathlib import Path
@@ -35,7 +36,7 @@ Emit = Callable[[dict], Awaitable[None]]
 PUBLIC_KEYS = ("id", "n", "url", "domain", "title", "snippet", "query", "round", "status", "relevance", "coverage",
                "trust", "trust_reason", "source_type", "summary", "findings", "prior", "prior_label", "published",
                "author", "site_name", "og_image", "error", "via", "date", "local", "path", "file_id", "suspicious",
-               "out_of_range", "pinned")
+               "out_of_range", "pinned", "blocked")
 
 
 def domain_of(url: str) -> str:
@@ -97,6 +98,12 @@ def _slug(text: str) -> str:
     return re.sub(r"[^\w]+", "-", text.lower(), flags=re.UNICODE).strip("-_")[:40] or "search"
 
 
+def short_query(q: str, words: int = 9) -> str:
+    """Search engines do badly with long questions: keep searches to a few words."""
+    parts = q.strip().split()
+    return " ".join(parts[:words]) if len(parts) > words + 2 else q.strip()
+
+
 class Research:
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
                  include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None,
@@ -155,6 +162,8 @@ class Research:
         self.sites = SiteLists(self.r)   # blocked and favourite sites (domains or directories)
         self._sem_llm = asyncio.Semaphore(max(1, int(self.r["llm_concurrency"])))
         self._sem_fetch = asyncio.Semaphore(max(1, int(settings["fetch"]["max_concurrency"])))
+        self._sem_search = asyncio.Semaphore(2)    # a few searches at a time: search engines limit bursts
+        self._snippets: List[dict] = []
         self._texts: Dict[str, set] = {}   # url -> five-word runs of its text, to spot copies of the same article
 
     # helpers
@@ -518,6 +527,7 @@ class Research:
             "related_queries": related[:6],
             "image_query": str(d.get("image_query") or "").strip(),
             "freshness": str(d.get("freshness") or "any").strip(),
+            "aspects": strs(d.get("aspects"))[:5],
         }
         self.terms = list(dict.fromkeys(tokenize(self.query) + tokenize(" ".join(self.plan["key_terms"]))))
         await self.emit({"type": "plan", "plan": self.plan})
@@ -684,6 +694,7 @@ class Research:
         return self.sites.blocked_url(url)
 
     async def search_round(self, rnd: int, queries: List[str]) -> List[dict]:
+        queries = [short_query(q) for q in queries if q and q.strip()]
         self.tried += queries
         sid = f"search{rnd}"
         label = {1: "Searching the web", 2: "Searching related sources"}.get(rnd, "Searching for missing pieces")
@@ -698,14 +709,19 @@ class Research:
             recent = {"latest": "week", "recent": "year"}.get(fresh, "") if rnd == 1 or fresh == "latest" else ""
 
         async def one(q):
-            try:
-                res = await self.search.text(q, n, recent=recent) if recent else []
-                if len(res) < 3 and not self.dates:   # too narrow (or no time filter): search all dates too
-                    seen = {r.url for r in res}
-                    res += [r for r in await self.search.text(q, n) if r.url not in seen]
-                return q, res
-            except Exception as e:
-                return q, e
+            async with self._sem_search:
+                try:
+                    res = await self.search.text(q, n, recent=recent) if recent else []
+                    if len(res) < 3 and not self.dates:   # too narrow (or no time filter): search all dates too
+                        seen = {r.url for r in res}
+                        res += [r for r in await self.search.text(q, n) if r.url not in seen]
+                    if not res and len(q.split()) > 6:    # a long search found nothing: try its first words
+                        res = await self.search.text(" ".join(q.split()[:6]), n)
+                    return q, res
+                except Exception as e:
+                    if "no results" in str(e).lower():
+                        return q, []
+                    return q, e
 
         results = await asyncio.gather(*(one(q) for q in queries))
         lists, errors = [], []
@@ -745,20 +761,67 @@ class Research:
         return fresh
 
     async def read_round(self, rnd: int, fresh: List[dict]) -> None:
-        budget = int(self.r["max_sources_total"]) - self.read_count
-        to_read = fresh[: max(0, min(int(self.r["sources_per_round"]), budget))]
-        if not to_read:
+        """Reads the round's best pages. Pages that couldn't be read (blocked, bot checks, errors) don't use up the
+        reading budget: up to two more passes read the next candidates in their place. Sites that just blocked a
+        program are tried last."""
+        from .fetch import recently_blocked
+        want = max(0, min(int(self.r["sources_per_round"]), int(self.r["max_sources_total"]) - self.read_count))
+        if not want:
             return
-        self.read_count += len(to_read)
+        queue = sorted(fresh, key=lambda s: 1 if recently_blocked(s["url"]) else 0)   # stable: keeps rank order
+        done: List[dict] = []
         sid = f"read{rnd}"
-        await self.step(sid, f"Reading {len(to_read)} pages", "running", ", ".join(s["domain"] for s in to_read))
-        await asyncio.gather(*(self.read_one(s) for s in to_read))
-        useful = sum(1 for s in to_read if (s.get("relevance") or 0) >= 4 and s.get("findings"))
-        unread = sum(1 for s in to_read if s["status"] in ("unreadable", "error"))
+        for attempt in range(3):
+            readable = sum(1 for s in done if s["status"] not in ("unreadable", "error"))
+            need = want - readable
+            batch = [s for s in queue if s.get("status") == "found"][:need] if need > 0 else []
+            if not batch:
+                break
+            label = f"Reading {len(batch)} pages" if attempt == 0 else f"Reading {len(batch)} more pages in place of ones that couldn't be read"
+            await self.step(sid, label, "running", ", ".join(s["domain"] for s in batch))
+            await asyncio.gather(*(self.read_one(s) for s in batch))
+            done += batch
+        self.read_count += sum(1 for s in done if s["status"] not in ("unreadable", "error"))
+        if self._snippets:                    # pages we couldn't open: judge their search snippets, one AI call
+            pool, self._snippets = self._snippets[:12], self._snippets[12:]
+            await self.assess_snippets(pool)
+        useful = sum(1 for s in done if (s.get("relevance") or 0) >= 4 and s.get("findings"))
+        unread = sum(1 for s in done if s["status"] in ("unreadable", "error") or s.get("via") == "snippet")
         detail = f"{useful} contained relevant information"
         if unread:
-            detail += f" · {unread} couldn't be read"
-        await self.step(sid, f"Read {len(to_read)} pages", "done", detail)
+            detail += f" · {unread} couldn't be opened"
+        await self.step(sid, f"Read {len(done)} pages", "done", detail)
+
+    async def assess_snippets(self, pool: List[dict]) -> None:
+        """Pages that blocked us or failed: their search-result descriptions are judged together in one AI call,
+        as low-trust material (like the snippets a search engine shows)."""
+        items = [{"n": i + 1, "title": s.get("title") or "", "site": s["domain"], "snippet": (s.get("snippet") or "")[:500]}
+                 for i, s in enumerate(pool)]
+        clean, suspicious = guard.clean(json.dumps(items, ensure_ascii=False), self.s)
+        async with self._sem_llm:
+            try:
+                a = await complete_json(self.llm, *prompts.assess_snippets(self.query, self.plan["intent"],
+                                                                           self.plan.get("aspects") or [], clean),
+                                        max_tokens=1600)
+            except Exception:
+                return
+        for row in a.get("items") or []:
+            try:
+                s = pool[int(row.get("n")) - 1]
+            except (TypeError, ValueError, IndexError):
+                continue
+            findings = [{"claim": str(f.get("claim", "")).strip(), "evidence": str(f.get("evidence", "")).strip()[:300],
+                         "directness": "indirect"} for f in (row.get("findings") or [])[:3]
+                        if isinstance(f, dict) and str(f.get("claim", "")).strip()]
+            rel = min(5, _clamp(row.get("relevance")) or 0)
+            if not findings or rel < 4:
+                continue
+            s.update({"status": "assessed", "via": "snippet", "relevance": rel, "coverage": min(2, _clamp(row.get("coverage")) or 1),
+                      "trust": max(0, s["prior"] - 2 - (3 if suspicious else 0)), "findings": findings,
+                      "trust_reason": "Only the search result's short description could be read",
+                      "source_type": "search snippet", "summary": str(row.get("summary") or "").strip()[:300],
+                      "excerpt": s.get("snippet") or "", "error": ""})
+            await self.emit_source(s)
 
     async def read_one(self, s: dict) -> None:
         if s.get("local"):
@@ -772,11 +835,15 @@ class Research:
             async with self._sem_fetch:
                 s["status"] = "reading"
                 await self.emit_source(s)
-                page = await fetch_page(s["url"], self.s["fetch"])
+                page = await fetch_page(s["url"], self.s["fetch"], s.get("title") or "")
             s["via"] = page.via
             if not page.ok or len(page.text.strip()) < 120:
                 s["status"] = "unreadable"
                 s["error"] = page.error or "Too little text"
+                if page.blocked:
+                    s["blocked"] = True
+                if len((s.get("snippet") or "").strip()) >= 60:     # judged later from its search snippet
+                    self._snippets.append(s)
                 await self.emit_source(s)
                 return
             s.update({k: v for k, v in {"title": page.title or s["title"], "published": page.published,
@@ -799,7 +866,8 @@ class Research:
                 a = await complete_json(self.llm, *prompts.assess(
                     self.query, self.plan["intent"], s["title"], s["url"], s["prior"], s["prior_label"], excerpt,
                     local=bool(s.get("local")), freshness=self.plan.get("freshness", "any"),
-                    published=s.get("published") or "", dates=self.dates), max_tokens=1600)
+                    published=s.get("published") or "", dates=self.dates, aspects=self.plan.get("aspects")),
+                    max_tokens=2400)
             except Exception as e:
                 s["status"] = "error"
                 s["error"] = f"AI assessment failed: {e}"[:200]

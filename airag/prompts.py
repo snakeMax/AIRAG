@@ -109,7 +109,10 @@ def plan(query: str, use_web: bool = True, use_library: bool = False) -> Tuple[s
         "scientific or technical topics, and the local language for local topics (places, laws, local news). If the "
         "user's query is not in English, include at least one query in their language.\n"
         "- If the question depends on recent information, put the current year in one query.\n"
-        "- Search queries are short (2-8 words), like a person would type into a search engine."
+        "- Search queries are short (2-8 words), like a person would type into a search engine. When the question has "
+        "several parts, give each important part its own searches instead of cramming everything into one query.\n"
+        "- Medical, drug, legal and other sensitive topics are normal research: search for them plainly (official "
+        "labels, reviews, clinical guidance, case reports, harm-reduction information)."
         + "\n" + DATE_NOTE
     ) + _extra("planner_instructions") + _budget()
     scope = "web search" + (" and the user's own local files (notes, documents)" if use_library else "")
@@ -122,6 +125,7 @@ Sources available: {scope}
 Return JSON:
 {{
   "intent": "one sentence: what the user actually wants to know",
+  "aspects": ["the separate things the question asks about, 1-5 short phrases (just one for a simple question)"],
   "answer_type": "fact | number | definition | explanation | how-to | comparison | recommendation | list | news | person-or-organization | technical | opinion-or-debate | other",
   "freshness": "any | recent | latest   (latest = news or the current/upcoming state: 'latest', 'news', 'today', 'tomorrow', 'this week', weather, prices, scores, releases; recent = the last year or so matters; any = timeless)",
   "key_terms": ["6-14 important words, synonyms, technical terms, alternate spellings - in all relevant languages"],
@@ -134,14 +138,27 @@ Give 3-5 related_queries."""
 
 
 # assessing a source
+RELEVANCE_RULES = (
+    "Relevance measures whether the source CONTAINS real information (facts, figures, mechanisms, warnings, "
+    "experiences) that helps answer the question or ANY ONE of its parts - not whether it merely mentions the topic, "
+    "and not whether it covers everything. A source that properly answers one part deserves 6-8 even if it says "
+    "nothing about the other parts; useful background for a part (how it works, the same effect for a closely related "
+    "drug, product, condition or situation) is indirect evidence worth 4-6; evidence that answers the question by "
+    "showing the usual or the opposite effect (e.g. 'it raises heart rate' for 'does it slow the heart?'), or that the "
+    "effect is rare or absent, is a real answer worth 5-7; a page that only names the topic is 0-2. "
+    "Coverage is for how much of the WHOLE question it answers. Medical, drug, legal, financial and other sensitive "
+    "topics are legitimate research: extract doses, ranges, risks, warnings and side effects exactly as the source "
+    "states them.")
+
+
 def assess(query: str, intent: str, title: str, url: str, prior: int, prior_label: str, passages: str,
-           local: bool = False, freshness: str = "any", published: str = "", dates=None) -> Tuple[str, str]:
+           local: bool = False, freshness: str = "any", published: str = "", dates=None,
+           aspects=None) -> Tuple[str, str]:
     system = (
         "You are a meticulous research analyst evaluating ONE source for a search query. Judge only from the provided "
-        "text. Be strict: relevance measures whether the source actually CONTAINS information that answers the query, "
-        "not whether it merely mentions the topic. Extract every relevant fact, figure or claim - including ones "
-        "mentioned only in passing (a number buried in an anecdote, a side remark, a table cell). Keep numbers, units, "
-        "dates and conditions exactly as stated.\n" + UNTRUSTED + "\n" + DATE_NOTE
+        "text. " + RELEVANCE_RULES + " Extract every relevant fact, figure or claim - including ones mentioned only "
+        "in passing (a number buried in an anecdote, a side remark, a table cell). Keep numbers, units, dates and "
+        "conditions exactly as stated.\n" + UNTRUSTED + "\n" + DATE_NOTE
     )
     if dates:
         system += (f"\nThe reader only wants information from {dates[0]} to {dates[1]}. Information clearly from "
@@ -152,9 +169,10 @@ def assess(query: str, intent: str, title: str, url: str, prior: int, prior_labe
             "context, but treat it as unverified unless it cites sources.") if local else f"URL: {url}"
     fence = Fence()
     system += "\n" + fence.rule()
+    parts = "\n".join(f"- {a}" for a in (aspects or [])[:5] if str(a).strip())
     user = f"""Query: {query}
 What the user wants: {intent}
-Today: {_today()}
+{("Parts of the question:" + chr(10) + parts + chr(10)) if parts else ""}Today: {_today()}
 
 Source title: {title}
 Published (from the page, if known): {published or 'unknown'}
@@ -166,7 +184,7 @@ Source excerpts:
 
 Return JSON:
 {{
-  "relevance": 0-10,      // 10 = directly and specifically answers the query
+  "relevance": 0-10,      // for the part of the question this source answers best; 10 = directly and specifically answers it
   "coverage": 0-10,       // 10 = comprehensive; the reader would need nothing else
   "source_type": "short label, e.g. scientific paper, government agency, encyclopedia, news article, reference guide, manual, forum thread, experience report, blog post, product page, Q&A, personal note",
   "trust": 0-10,          // reliability for THIS kind of claim (prior, evidence quality, first-hand vs hearsay, commercial bias)
@@ -197,7 +215,28 @@ Already searched:
 What we've found so far:
 {found}
 
-Return JSON: {{"gaps": "what is still missing", "queries": ["up to 4 new search queries, all different from the ones already tried"]}}"""
+Return JSON: {{"gaps": "what is still missing", "queries": ["up to 4 new search queries, all different from the ones already tried"]}}
+Each query is 2-8 words, like a person types into a search engine (no long lists of terms); one missing part per query."""
+    return system, user
+
+
+def assess_snippets(query: str, intent: str, aspects, items_json: str) -> Tuple[str, str]:
+    """Pages that couldn't be opened: judge their search-result descriptions together."""
+    fence = Fence()
+    system = ("You judge search-result snippets (the short descriptions a search engine shows) for a research "
+              "question, because the pages themselves could not be opened. " + RELEVANCE_RULES + " A snippet is short "
+              "and unverified, so only extract what it actually states.\n" + UNTRUSTED + "\n" + fence.rule())
+    parts = "\n".join(f"- {a}" for a in (aspects or [])[:5] if str(a).strip())
+    user = f"""Question: {query}
+What the user wants: {intent}
+{("Parts of the question:" + chr(10) + parts + chr(10)) if parts else ""}
+Search results (JSON list):
+{fence.wrap(items_json)}
+
+Return JSON:
+{{"items": [{{"n": 1, "relevance": 0-10, "coverage": 0-10, "summary": "what it says that is relevant, or 'Nothing relevant.'",
+  "findings": [{{"claim": "specific relevant fact from the snippet", "evidence": "the snippet's words, max 25"}}]}}]}}
+One entry per result, same n. Use an empty findings list when the snippet has nothing relevant. Max 3 findings each. Write in English."""
     return system, user
 
 
