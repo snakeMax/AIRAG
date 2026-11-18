@@ -210,6 +210,7 @@ class Library:
     # ---- search
     @staticmethod
     def _match_expr(queries: List[str]) -> str:
+        """FTS search words: only letters/digits (no quotes, operators or SQL can get through), each one quoted."""
         words: List[str] = []
         for q in queries:
             for w in re.findall(r"\w+", cjk_space(q.lower())):
@@ -261,9 +262,10 @@ class Library:
         words = [w.strip('"') for w in expr.split(" OR ")][:12]
         if not words:
             return []
-        cond = " OR ".join("lower(text) LIKE ?" for _ in words)
+        from .sqlsafe import like_escape
+        cond = " OR ".join("lower(text) LIKE ? ESCAPE '\\'" for _ in words)     # fixed text; the words are parameters
         rows = c.execute(f"SELECT file_id, ord, text, title FROM chunks WHERE {cond} LIMIT 2000",
-                         [f"%{w}%" for w in words]).fetchall()
+                         [f"%{like_escape(w)}%" for w in words]).fetchall()
         scored = []
         for r in rows:
             low = (r["text"] + " " + (r["title"] or "")).lower()
