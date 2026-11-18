@@ -47,7 +47,9 @@ class MainActivity : AppCompatActivity() {
         speech?.onPermission(granted)
     }
     private var speech: Speech? = null
-    val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) JobService.refresh(this)   // the search already running gets its notification now
+    }
     var isInForeground = false
         private set
     private var pendingHash = ""

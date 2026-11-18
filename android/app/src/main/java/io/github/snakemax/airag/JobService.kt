@@ -66,7 +66,8 @@ class JobService : Service() {
     }
 
     companion object {
-        const val CHANNEL_PROGRESS = "jobs"
+        // v2: default importance so the icon shows in the status bar (a channel's importance can't change later)
+        const val CHANNEL_PROGRESS = "jobs_v2"
         const val CHANNEL_DONE = "done"
         const val ID_PROGRESS = 41
         const val ACTION_CANCEL = "io.github.snakemax.airag.CANCEL_JOBS"
@@ -75,13 +76,20 @@ class JobService : Service() {
         const val EXTRA_COUNT = "count"
         const val EXTRA_HASH = "hash"
         @Volatile var running = false
+        private var lastTitle = ""
+        private var lastCount = 0
         private var doneId = 100
 
         fun channels(ctx: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val nm = ctx.getSystemService(NotificationManager::class.java)
+            nm.deleteNotificationChannel("jobs")   // 0.4 test 1: low importance hid the status bar icon
             nm.createNotificationChannel(NotificationChannel(CHANNEL_PROGRESS, ctx.getString(R.string.ch_jobs),
-                NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+                NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    setSound(null, null)            // shown in the status bar, but silent
+                    enableVibration(false)
+                    setShowBadge(true)
+                })
             nm.createNotificationChannel(NotificationChannel(CHANNEL_DONE, ctx.getString(R.string.ch_done),
                 NotificationManager.IMPORTANCE_DEFAULT))
         }
@@ -103,6 +111,11 @@ class JobService : Service() {
                 .setProgress(0, 0, true)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                // Android 12+ otherwise waits up to 10 s before showing it, so short searches never showed one
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .setContentIntent(openApp(ctx, "", 2))
                 .addAction(0, ctx.getString(R.string.job_cancel), cancel)
                 .build()
@@ -111,6 +124,8 @@ class JobService : Service() {
         /** Python reports what's running: count 0 stops the service. */
         fun update(ctx: Context, count: Int, title: String) {
             val app = ctx.applicationContext
+            lastTitle = title
+            lastCount = count
             if (count <= 0) {
                 if (running) app.startService(Intent(app, JobService::class.java).setAction(ACTION_STOP))
                 return
@@ -121,6 +136,11 @@ class JobService : Service() {
             }
             val i = Intent(app, JobService::class.java).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_COUNT, count)
             try { ContextCompat.startForegroundService(app, i) } catch (_: Exception) { /* not allowed right now: the job still runs while the app is open */ }
+        }
+
+        /** Show the running notification again, e.g. right after the user allowed notifications. */
+        fun refresh(ctx: Context) {
+            if (running && lastCount > 0) update(ctx, lastCount, lastTitle)
         }
 
         fun done(ctx: Context, title: String, text: String, hash: String) {

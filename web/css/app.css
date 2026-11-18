@@ -537,7 +537,9 @@ html, body { overflow-x: hidden; }
 .icon-btn.sm { width: 28px; height: 28px; }
 #historyBtn { position: relative; }
 #historyBtn.has-dot::after { content: ""; position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 2px var(--bg); }
-#historyBtn.dot-busy::after { background: var(--accent); animation: dotPulse 1.4s ease-in-out infinite; }
-@keyframes dotPulse { 50% { opacity: .35; } }
+#historyBtn.dot-busy::after { width: 9px; height: 9px; background: var(--good); animation: dotPulse 1.2s ease-in-out infinite; }
+#historyBtn.dot-busy::before { content: ""; position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--good); animation: dotRing 1.2s ease-out infinite; }
+@keyframes dotRing { from { transform: scale(1); opacity: .6; } to { transform: scale(2.4); opacity: 0; } }
+@keyframes dotPulse { 50% { opacity: .55; } }
 #interBtn.busy { border-style: dashed; }
 .inter-wait .muted.sm { font-size: 12px; margin-top: 6px; }
