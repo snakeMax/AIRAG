@@ -36,7 +36,7 @@ def test_live_settings_never_grow_a_quick_search():
     q = QuickResearch("hummingbird wing beats", settings(), emit, "en")
     q.r["max_rounds"] = 9
     q.apply_profile()
-    assert q.r["max_rounds"] == PROFILE["max_rounds"] and q.r["max_sources_total"] == 3
+    assert q.r["max_rounds"] == PROFILE["max_rounds"] == 2 and q.r["sources_per_round"] == 3
 
 
 def test_quick_search_updates_the_article():
@@ -76,3 +76,16 @@ def test_quick_endpoint_streams_an_answer():
         assert r.status_code == 200
         assert '"done"' in r.text
         assert c.post("/api/quick", json={"query": "x", "context_id": "missing-id"}).status_code == 400
+
+
+def test_nothing_usable_tries_three_simpler_searches():
+    rec, events = quick("none quick test")
+    steps = {e["id"]: e for e in events if e["type"] == "step"}
+    assert "retry" in steps and "search2" in steps
+    assert len(rec["tried"]) == 1 + 3
+
+
+def test_good_results_need_no_extra_searches():
+    rec, events = quick("hummingbird wing beats")
+    assert not any(e["type"] == "step" and e["id"] == "retry" for e in events)
+    assert len(rec["tried"]) == 1

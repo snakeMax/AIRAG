@@ -83,6 +83,8 @@ class MockLLM(LLMProvider):
         if "judge search-result snippets" in system:
             return json.dumps({"items": [{"n": 1, "relevance": 6, "coverage": 2, "summary": "States a wingbeat range.",
                                           "findings": [{"claim": "Wingbeats of 50 per second", "evidence": "50 per second"}]}]})
+        if "simpler web searches" in system:
+            return '{"queries":["hummingbird wingbeat","hummingbird wings per second","hummingbird flight facts"]}'
         if "search strategist" in system:
             return '{"gaps":"species coverage","queries":["giant hummingbird wingbeat frequency"]}'
         if "nothing reliable" in system:

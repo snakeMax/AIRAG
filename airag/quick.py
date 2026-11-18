@@ -9,13 +9,14 @@ import time
 from typing import List, Optional
 
 from . import history, prompts
+from .llm.jsonutil import complete_json
 from .pipeline import Research, short_query, tokenize
 
 # the light profile, applied on top of the user's research settings (and again after live settings changes)
 PROFILE = {
-    "max_rounds": 1,
+    "max_rounds": 2,            # round 2 only runs when round 1 found nothing usable
     "sources_per_round": 3,
-    "max_sources_total": 3,
+    "max_sources_total": 6,     # 3 pages, plus 3 more only if the extra searches run
     "max_article_sources": 3,
     "min_findings": 1,
     "use_pinned": False,
@@ -75,6 +76,29 @@ class QuickResearch(Research):
         await self.emit({"type": "plan", "plan": self.plan})
         await self.step("plan", "Quick search", "done", intent)
 
+    # when nothing usable was found: three simpler searches, then the same quick rules
+    async def queries_for_round(self, rnd: int) -> List[str]:
+        if rnd == 1:
+            return await super().queries_for_round(1)
+        if rnd != 2 or self.useful_sources():
+            return []
+        return await self.retry_queries()
+
+    async def retry_queries(self) -> List[str]:
+        await self.step("retry", "Nothing usable yet - trying simpler searches")
+        try:
+            d = await complete_json(self.llm, *prompts.quick_retry(self.query, self.tried, self.context_title()),
+                                    max_tokens=300)
+            raw = d.get("queries") if isinstance(d, dict) else d
+            qs = [" ".join(str(q).split()) for q in (raw or []) if str(q).strip()]
+        except Exception as e:
+            await self.step("retry", "Couldn't make simpler searches", "warn", str(e)[:160])
+            return []
+        seen = {t.lower() for t in self.tried}
+        qs = [q for q in dict.fromkeys(qs) if q.lower() not in seen][:3]
+        await self.step("retry", "Trying simpler searches", "done", " · ".join(qs))
+        return qs
+
     # writing
     def chosen(self) -> List[dict]:
         return sorted(self.useful_sources(), key=self.score, reverse=True)[: int(self.r["max_article_sources"])]
@@ -123,6 +147,11 @@ class QuickResearch(Research):
         if self.use_web:
             fresh = await self.search_round(1, self.plan["direct_queries"])
             await self.read_round(1, fresh)
+            if not self.useful_sources():
+                self.refresh_settings()
+                retry = await self.retry_queries()
+                if retry:
+                    await self.read_round(2, await self.search_round(2, retry))
         chosen = self.chosen()
         old_art = list(rec.get("article_sources") or [])
         section = ""

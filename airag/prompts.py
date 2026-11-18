@@ -379,6 +379,18 @@ def _quick_blocks(sources: List[dict], fence: "Fence") -> str:
     return "\n".join(blocks)
 
 
+def quick_retry(query: str, tried: List[str], context: str = "") -> Tuple[str, str]:
+    """A quick search found nothing usable: three simpler searches that are likelier to find results."""
+    system = ("You write simpler web searches for a quick search that found nothing usable. Return JSON only: "
+              '{"queries": ["...", "...", "..."]} with exactly 3 short searches (2-7 words each) that ask for the same '
+              "thing as the reader's question: use standard or common terminology, drop rare words and filler, try a "
+              "broader version, and a version naming the likely kind of source (for example a health site, an official "
+              "body or a review). Stay close to the original question; don't change its subject.")
+    ctx = f"It's a follow-up to an article titled: {context[:200]}\n" if context else ""
+    user = f"Reader's question: {query}\n{ctx}Already searched: {'; '.join(tried[:6]) or '(nothing)'}"
+    return system, user
+
+
 def quick_answer(query: str, sources: List[dict], lang: str, context: str = "") -> Tuple[str, str]:
     fence = Fence()
     system = (QUICK_RULES + "\n\n" + SAFETY + "\n" + UNTRUSTED + "\n" + DATE_NOTE +
