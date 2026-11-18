@@ -13,6 +13,7 @@ import { pinButton, togglePinSource } from "./pins.js";
 import { showToolbar, hideToolbar } from "./toolbar.js";
 import { downloadSummary } from "./summaryfile.js";
 import { openRegenerate, setRegenHooks } from "./regenerate.js";
+import { openSaveDialog, metaRow } from "./tagsui.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -159,37 +160,16 @@ function updateSaveButton(R) {
 }
 
 function openSavePop(anchor, R) {
-  if ($(".save-pop")) { $(".save-pop").remove(); return; }
-  const rich = !!hooks.defaults?.()?.save_rich;
-  const pop = document.createElement("div");
-  pop.className = "date-pop save-pop";
-  pop.innerHTML = `<label class="switch"><input type="checkbox" id="saveRich" ${rich ? "checked" : ""}> ${h(t("save.rich"))}</label>
-    <div class="muted" style="font-size:12px">${h(t(R.interactiveHtml || R.interactive?.html ? "save.richHelp" : "save.richHelpNoInter"))}</div>
-    <div class="dp-foot"><span></span><button type="button" class="btn sm primary" id="saveGo">${icon("download")}${h(t("save.button"))}</button></div>`;
-  document.body.appendChild(pop);
-  const r = anchor.getBoundingClientRect(), w = Math.min(300, innerWidth - 16);
-  pop.style.width = w + "px";
-  pop.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
-  pop.style.top = (r.bottom + scrollY + 8) + "px";
-  $("#saveGo", pop).onclick = () => {
-    const on = $("#saveRich", pop).checked;
-    pop.remove();
-    saveArticle(R, on);
-  };
-  setTimeout(() => document.addEventListener("pointerdown", function away(e) {
-    if (!pop.isConnected) { document.removeEventListener("pointerdown", away); return; }
-    if (pop.contains(e.target) || anchor.contains(e.target)) return;
-    pop.remove();
-    document.removeEventListener("pointerdown", away);
-  }), 0);
+  openSaveDialog(R, { rich: !!hooks.defaults?.()?.save_rich }, (rich, tags, keep) => saveArticle(R, rich, tags, keep));
 }
 
-async function saveArticle(R, rich = false) {
+async function saveArticle(R, rich = false, tags = null, translations = null) {
   const b = $("#saveBtn");
   if (b) b.disabled = true;
   try {
-    const r = await api("/api/mylibrary/save", { method: "POST", body: { id: R.id, rich } });
+    const r = await api("/api/mylibrary/save", { method: "POST", body: { id: R.id, rich, tags, translations } });
     R.savedPath = r.path;
+    if (tags) { R.tags = tags; drawMeta(R); }
     toast(t("save.done", { path: r.path }), 5000);
   } catch (e) { toast(e.message, 5000); }
   updateSaveButton(R);
@@ -203,6 +183,7 @@ function finish(R) {
   $(".again-chip")?.removeAttribute("hidden");
   $(".cancel-chip")?.setAttribute("hidden", "");
   updateSaveButton(R);
+  drawMeta(R);
   const ph = $("#phIcon");
   if (ph) { ph.className = "ph-icon " + (R.error ? "err" : "ok"); ph.innerHTML = icon(R.error ? "warn" : "check"); }
   const pt = $(".ph-title");
@@ -386,7 +367,7 @@ $("#runMain").addEventListener("click", e => {
 // "Translated into X with AI · Show original" bar
 function trNote(R, kind) {
   const code = R.translation?.[kind];
-  if (!code) return "";
+  if (!code || (kind === "article" && R.translations?.[code] && R.finished)) return "";   // the language switcher shows it
   let name = code;
   try { name = new Intl.DisplayNames([uiLang()], { type: "language" }).of(code) || code; } catch { /* old browsers */ }
   return `<div class="tr-note">${icon("globe")}<span>${h(t("tr.note", { lang: name }))}</span>
@@ -396,6 +377,26 @@ function trNote(R, kind) {
 function showTrNote(R) {
   const el = $("#trNoteArt");
   if (el) el.innerHTML = trNote(R, "article");
+  drawMeta(R);
+}
+
+/** Language switcher and tags under the byline. */
+function drawMeta(R) {
+  if (RUN.current !== R || R.outcome !== "article") return;
+  metaRow(R, {
+    onLang: code => {
+      if (!code) restoreTranslation(R, "article");
+      else {
+        if (R.origMd == null) R.origMd = R.md;
+        R.md = R.translations[code];
+        R.translation = { ...(R.translation || {}), article: code };
+      }
+      renderArticleBody(R, true);
+      renderArticleSide(R);
+      showTrNote(R);
+    },
+    onTag: tag => import("./history.js").then(m => m.openDrawer("saved", tag)),
+  });
 }
 
 function renderResults(R) {
@@ -448,6 +449,7 @@ function renderArticle(R) {
         <div class="a-actions" id="aActions">${articleActions(R)}</div></div>
       ${hero ? `<figure class="a-hero" data-img><img src="${h(hero.src)}" alt="${h(hero.title)}" referrerpolicy="no-referrer" ${imgOnErr}>
         <figcaption>${h(hero.title)}${hero.title ? " · " : ""}<a href="${h(safeUrl(hero.page_url))}" target="_blank" rel="noopener noreferrer">${h(hero.credit)}</a></figcaption></figure>` : ""}
+      <div class="a-meta" id="aMeta"></div>
       <div id="trNoteArt"></div>
       <div class="a-body prose ${/^(zh|ja|ko)/.test(uiLang()) ? "" : "dropcap"}" id="aBody"><span class="cursor"></span></div>
       ${rest.length ? `<section class="a-gallery"><h2>${h(t("art.images"))}</h2><div class="gallery-grid">${rest.map(im => `
@@ -458,6 +460,7 @@ function renderArticle(R) {
     </article>`;
   renderArticleSide(R);
   updateInteractiveButton(R);
+  if (R.finished) drawMeta(R);
 }
 
 // Article tools in fold-out groups (Explainer always on its own). Every button exists once; on phones the
@@ -844,7 +847,7 @@ function showRecord(rec) {
     images: rec.images || [], md: rec.article || "", articleSources: rec.article_sources || [], related: rec.related || [],
     results: rec.results || null, suggestions: rec.suggestions || null, elapsed: rec.elapsed, interactive: rec.interactive || null,
     savedPath: rec.saved_path || null, savedFile: rec.saved_file || null, interactiveHtml: rec.interactive_html || "",
-    openedFile: rec.opened_file || null,
+    openedFile: rec.opened_file || null, tags: rec.tags || [], translations: rec.translations || {},
     pinned: !!rec.pinned,
   });
   (rec.sources || []).forEach(s => (R.sources[s.id] = s));

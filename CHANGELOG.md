@@ -14,6 +14,12 @@
 - **Budget stop covers all AI work** (follow-ups, rewrites, explainers, summaries, translations, image analysis), not only searches; work already running finishes
 - **Fewer resources**: pressing a button twice no longer starts the same job twice; at most 30 tasks can wait; streamed text uses much less memory; a few small leaks fixed (PC-link connections, notification and lock-out lists, summary cache)
 - **Adding files to My library** skips files that are already there and never overwrites a different file with the same name
+- **More file types**: My library and Open with AIRAG read Word, PowerPoint (with speaker notes), Excel (every sheet as a table), OpenDocument, RTF, CSV, JSON and SQLite databases (read-only): text, tables and web links. Nothing in a file is run. Older .doc/.xls/.ppt files say to save them in the newer format
+- **Save dialog**: tags (type them, or *Suggest tags* with the AI), which translations to keep, pictures and the explainer. Tags go in the Markdown file's properties, so Obsidian sees them too
+- **Tags and language switcher** under an article's byline: edit tags any time (a saved copy is updated), tap a tag to see saved articles with it; switch between the original and its translations
+- **Library searches read files whose tags match the question first**
+- **Offline mode**: nothing is searched or read on the web; answers come from My library, your folders, pinned pages and History. Choose a local model (Ollama, the PC link, or a local server such as llama.cpp on the phone) or keep your current model with only local sources. An Offline chip shows it's on
+- **Long messages at the bottom of the screen** are no longer squeezed into a circle
 - **Article tools grouped**: Explainer and Listen stay, the rest are in *Export options*, *Rewrite* and *Sources* menus; on phones one row of four big buttons (Explainer, Listen, Export, More) with menus that slide up from the bottom
 - **Regenerate article**: write the article again from the same sources, your way (typed or spoken instructions, quick choices, keep your edits, shorter or longer), or just a clearer version
 - **Version history**: every change to an article keeps the previous version; Undo, Compare and Restore (last 20 kept, nothing is deleted)

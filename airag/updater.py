@@ -77,6 +77,9 @@ def _assets(rel: dict) -> Tuple[Optional[dict], Optional[str]]:
 
 
 async def check(force: bool = False) -> dict:
+    from . import offline
+    if not force and offline.blocked():
+        return _read_cache() or {"available": False, "offline": True}
     if not force:
         cached = _read_cache()
         if cached:

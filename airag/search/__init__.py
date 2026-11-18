@@ -17,7 +17,23 @@ def register(cls: Type[SearchBackend]) -> Type[SearchBackend]:
     return cls
 
 
+class _OfflineBackend(SearchBackend):
+    """Offline mode: every search answers with nothing, so no request ever leaves."""
+    name = "offline"
+    label = "Offline: your files only"
+    supports_images = True
+
+    async def text(self, query: str, n: int = 10, recent: str = ""):
+        return []
+
+    async def images(self, query: str, n: int = 10):
+        return []
+
+
 def _make(settings: dict, name: str) -> SearchBackend:
+    from ..offline import blocked
+    if blocked(settings):
+        return _OfflineBackend({}, {})
     s = settings["search"]
     cls = BACKENDS.get(name)
     if cls is None:

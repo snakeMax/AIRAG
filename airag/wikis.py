@@ -39,6 +39,9 @@ def _strip(snippet: str) -> str:
 
 async def search(wiki: dict, query: str, n: int = 3, lang: str = "en", timeout: float = 12) -> List[dict]:
     """[{title, url, snippet, wiki}] from one wiki (empty on any error)."""
+    from . import offline
+    if offline.blocked():
+        return []
     url = api_url(wiki.get("api", ""), lang)
     # the site info in the same request tells where its articles live (/wiki/Title, /w/Title, ...)
     params = {"action": "query", "list": "search", "srsearch": query, "srlimit": n, "format": "json",

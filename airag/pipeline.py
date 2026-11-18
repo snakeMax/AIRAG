@@ -130,8 +130,10 @@ class Research:
         self.s = settings
         from .effort import scale_research
         self.r = scale_research(settings["research"], settings, "standard")
-        self.use_library = bool(include_library) and bool(library_args(settings)["folders"])
-        self.use_web = (not self.use_library) or bool(settings["library"].get("web_too", True))
+        from . import offline
+        self.offline = offline.on(settings)
+        self.use_library = (bool(include_library) or self.offline) and bool(library_args(settings)["folders"])
+        self.use_web = not self.offline and ((not self.use_library) or bool(settings["library"].get("web_too", True)))
         self.emit = emit
         self.llm = get_llm(settings)
         self.search = get_search(settings)
@@ -210,7 +212,7 @@ class Research:
     async def run(self) -> dict:
         t0 = time.time()
         await self.emit({"type": "start", "id": self.run_id, "query": self.query, "mode": self.mode,
-                         "model": self.llm.describe(), "search": self.search.label if self.use_web else "Library only",
+                         "model": self.llm.describe(), "search": self.search.label if self.use_web else ("Offline: your files only" if self.offline else "Library only"),
                          "created": self.created, "library": self.use_library,
                          "dates": list(self.dates) if self.dates else None})
         if self.extend:
@@ -259,8 +261,10 @@ class Research:
                                 "New sources found now are compared with these")
         if self.use_library:
             await self.library_round()
-        if self.r.get("use_pinned", True):
+        if self.r.get("use_pinned", True) or self.offline:
             await self.pinned_round()
+        if self.offline:
+            await self.history_round()
         if self.use_web and self.s["search"].get("use_wikis", True):
             await self.wiki_round()
 
@@ -375,7 +379,7 @@ class Research:
         self.plan = rec["plan"]
         self.terms = list(dict.fromkeys(tokenize(self.query) + tokenize(" ".join(self.plan.get("key_terms") or []))))
         self.tried = list(rec.get("tried") or [])
-        self.use_library = bool(rec.get("library"))
+        self.use_library = bool(rec.get("library")) or self.offline
         await self.emit({"type": "plan", "plan": self.plan})
         await self.step("plan", "Understanding the question", "done", self.plan.get("intent", ""))
         known = set()
@@ -391,7 +395,12 @@ class Research:
         await self.step("reuse", f"The article already uses {len(rec.get('article_sources') or [])} sources", "done",
                         "Looking for new ones")
         before = len(self.useful_sources())
-        for rnd in range(3, 3 + max(1, int(self.r["max_rounds"]))):     # new angles only (rounds 1-2 were done)
+        if self.offline:                  # offline mode: look again in your own files instead of the web
+            if self.use_library:
+                await self.library_round()
+            await self.pinned_round()
+            await self.history_round()
+        for rnd in range(3, 3 + max(1, int(self.r["max_rounds"]))) if not self.offline else ():   # new angles only
             queries = await self.queries_for_round(rnd)
             if not queries:
                 break
@@ -574,6 +583,33 @@ class Research:
         await asyncio.gather(*(self.read_one(x) for x in fresh))
         useful = sum(1 for x in fresh if (x.get("relevance") or 0) >= 4)
         await self.step("pinned", "Read your pinned sources", "done", f"{len(fresh)} checked · {useful} relevant")
+
+    async def history_round(self) -> None:
+        """Offline mode: earlier articles in History that match the question are read like sources."""
+        from . import offline
+        try:
+            hits = await asyncio.to_thread(offline.history_matches, self.terms, 3, self.id)
+        except Exception:
+            return
+        fresh = []
+        for rec in hits:
+            url = f"#/view/{rec['id']}"
+            if url in self.sources:
+                continue
+            src = {"id": self.next_id(), "url": url, "domain": "history", "title": rec.get("title") or rec.get("query"),
+                   "snippet": (rec.get("article") or "")[:240], "query": "history", "round": 0, "rank": len(fresh),
+                   "status": "found", "prior": 5, "prior_label": "Your earlier article (AI-written)", "local": True,
+                   "_text": select_passages(rec.get("article") or "", list(self.search_terms()),
+                                            self.excerpt_budget(rec.get("article") or "")),
+                   "site_name": "History", "_quiet": True}
+            self.sources[url] = src
+            self.order.append(url)
+            fresh.append(src)
+        if not fresh:
+            return
+        await self.step("history", "Reading your earlier articles", "running", f"{len(fresh)} match this search")
+        await asyncio.gather(*(self.read_one(x) for x in fresh))
+        await self.step("history", "Read your earlier articles", "done", f"{len(fresh)} checked")
 
     async def wiki_round(self) -> None:
         """Wikipedia (and any wikis the user added) next to the normal search: titles first, then the

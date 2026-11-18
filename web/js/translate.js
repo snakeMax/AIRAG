@@ -71,6 +71,7 @@ async function translateArticle(R, lang, hooks) {
     toast(e.message, 5000);
     restore(R, "article");
   }
+  if (R.translation?.article === lang && R.md) R.translations = { ...(R.translations || {}), [lang]: R.md };
   hooks.setBusy(false);
   hooks.render(true);
 }

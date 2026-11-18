@@ -103,7 +103,7 @@ export async function openSettings(tab = "general") {
     $$(".dlg-tabs button", dlg).forEach(b => b.classList.toggle("on", b.dataset.tab === k));
     $$("[data-pane]", dlg).forEach(p => (p.hidden = p.dataset.pane !== k));
     if (k === "model") { refreshOllama(); refreshPcLink(); }
-    if (k === "library") refreshLibrary();
+    if (k === "library") { refreshLibrary(); import("./offline.js").then(m => m.refreshOffline()); }
     if (k === "research") refreshBrowser();
     if (k === "usage") refreshUsage();
     if (k === "system") { refreshSystem(); refreshStorage(); refreshLog(); }
@@ -782,6 +782,8 @@ function wireSearch(dlg) {
 // library
 function libraryPane(sc, st) {
   return `<h3>${h(t("lib.title"))}</h3><p>${h(t("lib.intro"))}</p>
+    <h4>${h(t("off.settingsTitle"))}</h4>
+    <div class="status-card" id="offCard"><div class="grow">${h(t("common.loading"))}</div></div>
     <h4>${h(t("my.title"))}</h4><p class="muted" style="font-size:13px">${h(t("my.intro"))}</p>
     <div class="status-card" id="myLibCard"><div class="grow">${h(t("common.loading"))}</div></div>
     <div class="row" style="margin:8px 0 18px"><span class="muted" style="font-size:13px">${h(t("my.addFiles"))}</span>

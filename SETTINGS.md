@@ -79,7 +79,11 @@ Searches new angles for sources AIRAG hasn't used yet.
 Uses about as many tokens as a short search.
 
 ### Save
-Saves the article to My library as a Markdown file. See [Saving and exporting](#saving-and-exporting).
+Opens the Save dialog: tags, translations to keep, pictures and the explainer. See [Saving and exporting](#saving-and-exporting).
+
+### Tags and language switcher (under the byline)
+- **Tags:** shown under the article's byline once it's finished. *Edit tags* (or *Add tags*) changes them; for a saved article the saved Markdown file is updated too. Tap a tag to see the saved articles that have it (Saved tab in History). Free; only *Suggest tags* uses tokens.
+- **Language switcher:** appears when the article has been translated. *Original* is always first; tap a language to read that translation. Follow-ups and the toolbar still use the original.
 
 ### Copy as Markdown
 Copies the article and its source list, ready to paste anywhere. Free.
@@ -404,6 +408,13 @@ How AIRAG identifies itself to websites. Only change this if a site you need ref
 ## My library (your own files)
 **Settings → Library.** AIRAG can only read the file types listed here, inside the folders you picked, nothing else.
 
+### Offline mode
+Nothing is searched or read on the web. Answers come only from My library, your library folders, pinned pages and earlier articles in History (these are marked "Your earlier article (AI-written)"). Turn it on with the **Offline** chip next to the search options on the home page, or here under *Offline mode*. Turning it on asks who writes the answers:
+- **A local model:** nothing leaves your devices. Offered for what's set up under *AI model*: Ollama on this computer (it starts only when you press *Turn on*), Ollama on your computer through the PC link (phone), or an OpenAI-compatible server running on this device, for example llama.cpp's server on a phone (base URL `http://127.0.0.1:…/v1` with a model name).
+- **Keep your current model, local sources only:** your usual model writes, but it only gets passages from your own files. The question and those passages are still sent to that AI service, and the dialog says so.
+
+While it's on: the Offline chip shows by the search box (tap it to turn off), the *My library* tickbox is always on, web searches, page reading, wikis, YouTube, pictures for saved or exported pages, the automatic update check and the price-list update are all skipped. *Locate more sources* looks again in your own files instead of the web.
+
 ### Folders
 The folders to search when *My library* is ticked. Your **personal folder** (where saved articles go) is always included.
 
@@ -414,7 +425,10 @@ Off: answers only from your own files.
 On (default): opening a saved article puts it back in History if it had dropped out, so follow-ups and the other toolbar tools work on it.
 
 ### File types
-Comma-separated extensions AIRAG may read.
+Comma-separated extensions AIRAG may read. AIRAG can read: text and Markdown, PDF, Word (`.docx`), PowerPoint (`.pptx`, with speaker notes), Excel (`.xlsx`, every sheet as a table), OpenDocument (`.odt`, `.ods`, `.odp`), RTF, web pages, CSV/TSV, JSON (lists of records become tables) and SQLite databases (`.db`, `.sqlite`). Only text, tables and web links are taken; nothing in a file is ever run (no macros; formulas show their last saved value, or the formula itself), and databases are opened read-only and only listed and read, never queried with anything from the file. Older `.doc`, `.xls` and `.ppt` files can't be read; save them in the newer format. New in 0.4.1: if you never changed this list, the new types are added for you.
+
+### Tags in My library
+Markdown files with `tags:` in their properties (the way Obsidian writes them) are read first when a question mentions one of their tags.
 
 ### Skip files larger than (MB)
 Large files take longer to index.
@@ -507,7 +521,11 @@ On articles, *Listen*, *Pause*, *Resume* and *Stop* control the reading.
 ## Saving and exporting
 
 ### Save (articles)
-Saves a Markdown file to *My library → Articles*, plus a small `.airag.json` copy so it opens in AIRAG again. Saved articles appear under *Saved* in History.
+Saves a Markdown file to *My library → Articles*, plus a small `.airag.json` copy so it opens in AIRAG again. Saved articles appear under *Saved* in History, with their tags. The Save dialog has:
+- **Tags:** type one and press Enter or a comma; × removes it. They go in the Markdown file's properties (`tags: [airag, …]`; `airag` is always added). *Suggest tags* asks the AI for 3-6 (a few hundred tokens, runs in the background); tap a suggestion to add it.
+- **Translations to keep:** shown when the article has translations; ticked ones are kept in the AIRAG copy and appear in the language switcher when you open it again.
+- **Include pictures and the interactive explainer:** see below.
+Saving again updates the same file.
 - **Editing the .md:** you can change the saved Markdown file in any editor (Obsidian, Notepad...). Next time you open the article in AIRAG, it's read from your edited file, and a note says so. Keep the "Sources" list at the bottom as it is, so the source numbers still work.
 
 ### Save articles with pictures and the explainer (Settings → Defaults)
@@ -528,7 +546,7 @@ A small Markdown file in *My library → Summaries* with only the summary and th
 
 ### Open with AIRAG
 Opens a file as an article, **without the AI** (no tokens). The article goes into History, so the toolbar works on it.
-- **What it opens:** Markdown and text files (`.md`, `.txt`), saved articles (`.airag.json`) and web pages exported from AIRAG (`.html`). Other web pages open as their readable text. Up to 20 MB.
+- **What it opens:** Markdown and text files (`.md`, `.txt`), saved articles (`.airag.json`), web pages exported from AIRAG (`.html`), and (new in 0.4.1) Word, PowerPoint, Excel, OpenDocument, PDF, RTF, CSV, JSON and SQLite files, shown as text with real tables; web links found in the file become its sources. Other web pages open as their readable text. Up to 20 MB.
 - **Computer:** right-click a file → *Open with* → AIRAG (the installer adds AIRAG to that list but never makes it the default app). Or use *Open a file* at the top of *Saved* in History. The portable zip version has only the *Open a file* button.
 - **Phone:** open the file in a file manager and pick *Open in AIRAG*, or share the file to AIRAG.
 - **Safety:** an interactive explainer is only loaded from files in your own My library; from anywhere else it's left out, and links that aren't web addresses are removed.

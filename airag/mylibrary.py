@@ -73,6 +73,9 @@ def _embed_images(images: List[dict]) -> List[dict]:
     """Download pictures and keep them inside the saved file (as data: URLs), so they work offline."""
     import base64
     import httpx
+    from . import offline
+    if offline.blocked():
+        return []
     out = []
     with httpx.Client(timeout=15, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 AIRAG"}) as c:
         for im in images[:MAX_IMAGES]:

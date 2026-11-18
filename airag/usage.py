@@ -144,6 +144,9 @@ async def refresh_prices(force: bool = False) -> bool:
     _load_prices()
     if not force and (time.time() - _prices_at < PRICES_MAX_AGE or time.time() < _retry_at):
         return False
+    from . import offline
+    if not force and offline.blocked():
+        return False
     import httpx
     try:
         async with httpx.AsyncClient(timeout=20) as c:

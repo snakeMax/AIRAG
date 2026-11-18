@@ -8,14 +8,15 @@ import { pickFile } from "./openfile.js";
 const outcomeIcon = o => ({ article: "doc", results: "list", suggestions: "bulb" }[o] || "search");
 const outcomeLabel = o => t("outcome." + (o || "search"));
 
-let tab = "history";
-export function openDrawer(which = tab) {
+let tab = "history", tagFilter = "";
+export function openDrawer(which = tab, tag = "") {
   tab = which;
+  tagFilter = which === "saved" ? tag : "";
   $("#drawer").hidden = false;
   $("#scrim").hidden = false;
   $$("#drawerTabs button").forEach(b => {
     b.classList.toggle("on", b.dataset.tab === tab);
-    b.onclick = () => openDrawer(b.dataset.tab);
+    b.onclick = () => openDrawer(b.dataset.tab, b.dataset.tab === "saved" ? tagFilter : "");
   });
   tab === "saved" ? loadSaved() : loadHistory();
 }
@@ -24,20 +25,26 @@ export function openDrawer(which = tab) {
 export async function loadSaved() {
   const el = $("#historyList");
   try {
-    const { items } = await api("/api/mylibrary/saved");
+    let { items } = await api("/api/mylibrary/saved");
+    const filter = tagFilter ? `<div class="h-filter">${icon("tag")}<span>${h(t("tags.filtered", { tag: tagFilter }))}</span>
+        <button type="button" class="icon-btn" id="tagFilterOff" aria-label="${h(t("tags.clearFilter"))}">${icon("x")}</button></div>` : "";
+    if (tagFilter) items = items.filter(it => (it.tags || []).includes(tagFilter));
     const opener = `<button type="button" class="h-item h-open" id="openFileBtn">${icon("folder")}
         <div style="min-width:0"><div class="h-q">${h(t("open.button"))}</div><div class="h-d">${h(t("open.hint"))}</div></div></button>`;
-    if (!items.length) { el.innerHTML = opener + `<div class="h-empty">${h(t("saved.empty"))}</div>`; wireOpener(); return; }
-    el.innerHTML = opener + items.map(it => `
+    if (!items.length) { el.innerHTML = opener + filter + `<div class="h-empty">${h(t(tagFilter ? "tags.noneSaved" : "saved.empty"))}</div>`; wireOpener(); return; }
+    el.innerHTML = opener + filter + items.map(it => `
       <a class="h-item" href="#/saved/${encodeURIComponent(it.file)}">${icon(it.rich ? "palette" : "doc")}
         <div style="min-width:0"><div class="h-q">${h(it.title || it.query)}</div>
-        <div class="h-d">${h(fmtAgo(it.created, uiLang()))}${it.rich ? ` · ${h(t("saved.rich"))}` : ""}${it.title !== it.query ? ` · "${h(it.query)}"` : ""}</div></div></a>`).join("");
+        <div class="h-d">${h(fmtAgo(it.created, uiLang()))}${it.rich ? ` · ${h(t("saved.rich"))}` : ""}${it.title !== it.query ? ` · "${h(it.query)}"` : ""}</div>
+        ${(it.tags || []).length ? `<div class="h-tags">${it.tags.map(x => `<span>${h(x)}</span>`).join("")}</div>` : ""}</div></a>`).join("");
     $$(".h-item", el).forEach(a => a.addEventListener("click", closeDrawer));
     wireOpener();
   } catch (e) { el.innerHTML = `<div class="h-empty">${h(e.message)}</div>`; }
 }
 
 function wireOpener() {
+  const off = $("#tagFilterOff");
+  if (off) off.onclick = () => { tagFilter = ""; loadSaved(); };
   const b = $("#openFileBtn");
   if (b) b.onclick = () => { closeDrawer(); pickFile(); };
 }

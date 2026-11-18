@@ -18,6 +18,7 @@ import { loadPins, openPinned, setPinHooks } from "./pins.js";
 import { initToolbar } from "./toolbar.js";
 import { initImageAsk, updateImageButton, pickImage } from "./imageask.js";
 import { initOpenFile } from "./openfile.js";
+import { initOffline, onOfflineChange } from "./offline.js";
 
 const state = {
   mode: "auto",
@@ -198,6 +199,8 @@ async function boot() {
   setPinHooks({ showView, defaultView: () => state.settings?.defaults?.pinned_view });
   initImageAsk({ vision: () => !!state.status?.vision });
   initOpenFile();
+  initOffline();
+  onOfflineChange(() => refreshStatus());
   $("#imgAskBtn").onclick = pickImage;
   $(".img-chip-ic").innerHTML = icon("eye");
   initToolbar({ getRun: () => RUN.current, reload: reloadRecord, act: toolbarAction,

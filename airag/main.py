@@ -653,6 +653,58 @@ async def mylibrary_save(req: SaveReq):
     return {"path": str(path)}
 
 
+@app.get("/api/offline")
+async def offline_state():
+    """Offline mode and the local models it could use (nothing is started here)."""
+    from . import offline, ollama_manager
+    from .llm import PROVIDERS
+    s = config.load()
+    lib = s["library"]
+    choices = offline.local_choices(s)
+    for c in choices:
+        c["models"] = []
+        if c["provider"] == "ollama":
+            url = s["llm"]["providers"].get("ollama", {}).get("base_url") or "http://localhost:11434"
+            try:
+                if await ollama_manager.version(url):      # running already: list what's installed
+                    c["models"] = [m["name"] for m in await ollama_manager.list_models(url)]
+            except Exception:
+                pass
+    name = s["llm"].get("provider", "")
+    cls = PROVIDERS.get(name)
+    model = s["llm"].get("providers", {}).get(name, {}).get("model", "")
+    return {"on": bool(lib.get("offline")), "writer": lib.get("offline_writer") or "current",
+            "provider": lib.get("offline_provider") or "", "model": lib.get("offline_model") or "",
+            "choices": choices, "current": {"provider": name, "label": cls.label if cls else name, "model": model,
+                                            "local": any(c["provider"] == name for c in choices)}}
+
+
+class OfflineReq(BaseModel):
+    on: bool
+    writer: str = "current"        # "current" or "local"
+    provider: str = ""
+    model: str = ""
+
+
+@app.post("/api/offline")
+async def offline_set(req: OfflineReq):
+    from . import offline, ollama_manager
+    s = config.load()
+    writer = req.writer if req.writer in ("current", "local") else "current"
+    if req.on and writer == "local":
+        ok = {c["provider"] for c in offline.local_choices(s)}
+        if req.provider not in ok:
+            raise HTTPException(400, "That local model isn't set up. Add it in Settings → AI model first.")
+    s = config.save({"library": {"offline": bool(req.on), "offline_writer": writer,
+                                 "offline_provider": req.provider[:40] if writer == "local" else "",
+                                 "offline_model": req.model[:120] if writer == "local" else ""}})
+    if req.on and writer == "local" and req.provider == "ollama":     # you chose it: start Ollama now
+        url = s["llm"]["providers"].get("ollama", {}).get("base_url") or "http://localhost:11434"
+        if ollama_manager.is_local(url):
+            asyncio.create_task(ollama_manager.ensure_running(url))
+    return await offline_state()
+
+
 class TagsReq(BaseModel):
     tags: List[str]
 

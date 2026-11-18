@@ -160,6 +160,8 @@ def install(settings_patch: bool = True):
     import airag.pipeline as P
     import airag.summarize as Sm
     from airag import config
+    if not hasattr(F, "real_fetch_page"):
+        F.real_fetch_page = F.fetch_page
     F.fetch_page = P.fetch_page = Sm.fetch_page = fake_fetch
     import airag.wikis as W
 

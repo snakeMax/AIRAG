@@ -4,7 +4,7 @@ import { t } from "./i18n.js";
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const h = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-export const safeUrl = u => (/^https?:\/\//i.test(u || "") || /^\/api\/library\/file\/\d+$/.test(u || "") ? u : "#");
+export const safeUrl = u => (/^https?:\/\//i.test(u || "") || /^\/api\/library\/file\/\d+$/.test(u || "") || /^#\/view\/[\w.-]+$/.test(u || "") ? u : "#");
 export const favicon = d => `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(d || "")}`;
 export const stripThink = md => (md || "").replace(/<think>[\s\S]*?(<\/think>|$)/gi, "");
 export const shortUrl = u => {
@@ -60,6 +60,8 @@ const ICONS = {
   copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
   ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   cpu: '<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+  tag: '<path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+  offline: '<path d="M3 3l18 18M8.5 8.6A6 6 0 0 0 6 13M12 5c3.6 0 6.8 1.6 9 4M2 9a14 14 0 0 1 4.3-3M12 17h.01"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>',
   sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',

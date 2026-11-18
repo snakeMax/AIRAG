@@ -53,6 +53,9 @@ def _clean(body_html: str):
 
 def _embed_images(soup) -> int:
     import httpx
+    from . import offline
+    if offline.blocked():
+        return 0
     n = 0
     imgs = [im for im in soup.find_all("img") if str(im.get("src", "")).startswith("http")]
     with httpx.Client(timeout=15, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 AIRAG"}) as c:

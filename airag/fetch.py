@@ -47,6 +47,9 @@ class Page:
 # public API
 async def fetch_page(url: str, cfg: dict) -> Page:
     global _cache_chars
+    from . import offline
+    if offline.blocked():
+        return Page(url=url, error=offline.MESSAGE)
     if url in _cache:
         _cache.move_to_end(url)
         return _cache[url]
