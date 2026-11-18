@@ -1,0 +1,450 @@
+# AIRAG settings guide
+
+Every setting and button in AIRAG, grouped by what it does (not by which Settings tab it's on). Each entry says what it's for and what changing it does. **Tokens** means AI usage: money with paid AI providers, time with local models.
+
+Everything works with the defaults. If you only change one thing, pick the AI model (see [AI model](#ai-model)).
+
+**Contents:**
+[Searching](#searching) ·
+[Article and result tools](#article-and-result-tools) ·
+[Interactive explainers](#interactive-explainers) ·
+[Pinned articles and sources](#pinned-articles-and-sources) ·
+[AI model](#ai-model) ·
+[Usage and budget](#usage-and-budget) ·
+[Search engine and wikis](#search-engine-and-wikis) ·
+[Blocked and favourite sites](#blocked-and-favourite-sites) ·
+[How hard each search works](#how-hard-each-search-works) ·
+[Reading pages and videos](#reading-pages-and-videos) ·
+[My library (your own files)](#my-library-your-own-files) ·
+[Writing style and instructions](#writing-style-and-instructions) ·
+[Look: theme and colours](#look-theme-and-colours) ·
+[Sound effects](#sound-effects) ·
+[Speech: microphone and read aloud](#speech-microphone-and-read-aloud) ·
+[Saving and exporting](#saving-and-exporting) ·
+[App, updates and maintenance](#app-updates-and-maintenance) ·
+[Background work and notifications](#background-work-and-notifications) ·
+[Recommended setups](#recommended-setups)
+
+*Developer settings (coming with the autonomous agent in 0.5) will get one group of their own at the end of this guide, with a subsection per setting.*
+
+---
+
+## Searching
+The controls under the search box. Each can be changed for one search; the defaults are set in **Settings → Defaults**.
+
+### Auto / Article / Results (search mode)
+- **Auto:** writes an article when the answer is spread over several pages. When one page answers the question directly, it shows ranked results instead.
+- **Article:** always writes an article.
+- **Results:** never writes one; you get ranked, summarized pages.
+
+Results is the fastest and uses the fewest tokens.
+
+### My library
+Also searches the folders you added in [My library](#my-library-your-own-files). Only files that are relevant enough are read and listed.
+
+### Pictures & explainer
+Finds pictures for the article, and checks whether an [interactive explainer](#interactive-explainers) would help. Turn it off to save tokens and time. The Interactive button can still check later, when you click it.
+
+### Time range (Any time / last week / month / year / custom dates)
+Only uses sources from that period. Some search engines can't filter by date; their results are filtered afterwards using each page's date.
+
+### Microphone
+Speak your search instead of typing. See [Speech](#speech-microphone-and-read-aloud).
+
+### Cancel search, queue and history
+- **Cancel search:** stops a running search.
+- **Leaving the page:** doesn't stop the search; it keeps going in the background.
+- **Starting another search:** it waits in a queue until the first one finishes.
+- **History:** running and queued searches show at the top as *In progress*, each with a cancel button.
+
+---
+
+## Article and result tools
+Buttons on articles, result pages and individual sources. Hide the ones you don't use in **Settings → Tools**; all are shown by default.
+
+### Summarize
+A short summary of the article, the result list or one source, focused on your question. Uses a few tokens.
+
+### Search results
+Shows the ranked list of pages behind an article.
+
+### Locate more sources
+Searches new angles for sources AIRAG hasn't used yet.
+- **On an article:** adds a *What more sources add* section that cites only the new sources. The article itself isn't rewritten.
+- **On a results page:** adds the new sources to the results.
+
+Uses about as many tokens as a short search.
+
+### Save
+Saves the article to My library as a Markdown file. See [Saving and exporting](#saving-and-exporting).
+
+### Copy as Markdown
+Copies the article and its source list, ready to paste anywhere. Free.
+
+### Translate with AI
+Translates the article or results into the language you pick; *Show original* switches back. Uses tokens roughly equal to the article's length.
+
+### Listen
+Reads the article aloud. See [Speech](#speech-microphone-and-read-aloud). Free.
+
+### Pin article
+Keeps the article at the top of the home page. See [Pinned articles and sources](#pinned-articles-and-sources).
+
+### Export web page
+Makes one HTML file of the article. See [Saving and exporting](#saving-and-exporting).
+
+### On sources: Summarize, Save page, Pin
+- **Summarize:** sums up that one page.
+- **Save page:** keeps a light copy of it in My library.
+- **Pin:** pins it (see [Pinned articles and sources](#pinned-articles-and-sources)).
+
+### Hover previews (computer only)
+Hover over a citation number like [3], a link in the article, a source or a result title. A preview shows the page's title, site, trust score and summary.
+
+---
+
+## Interactive explainers
+Small simulations or games that explain the topic, built by the AI for articles where they help.
+
+### Interactive button
+- **Opening:** builds the explainer, or opens it if it's already built.
+- **In the background:** building keeps going when you close the window. The button shows a spinner while it builds, and clicking it again shows the one being built. *Cancel* stops it.
+
+### Explainer detail (Settings → Prompts)
+**Simple**, **medium** (default) or **detailed**. Detailed makes richer simulations but uses more tokens.
+
+### Look up code examples first (Settings → Research)
+Before building, a quick web search finds code for similar simulations to learn from. On by default; turn off to skip that search.
+
+---
+
+## Pinned articles and sources
+
+### Pin article
+Pinned articles appear at the top of the home page, and history never deletes them automatically.
+
+### Pin source
+Saves a copy of a web page and lists it under *Pinned sources* on the home page until you unpin it.
+
+### Open pinned sources as (Settings → Defaults)
+- **Saved page** (default): the copy saved when you pinned it.
+- **AI version:** a short version written by the AI, focused on your search. Uses a few tokens each time.
+
+### Use pinned sources in searches (Settings → Research)
+New searches first read pinned pages that match the question, from the saved copy (no download). They can be cited like any other source. On by default.
+
+---
+
+## AI model
+**Settings → AI model.** This has the biggest effect on quality, speed and cost.
+
+### Provider
+- **Anthropic Claude, OpenAI, DeepSeek:** need an API key from that company. Strong quality, and you pay per use.
+- **OpenRouter:** one key for hundreds of models. The default model `openrouter/auto` picks the best one for each request.
+- **Ollama (local):** runs models on your own computer. Free and private, but needs a capable PC; see the hardware recommendations in Settings → System.
+- **My PC (Ollama):** on the phone, uses the Ollama running on your computer over your home Wi-Fi.
+- **OpenAI-compatible server:** any server that speaks the OpenAI API (LM Studio, vLLM, …).
+
+### Model
+Bigger models write better articles and use more tokens; smaller ones are faster and cheaper. *Load models* lists what your key or server offers. *Test* checks that it works.
+
+### Temperature
+How varied the wording is. The default 0.3 keeps articles factual; higher values are more creative but less precise.
+
+### API keys
+Stored only on your device and never shown to the AI.
+
+---
+
+## Usage and budget
+**Settings → Usage.**
+
+### This month
+Tokens and cost per AI model.
+- **Where the counts come from:** exact numbers when the provider reports them, otherwise estimated (marked *partly estimated*).
+- **Prices:** from OpenRouter's public price list, updated daily, with built-in prices as a backup.
+- **Local models:** count tokens only, at $0.
+
+### Monthly budget ($)
+Shown as a bar; default $5. 0 means no budget.
+
+### Tell the AI when the budget is nearly used
+At 70% of the budget, the AI is asked to search less and write shorter answers. On by default.
+
+### Stop new searches when the budget is used up
+A hard stop: new searches are refused until you raise the budget or it's a new month. Off by default.
+
+### Update prices / Reset this month
+- **Update prices:** fetches the latest price list.
+- **Reset this month:** clears this month's numbers.
+
+---
+
+## Search engine and wikis
+**Settings → Search.**
+
+### Web search
+- **DuckDuckGo** (default): free, no key.
+- **Brave**, **Google (Programmable Search)**, **SearXNG** (your own or a public instance): give more or different results, and most need a key.
+- **Marginalia:** a free independent engine that favours text-heavy, non-commercial pages. The shared *public* key is rate-limited.
+
+### Image search
+Where pictures for articles come from. *None* turns pictures off entirely.
+
+### Region / Safe search
+- **Region:** *auto* follows your answer language. You can also enter a region code like `no-no`, `us-en` or `wt-wt` (worldwide).
+- **Safe search:** filters adult results.
+
+### Also search wikis / Wiki pages per search
+Searches Wikipedia, in your answer language, alongside the search engine and reads the top matching pages (2 by default). Wikipedia starts with a trust score of 7/10.
+
+### Wikis list
+Add any wiki built on MediaWiki (Fandom wikis, PsychonautWiki, the Minecraft wiki, …) by its address; AIRAG checks it works. For each wiki you can:
+- switch it on or off;
+- write what it's good for (*Ask AI to describe it* fills this in);
+- set how much it's trusted (1-10).
+
+---
+
+## Blocked and favourite sites
+**Settings → Research.** Both lists are comma-separated, and use the same rules:
+- `example.com` covers the whole site and all its subdomains (`news.example.com`).
+- `example.com/forum` covers only that directory and everything below it (`example.com/forum/thread/1`), not the rest of the site.
+
+### Blocked sites
+Never read. By default: TikTok, Instagram, Facebook, X/Twitter and Pinterest, which can't be read as text. YouTube was removed from this list in 0.4, because videos can now be read.
+
+### Favourite sites
+Pages from these start with a higher trust score (+2), so they're more likely to be used and cited.
+
+---
+
+## How hard each search works
+**Settings → Research.** Higher numbers mean better coverage, more tokens and more time.
+
+### Max search rounds (default 3)
+- **Round 1:** direct searches.
+- **Round 2:** related and indirect searches.
+- **Round 3 onwards:** searches that fill gaps in what was found.
+
+### Results per query / Pages read per round / Max pages read in total
+- **Results per query:** how many search results are considered for each search.
+- **Pages read per round:** how many of them are opened and read in each round.
+- **Max pages read in total:** a hard limit for the whole search.
+
+Reading is the main token cost.
+
+### Parallel AI calls (default 3)
+How many pages are judged at the same time. Use 1 for small local models.
+
+### Text per page sent to AI
+How much of each page the AI reads, only the most relevant passages. More text gives more detail and uses more tokens.
+
+### Direct-hit relevance / coverage thresholds
+In Auto mode, a page this relevant and complete makes AIRAG show results instead of writing an article.
+
+### Min findings to write an article / Stop searching after N findings
+- **Min findings to write an article:** with fewer facts found than this, AIRAG suggests better searches instead of writing an article.
+- **Stop searching after N findings:** stops early once it has enough facts.
+
+### Max article length (tokens) / Max sources per article
+Upper limits for the article. Reasoning models count their thinking towards the length, so keep it generous (default 8192).
+
+### Max images
+How many pictures an article can show.
+
+---
+
+## Reading pages and videos
+**Settings → Research → Page reader.**
+
+### Page reader
+- **auto:** fast download first, and a full browser for pages that need JavaScript (on PC with the optional browser installed; the phone app uses its own built-in browser).
+- **http:** download only.
+- **browser:** always the full browser.
+
+### Page timeout / Pages read in parallel
+How long to wait for each page, and how many are downloaded at once.
+
+### Read YouTube videos (on) / YouTube retries (1)
+A YouTube video's title, channel, description and, when YouTube allows it, its captions are read so the video can be used as a source. Videos show a preview card in the source list. *Retries* sets how often to try again when YouTube doesn't answer. If YouTube changes its pages, AIRAG says so separately from ordinary errors.
+
+### User agent
+How AIRAG identifies itself to websites. Only change this if a site you need refuses to load.
+
+---
+
+## My library (your own files)
+**Settings → Library.** AIRAG can only read the file types listed here, inside the folders you picked, nothing else.
+
+### Folders
+The folders to search when *My library* is ticked. Your **personal folder** (where saved articles go) is always included.
+
+### Also search the web when My library is ticked
+Off: answers only from your own files.
+
+### File types
+Comma-separated extensions AIRAG may read.
+
+### Skip files larger than (MB)
+Large files take longer to index.
+
+### Library files read per search / Minimum relevance
+- **Library files read per search:** how many matching files are read.
+- **Minimum relevance:** files the AI rates below this (1-10, default 4) for the question are left out and not listed.
+
+### Default reliability of your own files
+How much your notes are trusted to start with (default 6/10). The AI still judges each file.
+
+---
+
+## Writing style and instructions
+**Settings → Prompts.**
+
+### Writing style / Article length
+- **Writing style:** a balanced, simple or technical tone.
+- **Article length:** *auto* follows the question, from short for simple facts to long for complex topics.
+
+### Your instructions
+Added to the article, summary and explainer prompts. For example: "Always use metric units", "Prefer peer-reviewed sources", "Explain like I'm a nurse".
+
+### Search instructions
+Added to the search planner. For example: "Include Norwegian sources", "Avoid Reddit".
+
+### Article prompt (advanced)
+Replaces the main article instructions. Safety rules and the answer language are always added. Leave it empty for the default.
+
+---
+
+## Look: theme and colours
+**Settings → Appearance.** Changes apply right away.
+
+### Theme
+System, light or dark.
+
+### Colour palette
+The overall colour family of backgrounds and surfaces.
+
+### Accent colour
+The colour of buttons and highlights; pick one or choose your own. *Reset* goes back to the default look.
+
+---
+
+## Sound effects
+**Settings → Appearance → Customize audio.** Nothing here takes effect until you press **Save**; Cancel leaves everything as it was, including your phone's volume.
+
+### Play sound effects
+Turns all sound effects on or off.
+
+### Master volume
+- **On the phone:** this is the phone's media (music note) volume, so changing it here changes it on the phone too.
+- **On the PC:** AIRAG's own volume for its sounds.
+
+### Individual sounds
+Separate sounds for:
+- the microphone starting to listen;
+- the microphone stopping;
+- a search finishing;
+- an explainer finishing;
+- a task failing or being stopped.
+
+Each has a volume slider that plays the sound when you let go of it, and a play/stop button. **Choose a file** uses your own clip (MP3, OGG, WAV, M4A, AAC, OPUS, FLAC or WEBM, up to 3 MB); **Use built-in** goes back to the default.
+
+### Reset to defaults
+Restores all volumes and built-in sounds, once you press Save.
+
+---
+
+## Speech: microphone and read aloud
+
+### Microphone (search box)
+Speak your search. On the phone it uses Android's speech recognition; on computers it uses the browser's (the desktop window may not offer it).
+
+### Search as soon as you stop speaking (Settings → Defaults)
+The search starts by itself when you stop talking. Turn it off to check or edit the text first. On by default.
+
+### Read aloud: Voice (Settings → Appearance)
+*Female* or *Male* picks the best matching voice for the article's language, or you can choose a specific voice installed on your device. Install more voices in your phone's or computer's text-to-speech settings.
+
+### Read aloud: Speed and Test
+- **Speed:** 0.5× to 2×.
+- **Test:** plays a sample with the chosen voice.
+
+On articles, *Listen*, *Pause*, *Resume* and *Stop* control the reading.
+
+---
+
+## Saving and exporting
+
+### Save (articles)
+Saves a Markdown file to *My library → Articles*, plus a small `.airag.json` copy so it opens in AIRAG again. Saved articles appear under *Saved* in History.
+
+### Save articles with pictures and the explainer (Settings → Defaults)
+Also keeps pictures and the interactive explainer in the saved copy, so they work offline. This makes larger files.
+
+### Export web page
+One HTML file in *My library → Exports* that opens in any browser, offline, without AIRAG; good for sending to someone. Before exporting it asks whether to include:
+- a short summary;
+- the interactive explainer;
+- pictures.
+
+If the summary or explainer doesn't exist yet, it's made first, which uses tokens.
+
+### Backup / import (Settings → System)
+Exports your settings and history to one file, and imports them again. API keys are only included if you tick that option.
+
+---
+
+## App, updates and maintenance
+
+### Language and answer language (Settings → General)
+- **Language:** the app's own language.
+- **Answer language:** *Same as my question* (default) writes in the language you searched in; you can also pick the app's language or a fixed language.
+
+### Window mode (PC)
+How AIRAG runs on your PC: in its own **desktop window**, or as a **browser tab with a tray icon**.
+
+### Check for updates when AIRAG starts / Check for updates / Check & repair
+- **Check for updates when AIRAG starts:** shows a popup when a new version is out.
+- **Check & repair** (Settings → System): finds and fixes broken or missing app files.
+
+### Searches kept in history
+Older searches are deleted automatically; pinned articles are never deleted.
+
+### Preferred port (PC)
+The local address AIRAG uses on your computer; a free one is picked if it's busy.
+
+### Clear cache / Logs / Hardware (Settings → System)
+- **Clear cache:** fixes a page that looks outdated after an update.
+- **Logs:** helps when reporting a bug.
+- **Hardware:** shows your device and recommends local models that fit it.
+
+---
+
+## Background work and notifications
+
+### Searches and explainers keep running
+- **Leaving the page:** the work keeps going.
+- **On the phone:** a notification with AIRAG's icon and a **Cancel** button keeps it going even after you close the app. Expand the notification to see everything running or queued.
+- **On the PC:** closing the window while something runs hides the window until the work is done.
+
+### Finished and failed notifications
+A notification tells you when a search or explainer is done (tap to open it), or why it stopped.
+
+### Background permission (phone)
+The first time, AIRAG asks to show notifications and to be allowed to run in the background without battery restrictions. Without this, Android may pause a search when you leave the app.
+
+### Activity bar and History dot
+- **Activity bar:** a slim bar under the top bar shows what's running; tap it to open, or ✕ to cancel.
+- **History dot:** pulses while something runs, and stays on when something finished that you haven't opened yet.
+
+---
+
+## Recommended setups
+
+| Goal | Change these |
+|---|---|
+| **Cheapest** | Mode *Results*; Pictures & explainer off; a small model (Claude Haiku, `openrouter/auto`); Research → Max pages read in total 8-10; Usage → stop at budget. |
+| **Best quality** | Mode *Auto*; a strong model; Research → Max search rounds 3-4 and Max pages read 20+; Wikis on; add Favourite sites for your field. |
+| **Offline / private** | AI model → Ollama; tick *My library*; Library → *Also search the web* off. |
+| **Phone** | Keep the defaults; allow background running when asked so searches finish while the app is closed. |

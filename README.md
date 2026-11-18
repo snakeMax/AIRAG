@@ -43,50 +43,14 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 
 ## Settings guide
 
-Everything works out of the box; these are the knobs worth knowing. **Cost** means AI tokens (money with paid APIs, time with local models).
+Everything works out of the box. **[SETTINGS.md](SETTINGS.md)** explains every setting and button, grouped by what it does (searching, tools, AI model, usage and budget, search engine and wikis, blocked and favourite sites, how hard each search works, reading pages and videos, My library, writing style, look, sound, speech, saving and exporting, app and updates, background work), with what each change costs and recommended setups:
 
-### On the search page
-| Control | What it does | Impact |
-|---|---|---|
-| **Auto / Article / Results** | Auto writes an article when the question needs one and shows ranked results when a page answers it directly. Article always writes one; Results never does. | Results is the cheapest and fastest. |
-| **My library** | Also searches your own files (Settings → Library). | Uses only relevant files; a few extra AI calls. |
-| **Pictures & explainer** | Finds pictures and checks whether an interactive explainer fits. Off: the Interactive button checks only when you click it. | Off saves tokens and time. |
-| **Any time / date range** | Only uses sources from that period (engines that can't filter are filtered afterwards). | Fewer, fresher sources. |
-| **Microphone** | Speak your search. Settings → Defaults → *Search as soon as you stop speaking* (on). | – |
-
-### On articles and results (hide any of them in Settings → **Tools**)
-| Button | What it does | Cost |
-|---|---|---|
-| **Summarize** | Short summary of the article, the results or one source. | Small |
-| **Interactive** | Builds a small simulation/game that explains the topic. Runs in the background; the button shows a spinner and reopens it. | Medium–large |
-| **Locate more sources** | Searches new angles for sources the article doesn't have yet and adds a *What more sources add* section (results pages: adds them to the results). The article is not rewritten. | Medium |
-| **Save** | Saves to My library as Markdown (optionally with pictures and the explainer). | Free |
-| **Copy as Markdown** | Article with its source list, ready to paste. | Free |
-| **Translate with AI** | Translates the article or results; *Show original* switches back. | Medium |
-| **Listen** | Reads the article aloud with your device's voices. | Free |
-| **Pin** | Pins the article to the top of the home page (never removed automatically). | Free |
-| **Export web page** | One HTML file with the article (and optionally a summary, the explainer and pictures) that opens in any browser, offline, without AIRAG. | Free, unless it has to make the summary/explainer first (it asks). |
-| **On sources: Summarize / Save page / Pin** | Pinned sources stay on the home page until unpinned and are reused by searches that match them. | Pinning is free |
-
-### Settings tabs
-- **General** – language, window mode, updates, how many searches history keeps.
-- **Defaults** – what new searches start with (mode, My library, pictures & explainer, time range), saving with pictures, how pinned sources open (saved page or AI version), search-after-speaking.
-- **Appearance** – theme, palette and accent colour; **Customize audio** (sound effects, your own clips, master volume = the phone's media volume); **Read aloud** (female/male or a specific voice, speed).
-- **AI model** – provider (Anthropic, OpenAI, DeepSeek, OpenRouter, Ollama, your PC, any OpenAI-compatible server), key and model. *OpenRouter's* `openrouter/auto` picks the best model for each request. Cheaper models = cheaper searches; local models are free but need a capable PC.
-- **Search** – search engine (DuckDuckGo works out of the box; Brave, Google, SearXNG and Marginalia are options), region, safe search, and **Wikis**: Wikipedia in your answer language plus any MediaWiki wiki you add (with a note on what it's good for and a trust level).
-- **Library** – folders AIRAG may read (only the listed file types, nothing else), file size limit, how many files per search, minimum relevance, how much your own files are trusted.
-- **Research** – how hard each search works. More rounds / pages read = better coverage, more tokens and time. *Blocked sites* and *Favourite sites* take comma-separated sites (all subdomains) or paths (`site.com/forum` = that directory and below); favourites start with a higher trust score. *Use pinned sources*, *look up code examples for explainers*.
-- **Prompts** – writing style, article length, explainer detail (simple / medium / detailed), and your own instructions for the AI.
-- **Tools** – show or hide each tool button.
-- **Usage** – tokens and cost per model this month, a monthly budget bar (default $5), *tell the AI when the budget is nearly used* (it searches less and writes shorter), and an optional hard stop.
-- **System** – updates and *Check & repair*, storage, cache, backup/export, logs, hardware (and recommended local models).
-- **About** – version and licence.
-
-### Recommended setups
-- **Cheapest:** mode *Results*, Pictures & explainer off, a small model (e.g. Claude Haiku or `openrouter/auto`), Research → Max pages read 8–10.
-- **Best quality:** mode *Auto*, a strong model, Research → Max search rounds 3–4 and Max pages read 20+, Wikis on, a few Favourite sites for your field.
-- **Offline / private:** Ollama on your PC (Settings → AI model), My library ticked, *Also search the web* off.
-- **Phone:** the defaults; allow AIRAG to run in the background when asked so searches finish while the app is closed.
+| Goal | Change these |
+|---|---|
+| **Cheapest** | Mode *Results*, Pictures & explainer off, a small model (Claude Haiku, `openrouter/auto`), fewer pages read. |
+| **Best quality** | Mode *Auto*, a strong model, more search rounds and pages, wikis on, favourite sites for your field. |
+| **Offline / private** | Ollama on your PC, *My library* ticked, *Also search the web* off. |
+| **Phone** | The defaults; allow background running when asked. |
 
 ## Updates
 
