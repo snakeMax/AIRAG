@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import logging
 import os
 import secrets
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -226,8 +227,11 @@ def _needs_key(s: dict) -> bool:
 @app.get("/api/status")
 async def status():
     s = config.load()
+    vision = False
     try:
-        llm = get_llm(s).describe()
+        engine = get_llm(s)
+        llm = engine.describe()
+        vision = bool(getattr(engine, "supports_vision", False))
     except Exception as e:
         llm = f"not configured ({e})"
     try:
@@ -236,7 +240,7 @@ async def status():
         search = str(e)
     out = {"llm": llm, "provider": s["llm"]["provider"], "search": search, "version": __version__,
            "needs_key": _needs_key(s), "setup_done": bool(s["app"].get("setup_done")), "ollama": None,
-           "library_folders": len(library_args(s)["folders"]), "browser_ready": browser_install.installed()}
+           "library_folders": len(library_args(s)["folders"]), "browser_ready": browser_install.installed(), "vision": vision}
     if s["llm"]["provider"] == "ollama":
         url = s["llm"]["providers"]["ollama"].get("base_url") or ollama_manager.DEFAULT_URL
         st = await ollama_manager.status(url)
@@ -923,6 +927,188 @@ class TranslateReq(BaseModel):
     markdown: str = ""
     id: Optional[str] = None
     items: list = []
+
+
+# ---------------------------------------------------------------- research toolbar
+class FollowupReq(BaseModel):
+    id: str
+    question: str = ""
+    mode: str = "ask"            # ask | compare | timeline | factcheck | elaborate | voice
+    selection: str = ""
+    ui_lang: Optional[str] = None
+    extra: Optional[dict] = None   # elaborate: {formula, expr, result}
+
+
+@app.post("/api/followup")
+async def followup_route(req: FollowupReq):
+    from . import followup
+    settings = config.load()
+    extra = {k: str(v)[:2000] for k, v in (req.extra or {}).items() if k in ("formula", "expr", "result")}
+
+    async def run(emit):
+        async for ev in followup.answer(settings, req.id, req.question[:2000], req.mode, req.selection[:4000],
+                                        req.ui_lang, extra):
+            await emit(ev)
+    return _ndjson(run)
+
+
+@app.get("/api/followup/{rid}")
+def followup_thread(rid: str):
+    from . import followup
+    return {"items": followup.thread_of(rid)}
+
+
+class AddAnswerReq(BaseModel):
+    index: int
+
+
+@app.post("/api/followup/{rid}/add")
+def followup_add(rid: str, req: AddAnswerReq):
+    from . import followup
+    try:
+        return followup.add_to_article(config.load(), rid, req.index)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class CalcReq(BaseModel):
+    text: str
+
+
+@app.post("/api/tools/calculate")
+async def tools_calculate(req: CalcReq):
+    """The Calculate button: the selection becomes an expression, the calculator solves it (no long AI answer)."""
+    from . import followup
+    try:
+        return await followup.calculate(config.load(), req.text)
+    except LLMError as e:
+        raise HTTPException(502, str(e))
+    except (ValueError, asyncio.TimeoutError) as e:
+        raise HTTPException(400, f"Couldn't calculate that: {e or 'it took too long'}")
+
+
+class RewriteReq(BaseModel):
+    id: str
+    selection: str
+    instructions: str = ""
+    ui_lang: Optional[str] = None
+
+
+@app.post("/api/rewrite")
+async def rewrite_route(req: RewriteReq):
+    from . import rewrite
+    settings = config.load()
+
+    async def run(emit):
+        async for ev in rewrite.rewrite(settings, req.id, req.selection, req.instructions, req.ui_lang):
+            await emit(ev)
+    return _ndjson(run)
+
+
+class RewriteApplyReq(BaseModel):
+    id: str
+    old: str
+    new: str
+
+
+@app.post("/api/rewrite/apply")
+def rewrite_apply(req: RewriteApplyReq):
+    from . import rewrite
+    try:
+        return {"article": rewrite.apply(config.load(), req.id, req.old, req.new)}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class ImageReq(BaseModel):
+    image: str                  # https://... or data:image/...;base64,...
+    question: str = ""
+    id: Optional[str] = None
+    ui_lang: Optional[str] = None
+
+
+@app.post("/api/analyze-image")
+async def analyze_image(req: ImageReq):
+    """'Analyze image': the selected model looks at a picture (an equation, a chart...) and answers."""
+    from .llm import get_llm
+    s = config.load()
+    llm = get_llm(s)
+    if not getattr(llm, "supports_vision", False):
+        raise HTTPException(400, "The selected AI model can't look at images. Pick a model that can (Claude, GPT-4o/5, "
+                                 "or a vision model through OpenRouter), or copy the equation as text with an "
+                                 "image-to-text or maths-scanner app.")
+    img = req.image.strip()
+    if not (img.startswith("https://") or re.match(r"^data:image/(png|jpe?g|webp|gif);base64,", img)):
+        raise HTTPException(400, "Only web pictures or screenshots can be analyzed.")
+    if len(img) > 8_000_000:
+        raise HTTPException(413, "The picture is too large.")
+    rec = history.get(req.id) if req.id else None
+    lang = languages.answer_language(s, req.ui_lang, req.question or (rec or {}).get("query", ""))
+    q = req.question.strip() or ("If the picture shows a formula or equation, write it out in plain maths notation and "
+                                 "solve or explain it; otherwise describe what it shows and why it matters here.")
+    context = f"The picture is from an article about: {(rec or {}).get('query', '')}\n" if rec else ""
+    prompts_mod.use(s)
+    system = ("You look at one picture for a reader. Be accurate; if something in the picture is unreadable, say so. "
+              f"Write in {lang}.\n" + prompts_mod.SAFETY + "\n" + prompts_mod.UNTRUSTED)
+
+    async def run(emit):
+        got = False
+        try:
+            async for piece in llm.stream(system, llm.vision_content(context + q, [img]), max_tokens=1500):
+                got = got or bool(piece.strip())
+                await emit({"type": "token", "text": piece})
+        except LLMError as e:
+            raise ValueError(f"The model couldn't read the picture ({e}). It may not support images: try a "
+                             "vision model, or an image-to-text / maths-scanner app.")
+        if not got:
+            raise ValueError("The model gave no answer for the picture. It may not support images: try a vision "
+                             "model, or an image-to-text / maths-scanner app.")
+        await emit({"type": "done"})
+    return _ndjson(run)
+
+
+class AgentToolsReq(BaseModel):
+    agent: Optional[str] = None
+    tools: Optional[List[str]] = None
+    picker: Optional[str] = None
+    effort: Optional[Dict[str, str]] = None
+
+
+@app.get("/api/agent-tools")
+def agent_tools():
+    from . import tools as T, effort as E
+    s = config.load()
+    at = s.get("agent_tools") or {}
+    return {"tools": [{"name": t.name, "label": t.label, "help": t.help, "costly": t.costly, "later": t.later}
+                      for t in T.REGISTRY.values()],
+            "sets": {a: T.enabled(s, a) if (at.get("sets") or {}).get(a) is not None else T.default_sets()[a]
+                     for a in T.AGENTS},
+            "picker": at.get("picker") or "autonomous",
+            "effort": {a: E.level(s, a) for a in E.AGENTS}, "levels": E.ORDER}
+
+
+@app.post("/api/agent-tools")
+def agent_tools_save(req: AgentToolsReq):
+    """Tool switches save immediately (no Save button), one set per agent type."""
+    from . import tools as T
+    s = config.load()
+    at = dict(s.get("agent_tools") or {})
+    sets = dict(at.get("sets") or {})
+    if req.agent:
+        if req.agent not in T.AGENTS:
+            raise HTTPException(400, "Unknown agent type")
+        sets[req.agent] = [n for n in (req.tools or []) if n in T.REGISTRY]
+    if req.picker in T.AGENTS:
+        at["picker"] = req.picker
+    at["sets"] = sets
+    if req.effort:
+        from . import effort as E
+        eff = dict(s.get("effort") or {})
+        eff.update({a: v for a, v in req.effort.items() if a in E.AGENTS and v in E.LEVELS})
+        config.save({"agent_tools": at, "effort": eff})
+        return agent_tools()
+    config.save({"agent_tools": at})
+    return agent_tools()
 
 
 @app.post("/api/translate/article")

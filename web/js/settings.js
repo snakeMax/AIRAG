@@ -80,7 +80,7 @@ export async function openSettings(tab = "general") {
           <section data-pane="general">${generalPane(sc, st)}</section>
           <section data-pane="defaults" hidden>${defaultsPane(sc, st)}</section>
           <section data-pane="appearance" hidden>${appearancePane()}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
-          <section data-pane="tools" hidden>${buttonsPane(sc, st)}</section>
+          <section data-pane="tools" hidden>${agentToolsPane()}${buttonsPane(sc, st)}</section>
           <section data-pane="model" hidden>${modelPane(sc, st)}</section>
           <section data-pane="search" hidden>${searchPane(sc, st)}</section>
           <section data-pane="library" hidden>${libraryPane(sc, st)}</section>
@@ -112,6 +112,7 @@ export async function openSettings(tab = "general") {
   wireGeneral(dlg);
   wireAppearance(dlg);
   wireAudio(dlg);
+  wireAgentTools(dlg);
   wireReadAloud(dlg);
   wireModel(dlg);
   wireSearch(dlg);
@@ -476,10 +477,43 @@ function wireAudio(dlg) {
   S.audioDraft = draft;
 }
 
+// which tools each AI agent may use: one set per agent type, saved the moment a switch changes
+function agentToolsPane() {
+  return `<h3>${h(t("atools.title"))}</h3><p>${h(t("atools.intro"))}</p>
+    <div class="field"><label for="atAgent">${h(t("atools.agent"))}</label>
+      <select id="atAgent">${["standard", "autonomous", "subagents"].map(a => `<option value="${a}">${h(t("atools." + a))}</option>`).join("")}</select>
+      <div class="help" id="atAgentHelp"></div></div>
+    <div id="atList" class="btn-grid"><div class="status-line"><span class="spinner sm"></span></div></div>
+    <p class="help">${icon("check")} ${h(t("atools.autosave"))}</p>`;
+}
+
+async function wireAgentTools(dlg) {
+  const sel = $("#atAgent", dlg);
+  if (!sel) return;
+  let data;
+  try { data = await api("/api/agent-tools"); } catch (e) { $("#atList", dlg).innerHTML = `<div class="status-line err">${h(e.message)}</div>`; return; }
+  const draw = () => {
+    const agent = sel.value, on = new Set(data.sets[agent] || []);
+    $("#atAgentHelp", dlg).textContent = t("atools." + agent + "Help");
+    const L = (tl, k) => has(`tool.${tl.name}${k}`) ? t(`tool.${tl.name}${k}`) : (k ? tl.help : tl.label);
+    $("#atList", dlg).innerHTML = data.tools.map(tl => `<div class="field"><label class="switch">
+        <input type="checkbox" data-tool="${h(tl.name)}" ${on.has(tl.name) ? "checked" : ""}> ${h(L(tl, ""))}${tl.costly ? ` <span class="pill-cost">${h(t("atools.costly"))}</span>` : ""}</label>
+        <div class="help">${h(L(tl, ".help"))}</div></div>`).join("");
+    $$("[data-tool]", dlg).forEach(cb => (cb.onchange = async () => {
+      const tools = $$("[data-tool]", dlg).filter(x => x.checked).map(x => x.dataset.tool);
+      try { data = await api("/api/agent-tools", { method: "POST", body: { agent, tools } }); toast(t("atools.saved"), 1500); }
+      catch (e) { toast(e.message, 4000); cb.checked = !cb.checked; }
+    }));
+  };
+  sel.value = data.picker || "autonomous";
+  sel.onchange = () => { draw(); api("/api/agent-tools", { method: "POST", body: { picker: sel.value } }).catch(() => {}); };
+  draw();
+}
+
 // which tool buttons are shown
 function buttonsPane(sc, st) {
   if (!sc.buttons) return "";
-  return `<h3>${h(t("tab.tools"))}</h3><p>${h(t("btns.intro"))}</p>
+  return `<h3 style="margin-top:22px">${h(t("btns.title"))}</h3><p>${h(t("btns.intro"))}</p>
     <div class="btn-grid">${fields(sc.buttons, "buttons", "buttons", st.buttons)}</div>`;
 }
 
@@ -930,37 +964,86 @@ function versionLabel(v, build) {
 function usagePane(sc, st) {
   return `<h3>${h(t("tab.usage"))}</h3><p>${h(t("usage.intro"))}</p>
     <div id="usageBox"><div class="status-line">${h(t("common.checking"))}</div></div>
+    <h3 style="margin-top:20px">${h(t("effort.title"))}</h3><p>${h(t("effort.intro"))}</p>
+    <div id="effortBox" class="effort-box"></div>
     ${fields(sc.usage, "usage", "usage", st.usage)}`;
 }
 
 const money = v => "$" + (v < 0.01 && v > 0 ? v.toFixed(4) : v.toFixed(2));
 const tokens = n => n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(n);
 
+let usageUnit = (() => { try { return localStorage.getItem("airag.usageUnit") || "money"; } catch { return "money"; } })();
+
 async function refreshUsage() {
   const box = $("#usageBox");
   if (!box) return;
   const u = await api("/api/usage").catch(e => ({ error: e.message }));
   if (u.error) { box.innerHTML = `<div class="status-line err">${h(u.error)}</div>`; return; }
+  const tok = usageUnit === "tokens";
+  const val = (cost, n) => tok ? tokens(n) : money(cost);
   const share = u.budget ? Math.min(1, u.spent / u.budget) : 0;
   const level = share >= 1 ? "bad" : share >= 0.7 ? "warn" : "ok";
-  const bar = u.budget ? `<div class="budget-bar ${level}"><span style="width:${(share * 100).toFixed(1)}%"></span></div>
-      <div class="lr-s">${h(t("usage.ofBudget", { spent: money(u.spent), budget: money(u.budget), left: money(Math.max(0, u.left)) }))}</div>`
-    : `<div class="lr-s">${h(t("usage.noBudget", { spent: money(u.spent) }))}</div>`;
+  const left = u.budget ? (tok ? (u.tokens_left != null ? "≈ " + tokens(u.tokens_left) : "?") : money(Math.max(0, u.left))) : "-";
+  const maxDay = Math.max(1e-9, ...u.days.map(d => tok ? d.tokens : d.cost));
+  const spark = u.days.length > 1 ? `<div class="u-spark" aria-hidden="true">${u.days.map(d =>
+      `<i style="height:${Math.max(4, ((tok ? d.tokens : d.cost) / maxDay) * 100).toFixed(1)}%" title="${h(d.day)}: ${h(val(d.cost, d.tokens))}"></i>`).join("")}</div>` : "";
   const rows = u.rows.map(r => `<tr><td><div class="lr-t">${h(r.model || "?")}</div><div class="lr-s">${h(r.provider)}${r.estimated ? ` · ${h(t("usage.estimated"))}` : ""}</div></td>
       <td>${r.calls}</td><td>${tokens(r.in)}</td><td>${tokens(r.out)}</td><td>${r.priced === false ? "?" : money(r.cost)}</td></tr>`).join("");
-  box.innerHTML = `<div class="usage-top"><div><div class="usage-big">${money(u.spent)}</div><div class="lr-s">${h(t("usage.thisMonth", { n: tokens(u.tokens) }))}</div></div></div>
-    ${bar}
+  const stat = (label, v) => `<div class="u-stat"><div class="u-stat-v">${h(v)}</div><div class="u-stat-l">${h(label)}</div></div>`;
+  box.innerHTML = `<div class="u-hero ${level}">
+      <div class="u-hero-top"><div><div class="u-hero-l">${h(t("usage.month"))}</div>
+          <div class="usage-big">${h(val(u.spent, u.tokens))}</div></div>
+        <button type="button" class="u-unit ${tok ? "tok" : ""}" id="usageUnit" role="switch" aria-checked="${tok}" aria-label="${h(t("usage.unit"))}">
+          <span>$</span><span>${h(t("usage.tokens"))}</span><i></i></button></div>
+      ${u.budget ? `<div class="budget-bar ${level}"><span style="width:${(share * 100).toFixed(1)}%"></span></div>
+        <div class="u-hero-row"><span>${h(t("usage.used", { p: Math.round(share * 100) }))}</span><span>${h(t("usage.left", { v: left }))}</span></div>`
+        : `<div class="lr-s">${h(t("usage.noBudgetShort"))}</div>`}
+      ${spark}
+    </div>
+    <div class="u-stats">${stat(t("usage.today"), val(u.today.cost, u.today.tokens))}
+      ${stat(t("usage.calls"), String(u.calls))}
+      ${stat(t("usage.avgCall"), tokens(u.avg_call_tokens))}
+      ${!tok && u.projected ? stat(t("usage.projected"), money(u.projected)) : ""}
+      ${u.local_tokens ? stat(t("usage.local"), tokens(u.local_tokens)) : ""}
+      ${u.top_model ? stat(t("usage.topModel"), u.top_model) : ""}</div>
+    ${u.local_compare ? `<div class="help">${h(t("usage.localCompare", { v: money(u.local_compare.cost), model: u.local_compare.model }))}</div>` : ""}
     ${u.rows.length ? `<div class="table-wrap"><table class="usage-table"><thead><tr><th>${h(t("usage.model"))}</th><th>${h(t("usage.calls"))}</th><th>${h(t("usage.in"))}</th><th>${h(t("usage.out"))}</th><th>${h(t("usage.cost"))}</th></tr></thead><tbody>${rows}</tbody></table></div>`
       : `<div class="h-empty">${h(t("usage.none"))}</div>`}
     ${u.unpriced.length ? `<div class="help">${h(t("usage.unpriced"))}</div>` : ""}
     <div class="help">${h(u.prices_updated ? t("usage.prices", { when: fmtAgo(u.prices_updated * 1000, uiLang()) }) : t("usage.pricesBuiltIn"))}</div>
     <div class="row" style="margin:8px 0 14px"><button type="button" class="btn sm ghost" id="usagePrices">${icon("refresh")}${h(t("usage.refreshPrices"))}</button>
       <button type="button" class="btn sm ghost" id="usageReset">${icon("trash")}${h(t("usage.reset"))}</button></div>`;
+  $("#usageUnit").onclick = () => {
+    usageUnit = tok ? "money" : "tokens";
+    try { localStorage.setItem("airag.usageUnit", usageUnit); } catch { /* not kept */ }
+    $("#usageUnit").classList.toggle("tok", !tok);
+    setTimeout(refreshUsage, 220);   // let the switch slide first
+  };
   $("#usagePrices").onclick = async () => { await api("/api/usage/prices", { method: "POST" }).catch(() => {}); refreshUsage(); };
   $("#usageReset").onclick = async () => { if (!confirm(t("usage.resetConfirm"))) return; await api("/api/usage/reset", { method: "POST" }); refreshUsage(); };
 }
 
-function wireUsage() { /* buttons are wired each time the box is drawn */ }
+// quality vs. token saving: one mode per agent type, saved the moment it changes
+async function drawEffort() {
+  const box = $("#effortBox");
+  if (!box) return;
+  let data;
+  try { data = await api("/api/agent-tools"); } catch (e) { box.innerHTML = `<div class="status-line err">${h(e.message)}</div>`; return; }
+  box.innerHTML = ["standard", "autonomous", "subagents"].map(a => `<div class="effort-row">
+      <div class="effort-name">${h(t("atools." + a))}</div>
+      <div class="effort-seg" role="radiogroup" aria-label="${h(t("atools." + a))}" style="--i:${data.levels.indexOf(data.effort[a])};--n:${data.levels.length}">
+        <i aria-hidden="true"></i>${data.levels.map(l => `<button type="button" role="radio" aria-checked="${l === data.effort[a]}" data-agent="${a}" data-level="${l}" title="${h(t("effort." + l + "Help"))}">${h(t("effort." + l))}</button>`).join("")}</div>
+      <div class="help">${h(t("effort." + data.effort[a] + "Help"))}</div></div>`).join("");
+  $$("[data-level]", box).forEach(b => (b.onclick = async () => {
+    const seg = b.parentElement;
+    seg.style.setProperty("--i", data.levels.indexOf(b.dataset.level));
+    try { await api("/api/agent-tools", { method: "POST", body: { effort: { [b.dataset.agent]: b.dataset.level } } }); toast(t("atools.saved"), 1200); }
+    catch (e) { toast(e.message, 4000); }
+    drawEffort();
+  }));
+}
+
+function wireUsage() { drawEffort(); /* the usage buttons are wired each time the box is drawn */ }
 
 function aboutPane() {
   const i = S.info;

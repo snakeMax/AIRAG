@@ -8,6 +8,9 @@ Everything works with the defaults. If you only change one thing, pick the AI mo
 [Searching](#searching) ·
 [Article and result tools](#article-and-result-tools) ·
 [Interactive explainers](#interactive-explainers) ·
+[Research toolbar](#research-toolbar) ·
+[What the AI may use (tools)](#what-the-ai-may-use-tools) ·
+[Analyze image](#analyze-image) ·
 [Pinned articles and sources](#pinned-articles-and-sources) ·
 [AI model](#ai-model) ·
 [Usage and budget](#usage-and-budget) ·
@@ -110,11 +113,88 @@ Small simulations or games that explain the topic, built by the AI for articles 
 - **Opening:** builds the explainer, or opens it if it's already built.
 - **In the background:** building keeps going when you close the window. The button shows a spinner while it builds, and clicking it again shows the one being built. *Cancel* stops it.
 
+### Data charts
+When the article or its sources give related numbers (prices or stock values over time, figures for different groups or years), the explainer can be an interactive line or bar chart of that data. Each point shows its source number. Only numbers from the sources are plotted.
+
 ### Explainer detail (Settings → Prompts)
 **Simple**, **medium** (default) or **detailed**. Detailed makes richer simulations but uses more tokens.
 
 ### Look up code examples first (Settings → Research)
 Before building, a quick web search finds code for similar simulations to learn from. On by default; turn off to skip that search.
+
+---
+
+## Research toolbar
+Tools for a finished article or results page. On a computer it's a small bar at the bottom of the page; on a phone, tap the round button with three lines (they turn upright while the menu is open).
+
+### Follow-up
+Opens a box to ask about the article; tap the microphone to speak instead.
+- **Where answers go:** a Follow-ups panel beside the article (a sheet from the bottom on phones), cited with the article's source numbers.
+- **Add to article:** adds an answer to the article as a new section.
+- **Questions that don't fit the article:** the AI doesn't search for them. It answers briefly only if it already knows, to save tokens.
+- **Tools:** the AI may use the tools allowed for the standard agent (see [What the AI may use](#what-the-ai-may-use-tools)), for example the calculator for maths. The tools it used show as small labels above the answer.
+
+### Compare / Timeline / Fact-check
+Run on the whole article, or on the text you selected. Results go to the Follow-ups panel.
+- **Compare:** the main options or viewpoints side by side.
+- **Timeline:** the events in date order.
+- **Fact-check:** checks claims against the sources (and the web, if Web search is allowed).
+
+### Rewrite
+Select a paragraph, then Rewrite. Say how it should change (or speak it), and the new version appears **next to the old one**. Nothing changes until you press *Replace in article*; *Copy* takes the new text without changing the article.
+
+### Calculate
+Select a formula or sum. The AI turns it into plain maths and the calculator solves it exactly; the result stays in a small card until you close it. *Elaborate…* explains how the answer was found and how it relates to the article and its sources. Selecting text in the result card does the same.
+
+### Cite
+Copies all sources as **APA**, **MLA** or **BibTeX**, or downloads them (a .bib file for BibTeX).
+
+### Selected text: Ask about this, Fact-check, Rewrite, Calculate, Copy with source, Voice
+Selecting text in an article shows a small menu.
+- **Copy with source:** copies the quote with its sources in your citation style.
+- **Calculate:** only appears when the selection looks like maths.
+- **Voice (microphone):** say what to do with the selected text. A question becomes a follow-up; "fact-check this" runs a fact-check, and so on.
+
+### Citation style (Settings → Defaults)
+APA (default), MLA or BibTeX. Used by Cite and Copy with source.
+
+### Analyze image (press and hold, or right-click)
+On a picture or drawing in an article, choose *Analyze image*. The answer appears in the Follow-ups panel. Needs an AI model that can see pictures (see [Analyze image](#analyze-image)).
+
+---
+
+## What the AI may use (tools)
+**Settings → Tools**, at the top. Tools are things the AI can call while it answers, like the calculator.
+
+### Agent
+Pick which kind of agent you're changing. Each has its own set, and AIRAG remembers your last pick. Opens on *Autonomous* until you pick another.
+- **Standard:** answers follow-ups and toolbar actions. It can't ask for more tools or setting changes; if a tool is off, it works the answer out in text.
+- **Autonomous (from 0.5):** the research agent coming in 0.5. It may ask you once per research session to allow a tool for itself or its sub-agents.
+- **Sub-agents (from 0.5):** helpers the autonomous agent starts for parts of a task.
+
+### Tool switches
+Saved the moment you change them (no Save button needed).
+
+| Tool | What it does | On by default for |
+|---|---|---|
+| Calculator | Exact maths, equations, algebra and statistics. No AI tokens | all |
+| Date and time | Today's date and the time | all |
+| Search this article's sources | Looks through the pages already read, including ones the article didn't cite | all |
+| Web search | New searches for fact-checks and follow-ups. *Uses tokens* | all |
+| Read a web page | Reads a page found by web search. *Uses tokens* | all |
+| Read aloud | Speaks text with your device's voice | all |
+| Locate more sources | Same as the button. *Uses tokens* | standard, autonomous |
+| Copy to clipboard | Copies an exact quote or result | autonomous |
+| Pin article | Pins the article to Home | autonomous |
+
+---
+
+## Analyze image
+Lets the AI model look at a picture or screenshot: formulas are written out and solved, other pictures are described.
+- **Computer:** the *Analyze image* button on Home, or paste (Ctrl+V) or drop a picture on Home. The button only shows when the selected model can see pictures.
+- **Phone:** share a picture or screenshot from any app and choose *Analyze with AIRAG*.
+- **Ask a question (optional):** type or speak what you want to know.
+- **Models that can see pictures:** Claude, OpenAI (GPT-4o and newer) and vision models through OpenRouter. Ollama and DeepSeek can't. If the model can't, AIRAG says so and suggests an image-to-text or maths-scanner app instead.
 
 ---
 
@@ -160,10 +240,28 @@ Stored only on your device and never shown to the AI.
 **Settings → Usage.**
 
 ### This month
-Tokens and cost per AI model.
+The total at the top, with a bar for the budget, what's left, and a small chart of each day.
+- **$ / Tokens switch:** shows the numbers in dollars or in tokens. In tokens, *left* is an estimate of how many tokens the rest of the budget buys at your average price.
+- **Other numbers:** today, number of AI calls, average tokens per call, the month at this pace, the most used model, and free local tokens.
+- **Local models (Ollama):** counted in tokens only. When you've also used a paid model this month, a line shows what the local use would have cost on the cheapest paid model you used.
+
+Tokens and cost per AI model are listed below.
 - **Where the counts come from:** exact numbers when the provider reports them, otherwise estimated (marked *partly estimated*).
 - **Prices:** from OpenRouter's public price list, updated daily, with built-in prices as a backup.
 - **Local models:** count tokens only, at $0.
+
+### Quality or saving (one per agent)
+Five modes: **Minimal**, **Saver**, **Medium** (default for all), **Detailed** and **Maximum**. Set separately for Standard, Autonomous and Sub-agents; saved straight away.
+
+| Mode | Answers | Research rounds and pages read | Tool calls per answer |
+|---|---|---|---|
+| Minimal | very short, plain | about a third | 1 |
+| Saver | short | about two thirds | 2 |
+| Medium | normal | as set in [How hard each search works](#how-hard-each-search-works) | 4 |
+| Detailed | longer, more cross-checking | about a third more | 6 |
+| Maximum | most thorough | about two thirds more | 8 |
+
+The standard mode also applies to normal searches (rounds and pages read are scaled from your research settings).
 
 ### Monthly budget ($)
 Shown as a bar; default $5. 0 means no budget.

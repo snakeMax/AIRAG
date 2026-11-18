@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     }
     private var speech: Speech? = null
     private var audioBridge: AudioBridge? = null
+    private var share: ShareBridge? = null
     val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) JobService.refresh(this)   // the search already running gets its notification now
     }
@@ -67,12 +68,14 @@ class MainActivity : AppCompatActivity() {
             }
         })
         pendingHash = intent?.getStringExtra(JobService.EXTRA_HASH) ?: ""
+        share?.handle(intent)          // opened by sharing a picture to AIRAG
         startServer()
     }
 
     /** Tapping a "done" notification while the app is open: go to that result. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        share?.handle(intent)
         val hash = intent.getStringExtra(JobService.EXTRA_HASH) ?: return
         if (port != 0) web.loadUrl("http://127.0.0.1:$port/$hash") else pendingHash = hash
     }
@@ -107,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         }
         speech = Speech(this, web).also { web.addJavascriptInterface(it, "AIRAGNative") }
         audioBridge = AudioBridge(this, web).also { web.addJavascriptInterface(it, "AIRAGAudio") }
+        share = ShareBridge(this, web).also { web.addJavascriptInterface(it, "AIRAGShare") }
         val bar = ProgressBar(this).apply { isIndeterminate = true }
         splashText = TextView(this).apply {
             text = getString(R.string.starting)

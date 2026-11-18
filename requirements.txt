@@ -13,3 +13,4 @@ pystray>=0.19
 pillow>=10.0
 # Optional: headless browser for JavaScript-heavy pages (can also be installed from Settings)
 # playwright>=1.44
+sympy>=1.12        # calculator tool (exact maths); pure Python, brings mpmath

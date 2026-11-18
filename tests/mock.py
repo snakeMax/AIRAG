@@ -54,6 +54,10 @@ class MockLLM(LLMProvider):
     name = "mock"
     label = "Mock model"
     fields = [{"key": "model", "label": "Model", "type": "model", "default": "demo"}]
+    supports_vision = True
+
+    def vision_content(self, text, image_urls):
+        return [{"type": "text", "text": text}, {"type": "image", "n": len(image_urls)}]
 
     async def complete(self, system, user, max_tokens=2048, json_mode=False):
         await asyncio.sleep(float(os.environ.get('AIRAG_MOCK_DELAY', '0.05')))
@@ -83,6 +87,8 @@ class MockLLM(LLMProvider):
             return '{"suitable": true, "idea": "A slider that shows how body size changes wingbeat rate.", "reason": "quantitative"}'
         if "interactive explainers" in system:
             return HTML
+        if "Turn the reader's formula" in system:
+            return "x**2 - 5*x + 6 = 0"
         if "expert translator" in system:   # results page: tag every text so tests can see it was translated
             m = re.search(r">>\n(\[.*\])\n<<", user, re.S)
             items = json.loads(m.group(1)) if m else []
@@ -93,10 +99,28 @@ class MockLLM(LLMProvider):
         return "OK"
 
     async def stream(self, system, user, max_tokens=4096):
+        if "look at one picture" in system:
+            for piece in ["The picture shows the equation ", "**x² − 5x + 6 = 0**. ", "Its solutions are x = 2 and x = 3."]:
+                yield piece
+            return
         if "expert translator" in system:
             text = "# Hvor raskt slår kolibrienes vinger?\n\nDe fleste kolibrier slår vingene **10 til 80 ganger i sekundet** [1]."
             for i in range(0, len(text), 40):
                 yield text[i:i + 40]
+            return
+        if "answering follow-ups" in system:
+            if "Tool result" not in user and ("calculat" in user.lower() or "how many" in user.lower()):
+                yield 'TOOL {"name": "calculator", "args": {"expression": "80 / 10"}}'
+                return
+            text = ("Larger hummingbirds beat their wings more slowly [2]. The fastest figures come from small species "
+                    "[1]." + (" The calculator says the range spans a factor of 8." if "Tool result" in user else ""))
+            for i in range(0, len(text), 30):
+                await asyncio.sleep(0.005)
+                yield text[i:i + 30]
+            return
+        if "Rewrite the given passage" in system:
+            text = "Most hummingbirds flap 10-80 times a second [1]."
+            yield text
             return
         text = ARTICLE if "research journalist" in system else "**Bottom line:** 10-80 beats per second.\n\n- Smaller birds beat faster [1]\n- Giant hummingbird: 10-15 [2]"
         for i in range(0, len(text), 40):

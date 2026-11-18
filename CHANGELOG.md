@@ -29,6 +29,14 @@
 - **README**: a settings guide explaining every setting and button, with recommended setups
 - **Fixed**: sound effects didn't play (wrong file address, and the phone app only allowed sound right after a tap); a sound's play button now turns into stop while it plays
 - **Fixed**: the search spinner kept spinning after a search engine stopped answering and the Try again button showed
+- **Research toolbar** on finished articles and results: Follow-up questions (typed or spoken) answered in a side panel with the article's source numbers and *Add to article*; Compare, Timeline and Fact-check; Rewrite with a side-by-side preview before anything changes; Calculate (exact maths with SymPy) with *Elaborate…*; Cite as APA, MLA or BibTeX. On phones it's a round menu button that opens a sheet
+- **Selected text menu**: Ask about this, Fact-check, Rewrite, Calculate, Copy with source, and Voice (say what to do with the selection)
+- **The AI can use tools** in follow-ups (calculator, date, searching the article's sources, web search, reading pages, read aloud, locate more sources). Settings → Tools sets which tools each kind of agent may use, saved straight away
+- **Quality or saving**: five modes from Minimal to Maximum, per agent type (Medium by default), that set answer length, research rounds, pages read and tool calls
+- **Analyze image**: the AI model looks at a picture or screenshot (formulas are solved, other pictures described). On Home (button, paste or drop), on pictures in articles (press and hold / right-click), and on Android by sharing a picture to AIRAG. Needs a model that can see pictures
+- **Usage tab redesign**: switch between dollars and tokens, what's left of the budget, today's use, a daily chart, the month at this pace, and what local (Ollama) use would have cost on a paid model
+- **Explainers can be data charts**: line or bar charts of numbers from the article and its sources (prices, stock values, measurements), each point labelled with its source
+- **Microphone animation**: the mic button grows, bobs and glows in your accent colour (bright red with grey palettes) with a ring spinning around it while it listens
 - **Explainers build in the background**: closing the explainer window doesn't stop it; the Interactive button shows a spinner, and clicking it again shows the one being built. Cancel button while building
 
 ## [0.3.0] - 2026-11-18

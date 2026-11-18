@@ -10,6 +10,7 @@ import { jobFor, pokeJobs } from "./activity.js";
 import { ttsAvailable, speak, pause as ttsPause, resume as ttsResume, stop as ttsStop, paused as ttsPaused } from "./tts.js";
 import { exportHtml } from "./export.js";
 import { pinButton, togglePinSource } from "./pins.js";
+import { showToolbar, hideToolbar } from "./toolbar.js";
 
 export const RUN = { current: null, ctrl: null };
 let hooks = { go: () => {}, openSettings: () => {}, showView: () => {}, refreshRecent: () => {} };
@@ -196,6 +197,7 @@ function finish(R) {
   if (R.finished) return;
   R.finished = true;
   pokeJobs();
+  if (RUN.current === R && !R.extend) setTimeout(() => showToolbar(R), 0);
   $(".again-chip")?.removeAttribute("hidden");
   $(".cancel-chip")?.setAttribute("hidden", "");
   updateSaveButton(R);
@@ -701,8 +703,27 @@ async function copyText(text) {
   return ok;
 }
 
-// stop reading aloud when leaving the article
-window.addEventListener("hashchange", () => ttsStop());
+// stop reading aloud and hide the research toolbar when leaving the article
+window.addEventListener("hashchange", () => {
+  ttsStop();
+  if (!/^#\/(view|run)\//.test(location.hash)) hideToolbar();
+});
+
+/** Things the research toolbar's agent asked the app to do (read aloud, more sources, copy, pin). */
+export function toolbarAction(ev) {
+  const R = RUN.current;
+  if (!R) return;
+  if (ev.action === "listen" && ev.text) speak(ev.text, uiLang(), setListenButton);
+  else if (ev.action === "more-sources" && R.id) startResearch(R.query, R.outcome === "article" ? "article" : "results", R.library, null, R.dates, null, false, R.id);
+  else if (ev.action === "copy" && ev.text) copyText(ev.text).then(() => toast(t("art.copied")));
+  else if (ev.action === "pin" && R.id && !R.pinned) togglePin(R);
+}
+
+/** Reloads an article after the toolbar changed it (rewrite, answer added). */
+export function reloadRecord(id) {
+  RUN.current = null;
+  openRecord(id);
+}
 
 // saved runs
 export async function openRecord(id, explainer = false) {

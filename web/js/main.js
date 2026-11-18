@@ -2,7 +2,7 @@
 import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
 import { initI18n, t, applyI18n } from "./i18n.js";
 import { loadLocal, setAppearance, onAppearanceChange, effectiveTheme } from "./theme.js";
-import { RUN, startResearch, openRecord, openSaved, attachRun, setRunHooks } from "./run.js";
+import { RUN, startResearch, openRecord, openSaved, attachRun, setRunHooks, toolbarAction, reloadRecord } from "./run.js";
 import { openSettings, setSettingsHooks } from "./settings.js";
 import { openSetup, needsSetup, setSetupHooks } from "./setup.js";
 import { showDisclaimer, checkUpdates } from "./banners.js";
@@ -15,6 +15,8 @@ import { setSpeech } from "./tts.js";
 import { applyButtons } from "./buttons.js";
 import { initActivity, markSeen } from "./activity.js";
 import { loadPins, openPinned, setPinHooks } from "./pins.js";
+import { initToolbar } from "./toolbar.js";
+import { initImageAsk, updateImageButton, pickImage } from "./imageask.js";
 
 const state = {
   mode: "auto",
@@ -120,6 +122,7 @@ async function refreshStatus() {
     // the tickbox is always shown; with no folders added it leads to Settings -> Library
     if (!(st.library_folders > 0)) state.library = false;
     renderModes();
+    updateImageButton();
   } catch {
     $("#engineLine").textContent = t("home.offline");
   }
@@ -192,6 +195,11 @@ async function boot() {
   initSpeech(info?.mode === "desktop");
   initActivity();
   setPinHooks({ showView, defaultView: () => state.settings?.defaults?.pinned_view });
+  initImageAsk({ vision: () => !!state.status?.vision });
+  $("#imgAskBtn").onclick = pickImage;
+  $(".img-chip-ic").innerHTML = icon("eye");
+  initToolbar({ getRun: () => RUN.current, reload: reloadRecord, act: toolbarAction,
+                citeStyle: () => state.settings?.defaults?.citation_style || "apa" });
   loadPins();
   setRunHooks({ go, openSettings, showView, refreshRecent, defaults: () => state.settings?.defaults });
   setSettingsHooks({ onSaved: (s, langChanged) => {

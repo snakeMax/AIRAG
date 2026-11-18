@@ -41,6 +41,12 @@ export function setAppearance(patch, save = true) {
   if (save && onChange) onChange(getAppearance(), effectiveTheme());
 }
 
+function saturation(hex) {
+  const [r, g, b] = hex.replace("#", "").match(/.{2}/g).map(x => parseInt(x, 16) / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+  return mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
+}
+
 function contrastText(hex) {
   const m = hex.replace("#", "").match(/.{2}/g);
   if (!m) return "#ffffff";
@@ -53,6 +59,8 @@ function apply() {
   root.dataset.theme = effectiveTheme();
   root.dataset.palette = PALETTES[current.palette] ? current.palette : "zinc";
   const hex = ACCENTS[current.accent] !== undefined ? ACCENTS[current.accent] : current.accent;
+  // recording colour: the accent when it's a real colour, bright red for grey/desaturated accents
+  root.style.setProperty("--rec", hex && /^#[0-9a-f]{6}$/i.test(hex) && saturation(hex) > 0.25 ? hex : "#ef4444");
   if (hex && /^#[0-9a-f]{6}$/i.test(hex)) {
     root.style.setProperty("--accent", hex);
     root.style.setProperty("--accent-text", contrastText(hex));

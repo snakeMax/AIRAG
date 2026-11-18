@@ -20,6 +20,7 @@ hiddenimports = (
     collect_submodules("airag")
     + collect_submodules("uvicorn")
     + collect_submodules("ddgs")
+    + collect_submodules("sympy")      # the calculator imports parts of sympy lazily
     + ["pystray._win32", "webview.platforms.edgechromium", "webview.platforms.winforms", "clr"]
 )
 

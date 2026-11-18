@@ -91,9 +91,20 @@ def add(provider: str, model: str, tin: int, tout: int, estimated: bool) -> None
         row["cost"] = round(row["cost"] + (cost or 0.0), 6)
         row["estimated"] += 1 if estimated else 0
         row["priced"] = cost is not None or provider in LOCAL_PROVIDERS
-        for old in sorted(data)[:-13]:        # keep about a year
+        days = data.setdefault("_days", {})   # a small per-day tally for the last month
+        day = days.setdefault(time.strftime("%Y-%m-%d"), {"cost": 0.0, "tokens": 0, "calls": 0})
+        day["cost"] = round(day["cost"] + (cost or 0.0), 6)
+        day["tokens"] += tin + tout
+        day["calls"] += 1
+        for old in sorted(days)[:-31]:
+            days.pop(old, None)
+        for old in _months(data)[:-13]:       # keep about a year
             data.pop(old, None)
         _save(data)
+
+
+def _months(data: dict) -> list:
+    return sorted(k for k in data if not k.startswith("_"))
 
 
 def reset_month() -> None:
@@ -197,11 +208,34 @@ def summary(settings: Optional[dict] = None) -> dict:
     rows = sorted(data.get(month, {}).values(), key=lambda r: -r["cost"])
     spent = round(sum(r["cost"] for r in rows), 4)
     budget = float(((settings or {}).get("usage") or {}).get("monthly_budget") or 0)
-    history = [{"month": k, "cost": round(sum(r["cost"] for r in v.values()), 4),
-                "tokens": sum(r["in"] + r["out"] for r in v.values())} for k, v in sorted(data.items())]
+    history = [{"month": k, "cost": round(sum(r["cost"] for r in data[k].values()), 4),
+                "tokens": sum(r["in"] + r["out"] for r in data[k].values())} for k in _months(data)]
+    tokens = sum(r["in"] + r["out"] for r in rows)
+    calls = sum(r["calls"] for r in rows)
+    priced_tokens = sum(r["in"] + r["out"] for r in rows if r["provider"] not in LOCAL_PROVIDERS)
+    local_tokens = tokens - priced_tokens
+    days = data.get("_days", {})
+    today = days.get(time.strftime("%Y-%m-%d"), {"cost": 0.0, "tokens": 0, "calls": 0})
+    month_days = {k: v for k, v in days.items() if k.startswith(month)}
+    day_of_month = int(time.strftime("%d"))
+    import calendar
+    days_in_month = calendar.monthrange(int(month[:4]), int(month[5:7]))[1]
+    per_token = (spent / priced_tokens) if priced_tokens else 0.0
+    # what local (Ollama) use would have cost on the cheapest priced cloud model used this month
+    cloud = [r for r in rows if r["provider"] not in LOCAL_PROVIDERS and r["in"] + r["out"]]
+    compare = None
+    if local_tokens and cloud:
+        ref = min(cloud, key=lambda r: r["cost"] / max(1, r["in"] + r["out"]))
+        compare = {"model": ref["model"], "cost": round(local_tokens * ref["cost"] / max(1, ref["in"] + ref["out"]), 4)}
     return {"month": month, "rows": rows, "spent": spent, "budget": budget,
             "left": round(budget - spent, 4) if budget else None,
-            "tokens": sum(r["in"] + r["out"] for r in rows),
+            "tokens": tokens, "calls": calls, "local_tokens": local_tokens,
+            "today": today, "days": [{"day": k, **v} for k, v in sorted(month_days.items())],
+            "avg_call_tokens": round(tokens / calls) if calls else 0,
+            "projected": round(spent / day_of_month * days_in_month, 4) if spent else 0.0,
+            "tokens_left": int((budget - spent) / per_token) if budget and per_token and budget > spent else None,
+            "top_model": rows and max(rows, key=lambda r: r["calls"])["model"] or None,
+            "local_compare": compare,
             "unpriced": [r["model"] for r in rows if not r.get("priced", True)],
             "prices_updated": (_prices_at or None) if _prices else None, "history": history}
 

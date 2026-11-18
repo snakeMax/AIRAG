@@ -69,6 +69,27 @@ async def code_examples(settings: dict, idea: str, pages: int = 2) -> str:
     return "\n\n".join(out)
 
 
+_NUM = re.compile(r"\d[\d.,]*\s*(%|percent|USD|EUR|NOK|\$|€|£|kr|million|billion|bn|m\b|k\b|kg|km|°|years?)?", re.I)
+
+
+def source_figures(rec: dict, limit: int = 3500) -> str:
+    """Lines from the sources' notes that hold several numbers (prices, stock values, measurements),
+    so the explainer can chart data the article only mentions in passing."""
+    out, size = [], 0
+    for s in rec.get("sources") or []:
+        if (s.get("relevance") or 0) < 4 or not s.get("n"):
+            continue
+        parts = [s.get("summary") or ""] + [str(f) for f in (s.get("findings") or [])]
+        for line in re.split(r"(?<=[.;])\s+|\n", " ".join(parts)):
+            if len(_NUM.findall(line)) >= 2 and 20 < len(line) < 400:
+                item = f"[{s['n']}] {line.strip()}"
+                out.append(item)
+                size += len(item)
+                if size > limit:
+                    return "\n".join(out)
+    return "\n".join(out)
+
+
 async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool = False) -> dict:
     rec = history.get(rid)
     if not rec or rec.get("outcome") != "article":
@@ -90,7 +111,7 @@ async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool
     if settings.get("research", {}).get("explainer_examples", True) and info.get("idea"):
         examples = await code_examples(settings, info["idea"])
     raw = await llm.complete(*prompts.interactive(rec["query"], info.get("idea", ""), rec.get("article", ""), lang, level,
-                                                  examples),
+                                                  examples, source_figures(rec)),
                              max_tokens=prompts.explainer_level(level)[1])
     html = clean_html(raw)
     rec["interactive_html"] = html

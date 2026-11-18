@@ -128,7 +128,8 @@ class Research:
             settings["search"]["region"] = languages.region(lang_code or self.ui_lang)
         settings["fetch"]["accept_language"] = f"{lang_code or self.ui_lang},en;q=0.8"
         self.s = settings
-        self.r = settings["research"]
+        from .effort import scale_research
+        self.r = scale_research(settings["research"], settings, "standard")
         self.use_library = bool(include_library) and bool(library_args(settings)["folders"])
         self.use_web = (not self.use_library) or bool(settings["library"].get("web_too", True))
         self.emit = emit

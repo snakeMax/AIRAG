@@ -20,7 +20,7 @@ MASK = "••••"
 DEFAULT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 
-SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage", "audio", "speech", "buttons")
+SECTIONS = ("app", "llm", "search", "fetch", "research", "library", "prompts", "defaults", "usage", "audio", "speech", "buttons", "agent_tools", "effort")
 
 GENERAL_SCHEMA: dict = {
     "app": [
@@ -54,6 +54,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "dates", "label": "Time range", "type": "select", "default": "any", "options": ["any", "week", "month", "year"]},
         {"key": "translate_to", "label": "Translate into", "type": "hidden", "default": ""},
         {"key": "save_rich", "label": "Save articles with pictures and the explainer", "type": "bool", "default": False},
+        {"key": "citation_style", "label": "Citation style", "type": "select", "default": "apa",
+         "options": ["apa", "mla", "bibtex"], "help": "Used by Cite and Copy with source."},
         {"key": "pinned_view", "label": "Open pinned sources as", "type": "select", "default": "fetched",
          "options": ["fetched", "generated"],
          "help": "Fetched: the saved copy of the page. Generated: a short AI-written version focused on why you pinned it."},
@@ -80,6 +82,17 @@ GENERAL_SCHEMA: dict = {
     "speech": [
         {"key": "voice", "label": "Voice", "type": "hidden", "default": "female"},
         {"key": "rate", "label": "Speed", "type": "hidden", "default": 1.0},
+    ],
+    # which tools each agent type may use (Settings -> Tools; saved immediately by /api/agent-tools)
+    "agent_tools": [
+        {"key": "picker", "label": "", "type": "hidden", "default": "autonomous"},
+        {"key": "sets", "label": "", "type": "hidden", "default": {}},
+    ],
+    # quality vs. token saving, one mode per agent type (Settings -> Usage; saved immediately)
+    "effort": [
+        {"key": "standard", "label": "", "type": "hidden", "default": "medium"},
+        {"key": "autonomous", "label": "", "type": "hidden", "default": "medium"},
+        {"key": "subagents", "label": "", "type": "hidden", "default": "medium"},
     ],
     # token and cost tracking (Settings -> Usage)
     "usage": [
@@ -221,6 +234,8 @@ def _base_defaults() -> dict:
         "audio": field_defaults(GENERAL_SCHEMA["audio"]),
         "speech": field_defaults(GENERAL_SCHEMA["speech"]),
         "buttons": field_defaults(GENERAL_SCHEMA["buttons"]),
+        "agent_tools": field_defaults(GENERAL_SCHEMA["agent_tools"]),
+        "effort": field_defaults(GENERAL_SCHEMA["effort"]),
     }
 
 

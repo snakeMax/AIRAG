@@ -44,6 +44,7 @@ function onResult(text, final) {
   active.input.value = text;
   active.input.dispatchEvent(new Event("input", { bubbles: true }));
   if (!final) return;
+  if (active.onFinal) { const cb = active.onFinal; cb(text); return; }
   active.input.focus();
   if (autoSearch) {
     const form = active.input.closest("form");
@@ -58,9 +59,9 @@ window.airagSpeech = ev => {   // called by the Android app
   else if (ev.type === "end") finish();
 };
 
-function start(input, button) {
+function start(input, button, onFinal = null) {
   if (active) { const same = active.button === button; stop(); if (same) return; }
-  active = { input, button };
+  active = { input, button, onFinal };
   setState(button, true);
   play("mic_start");
   if (Native) {
@@ -82,8 +83,25 @@ function start(input, button) {
   try { rec.start(); } catch { finish(); toast(t("mic.error"), 4000); }
 }
 
+let desktopWin = false;
+
+/** A microphone button for any text box. onFinal(text) runs when speaking ends (else: the box's form is sent,
+ *  if search-after-speaking is on). Returns null when speech input isn't available here. */
+export function micButton(input, onFinal = null) {
+  if (!speechAvailable(desktopWin)) return null;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "mic-btn";
+  b.innerHTML = icon("mic");
+  b.title = t("mic.start");
+  b.setAttribute("aria-label", t("mic.start"));
+  b.onclick = () => start(input, b, onFinal);
+  return b;
+}
+
 /** Adds a microphone button to every search box (when speech input is available). */
 export function initSpeech(desktopWindow = false) {
+  desktopWin = desktopWindow;
   if (!speechAvailable(desktopWindow)) return;
   $$("form.searchbox").forEach(form => {
     if (form.querySelector(".mic-btn")) return;

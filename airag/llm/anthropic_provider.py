@@ -33,8 +33,12 @@ class Anthropic(LLMProvider):
     supports_vision = True
 
     def vision_content(self, text, image_urls):
-        return [{"type": "text", "text": text}] + [{"type": "image", "source": {"type": "url", "url": u}}
-                                                    for u in image_urls]
+        def src(u):
+            if u.startswith("data:") and ";base64," in u:      # a screenshot or picture sent from the app
+                head, data = u.split(",", 1)
+                return {"type": "base64", "media_type": head[5:].split(";")[0], "data": data}
+            return {"type": "url", "url": u}
+        return [{"type": "text", "text": text}] + [{"type": "image", "source": src(u)} for u in image_urls]
 
     def _body(self, system, user, max_tokens, stream, temperature=True) -> dict:
         body = {"model": self.model, "max_tokens": max_tokens, "system": system,
