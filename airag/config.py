@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from contextvars import ContextVar
 from copy import deepcopy
 from typing import Any, Iterator, List, Tuple
 
@@ -29,6 +30,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "language", "label": "Interface language", "type": "hidden", "default": "auto"},
         {"key": "answer_language", "label": "Answer language", "type": "hidden", "default": "auto"},
         {"key": "check_updates", "label": "Check for updates when AIRAG starts", "type": "bool", "default": True},
+        {"key": "guarded_execution", "label": "Guarded execution", "type": "bool", "default": True,
+         "help": "Protects running tasks: settings you change while a task runs apply when it has finished (small ones, like how many results to read, from its next step), and clearing caches or history waits until running tasks finish or are cancelled."},
         {"key": "history_limit", "label": "Searches kept in history", "type": "number", "default": 300, "min": 10, "max": 5000, "step": 10,
          "help": "Older searches are deleted automatically to save space."},
         {"key": "port", "label": "Preferred port", "type": "number", "default": 8765, "min": 0, "max": 65535, "step": 1,
@@ -338,7 +341,95 @@ def load_raw() -> dict:
     return {}
 
 
+# ---------------------------------------------------------------- settings while a task runs (guarded execution)
+# Each background task works with the settings it started with, so a change in Settings can't corrupt a search,
+# switch its AI model halfway or stop it. Changes reach the task in two ways:
+#  - LIVE keys (how much to read, how many results...) are picked up at the task's next step (live_update);
+#  - everything else applies to the next task.
+# Without guarded execution, tasks read the settings file directly (the behaviour before 0.4.1).
+_JOB: "ContextVar[dict | None]" = ContextVar("airag_job_settings", default=None)
+
+LIVE_KEYS = (
+    ("research", "results_per_query"), ("research", "sources_per_round"), ("research", "max_sources_total"),
+    ("research", "max_rounds"), ("research", "max_images"), ("research", "images"), ("research", "max_article_sources"),
+    ("research", "skip_domains"), ("research", "favourite_sites"), ("research", "enough_findings"),
+    ("fetch", "timeout"), ("fetch", "youtube"), ("library", "max_results"), ("library", "min_relevance"),
+)
+# settings that only change what you see or hear, never how a running task works
+UI_ONLY = {"audio", "speech", "buttons", "defaults"}
+UI_ONLY_KEYS = {("app", "appearance"), ("app", "theme_hint"), ("app", "language"), ("app", "disclaimer_dismissed"),
+                ("app", "setup_done"), ("app", "check_updates"), ("app", "guarded_execution"), ("app", "ui_mode")}
+
+
+def guarded() -> bool:
+    try:
+        return bool(deep_merge(defaults(), load_raw())["app"].get("guarded_execution", True))
+    except Exception:
+        return True
+
+
+def begin_job():
+    """Called when a background task starts: it gets its own copy of the settings (guarded execution).
+    Returns a token for end_job, or None when tasks read the settings live."""
+    if not guarded():
+        return None
+    return _JOB.set(load())
+
+
+def end_job(token) -> None:
+    if token is not None:
+        _JOB.reset(token)
+
+
+def in_job() -> bool:
+    return _JOB.get() is not None
+
+
+def live_update(current: dict) -> dict:
+    """At a task's next step: the LIVE keys from the settings file, everything else unchanged. Values that don't
+    fit their type are ignored, so a half-typed setting can't break the task."""
+    try:
+        fresh = _coerce(deep_merge(defaults(), load_raw()))
+    except Exception:
+        return current
+    out = deepcopy(current)
+    for sec, key in LIVE_KEYS:
+        if sec in fresh and key in fresh[sec] and sec in out:
+            old = out[sec].get(key)
+            new = fresh[sec][key]
+            if old is None or type(new) is type(old) or (isinstance(old, (int, float)) and isinstance(new, (int, float))):
+                out[sec][key] = new
+    snap = _JOB.get()
+    if snap is not None:                  # the rest of the task (helpers that load settings) sees them too
+        for sec, key in LIVE_KEYS:
+            if sec in out and key in out[sec] and sec in snap:
+                snap[sec][key] = out[sec][key]
+    return out
+
+
+def changed_for_running(before: dict, after: dict) -> List[str]:
+    """Sections whose changes a running task won't see until it has finished (for the "applies later" note)."""
+    live = set(LIVE_KEYS)
+    out = []
+    for sec in SECTIONS:
+        if sec in UI_ONLY:
+            continue
+        a, b = before.get(sec, {}), after.get(sec, {})
+        if not isinstance(a, dict) or not isinstance(b, dict):
+            continue
+        for key in set(a) | set(b):
+            if (sec, key) in live or (sec, key) in UI_ONLY_KEYS:
+                continue
+            if a.get(key) != b.get(key):
+                out.append(sec)
+                break
+    return out
+
+
 def load(with_env: bool = True) -> dict:
+    snap = _JOB.get()
+    if snap is not None:                  # inside a running task: the task's own copy
+        return deepcopy(snap)
     raw = load_raw()
     if "defaults" not in raw and raw.get("app", {}).get("include_library"):
         raw["defaults"] = {"library": True}   # 0.2 kept the My library tickbox in "app"

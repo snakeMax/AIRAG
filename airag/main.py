@@ -23,7 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import (__repo__, __version__, appctl, browser_install, config, guard, history, jobs, languages,
-               ollama_manager, paths, updater)
+               ollama_manager, paths, runs, updater)
 from .fetch import shutdown as fetch_shutdown
 from .library import LIBRARY, settings_args as library_args
 from .llm import PROVIDERS, LLMError, get_llm
@@ -265,9 +265,23 @@ def get_settings():
     return config.masked(config.load())
 
 
+def _busy_guard(what: str) -> None:
+    """Guarded execution: things that would disturb a running task (clearing caches, the library index or
+    History) wait until running tasks have finished or been cancelled."""
+    if config.guarded() and runs.active():
+        raise HTTPException(409, f"{what} would disturb the task that is running, so it waits. Try again when it has "
+                                 "finished, or cancel it first. (Settings → General → Guarded execution)")
+
+
 @app.post("/api/settings")
 def save_settings(body: dict):
-    return config.masked(config.save(body))
+    before = config.load() if runs.active() else None
+    out = config.masked(config.save(body))
+    if before is not None:
+        later = config.changed_for_running(before, config.load())
+        if later:
+            out["_applies_later"] = later       # the running task keeps its settings; these apply to the next one
+    return out
 
 
 def _needs_key(s: dict) -> bool:
@@ -404,6 +418,7 @@ async def backup_import():
 # clear caches (Settings): pages read during searches, the update check, and (on Android) the WebView cache
 @app.post("/api/app/clear-cache")
 def clear_cache():
+    _busy_guard("Clearing the cache")
     from . import fetch
     pages = len(fetch._cache)
     fetch._cache.clear()
@@ -702,7 +717,9 @@ async def offline_set(req: OfflineReq):
         url = s["llm"]["providers"].get("ollama", {}).get("base_url") or "http://localhost:11434"
         if ollama_manager.is_local(url):
             asyncio.create_task(ollama_manager.ensure_running(url))
-    return await offline_state()
+    out = await offline_state()
+    out["applies_later"] = bool(config.guarded() and runs.active())     # running tasks finish as they started
+    return out
 
 
 class TagsReq(BaseModel):
@@ -873,6 +890,7 @@ async def library_sync():
 
 @app.post("/api/library/clear")
 def library_clear():
+    _busy_guard("Clearing the library index")
     LIBRARY.clear()
     return library_status()
 
@@ -1621,9 +1639,13 @@ def history_get(rid: str):
 
 @app.delete("/api/history/{rid}")
 def history_delete(rid: str):
+    runs.cancel(rid)                          # a task can't keep writing to an article you deleted
     return {"deleted": history.delete(rid)}
 
 
 @app.delete("/api/history")
 def history_clear():
+    _busy_guard("Clearing History")
+    for r in runs.active():                   # not guarded: running tasks are cancelled first
+        runs.cancel(r.id)
     return {"deleted": history.clear()}

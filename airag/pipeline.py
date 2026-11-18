@@ -275,6 +275,10 @@ class Research:
 
         outcome = None
         for rnd in range(1, (max(1, int(self.r["max_rounds"])) + 1) if self.use_web else 1):
+            if rnd > 1:
+                self.refresh_settings()       # small setting changes count from the next round
+                if rnd > max(1, int(self.r["max_rounds"])):
+                    break
             if self.read_count >= int(self.r["max_sources_total"]):
                 break
             queries = await self.queries_for_round(rnd)
@@ -300,6 +304,7 @@ class Research:
                 searched_images = []
         images = await self.choose_images(self.collect_images(searched_images)) if self.extras else []
 
+        self.refresh_settings()
         record = self.base_record(images)
         if self.mode == "results" or outcome == "results":
             record.update(await self.show_results(images))
@@ -401,6 +406,10 @@ class Research:
             await self.pinned_round()
             await self.history_round()
         for rnd in range(3, 3 + max(1, int(self.r["max_rounds"]))) if not self.offline else ():   # new angles only
+            if rnd > 3:
+                self.refresh_settings()
+                if rnd >= 3 + max(1, int(self.r["max_rounds"])):
+                    break
             queries = await self.queries_for_round(rnd)
             if not queries:
                 break
@@ -947,6 +956,22 @@ class Research:
         await self.step("rank", "Ranking results", "done",
                         f"{len(best)} page(s) answer this directly" if best else f"{len(ranked)} relevant pages")
         return {"outcome": "results", "results": {"items": items, "best": best, "images": images}}
+
+    def refresh_settings(self) -> None:
+        """Between steps: pick up the small settings that are safe to change while a task runs (how many
+        results and pages to read, timeouts...). The AI model, search engine, language, offline mode and
+        everything else stay as they were when the task started (see config.LIVE_KEYS)."""
+        from . import config
+        from .effort import scale_research
+        try:
+            new = config.live_update(self.s)
+            r = scale_research(new["research"], new, "standard")
+        except Exception:
+            return                            # a broken settings file never stops a running task
+        self.s = new
+        for sec, key in config.LIVE_KEYS:
+            if sec == "research" and key in r:
+                self.r[key] = r[key]
 
     async def write_article(self, images: List[dict]) -> dict:
         chosen = sorted(self.useful_sources(), key=self.score, reverse=True)[: int(self.r["max_article_sources"])]

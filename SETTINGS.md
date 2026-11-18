@@ -565,6 +565,14 @@ Exports your settings and history to one file, and imports them again. API keys 
 ### Window mode (PC)
 How AIRAG runs on your PC: in its own **desktop window**, or as a **browser tab with a tray icon**.
 
+### Guarded execution (Settings → General)
+On by default. Protects tasks that are running (searches, explainers, toolbar answers, regenerating…):
+- **Settings you change while a task runs:** the task keeps the settings it started with, so switching the AI model, search engine, language or offline mode can't break it halfway. Small settings that only change *how much* it does (results per search, pages per round, rounds, pictures, sources in the article, blocked/favourite sites, page timeout, library files read) are picked up at its next step: lowering the number of results doesn't cut short the search it's doing, only the next ones. Everything else applies from the next task. After saving, a note says when your change applies.
+- **Clearing the cache, the library index or History** waits while a task is running: you're told to try again when it has finished or to cancel it first.
+- A settings file that's damaged or half-written while a task runs never stops the task; it carries on with the settings it has.
+
+Off: tasks read the settings file directly, as before 0.4.1, and clearing is always allowed (a task that was using cleared pages just reads them again; clearing History cancels running tasks first). Deleting one article from History always cancels its task first.
+
 ### Check for updates when AIRAG starts / Check for updates / Check & repair
 - **Check for updates when AIRAG starts:** shows a popup when a new version is out.
 - **Check & repair** (Settings → System): finds and fixes broken or missing app files.

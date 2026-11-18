@@ -129,6 +129,8 @@ def _schedule() -> None:
 
 async def _execute(run: Run) -> None:
     status = "done"
+    from . import config
+    token = config.begin_job()            # guarded execution: the task keeps the settings it started with
     try:
         from . import usage
         usage.check_budget()                # checked when the job starts (not while it waits in the queue)...
@@ -144,10 +146,16 @@ async def _execute(run: Run) -> None:
         status = "error"
         await run.emit({"type": "error", "message": str(e) or type(e).__name__})
     finally:
+        config.end_job(token)
         run.end(status)
         if run.id in _order:
             _order.remove(run.id)
         _schedule()
+
+
+def active(kinds: Optional[tuple] = None) -> List["Run"]:
+    """Running or waiting tasks (optionally only some kinds)."""
+    return [r for r in RUNS.values() if not r.finished and (kinds is None or r.kind in kinds)]
 
 
 def start(rid: str, query: str, mode: str, factory: Callable, kind: str = "search", ref: str = "") -> Run:

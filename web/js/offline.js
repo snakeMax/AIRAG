@@ -44,7 +44,7 @@ async function toggle() {
   if (!state) await refreshOffline();
   if (state?.on) {
     state = await api("/api/offline", { method: "POST", body: { on: false } }).catch(e => { toast(e.message); return state; });
-    toast(t("off.offToast"));
+    toast(t(state?.applies_later ? "off.offLater" : "off.offToast"), state?.applies_later ? 6000 : 2500);
     draw();
   } else openOfflineDialog();
 }
@@ -106,7 +106,7 @@ export async function openOfflineDialog() {
     try {
       state = await api("/api/offline", { method: "POST", body: { on: true, writer, provider, model } });
       d.close();
-      toast(t("off.onToast"), 4000);
+      toast(t(state.applies_later ? "off.onLater" : "off.onToast"), state.applies_later ? 6000 : 4000);
       draw();
     } catch (e) { toast(e.message, 6000); }
   };

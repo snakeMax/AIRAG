@@ -142,10 +142,12 @@ async function save() {
     await saveAudio(out);
     if (S.wikis) out.search.wikis = S.wikis;
     S.settings = await api("/api/settings", { method: "POST", body: out });
+    const later = S.settings._applies_later;
+    delete S.settings._applies_later;
     S.saved = true;
     setAudio(S.settings.audio);
     S.dlg.close();
-    toast(t("set.saved"));
+    toast(t(later ? "set.savedLater" : "set.saved"), later ? 6000 : 2500);
     S.onSaved?.(S.settings, before !== S.settings.app.language);
   } catch (e) { toast(t("set.saveFailed", { e: e.message }), 4000); }
 }
@@ -254,7 +256,7 @@ function wireSystem(dlg) {
   };
   $("#clearCache", dlg).onclick = async () => {
     const r = await api("/api/app/clear-cache", { method: "POST" }).catch(e => ({ error: e.message }));
-    if (r.error) { toast(r.error, 4000); return; }
+    if (r.error) { toast(r.error, 7000); return; }
     toast(t("sys.cacheCleared"), 3000);
     setTimeout(() => location.reload(), 600);
   };
@@ -339,7 +341,8 @@ async function refreshStorage() {
       <button type="button" class="btn sm" data-open="local">${icon("folder")}${h(t("gen.openFolder"))}</button></div>`;
   $("#clearHist").onclick = async () => {
     if (!confirm(t("gen.clearConfirm"))) return;
-    await api("/api/history", { method: "DELETE" });
+    try { await api("/api/history", { method: "DELETE" }); }
+    catch (e) { toast(e.message, 7000); return; }
     refreshStorage();
     window.dispatchEvent(new CustomEvent("airag:history"));
   };
@@ -836,7 +839,10 @@ async function refreshLibrary() {
     <button type="button" class="btn sm" id="libSync" ${s.folders.length ? "" : "disabled"}>${icon("refresh")}${h(t("lib.index"))}</button>
     <button type="button" class="btn sm ghost" id="libClear">${h(t("lib.rebuild"))}</button>`;
   $("#libSync").onclick = () => runSync();
-  $("#libClear").onclick = async () => { await api("/api/library/clear", { method: "POST" }); runSync(); };
+  $("#libClear").onclick = async () => {
+    try { await api("/api/library/clear", { method: "POST" }); } catch (e) { toast(e.message, 7000); return; }
+    runSync();
+  };
   if (s.job) runSync(s.job);
 }
 

@@ -14,6 +14,7 @@
 - **Budget stop covers all AI work** (follow-ups, rewrites, explainers, summaries, translations, image analysis), not only searches; work already running finishes
 - **Fewer resources**: pressing a button twice no longer starts the same job twice; at most 30 tasks can wait; streamed text uses much less memory; a few small leaks fixed (PC-link connections, notification and lock-out lists, summary cache)
 - **Adding files to My library** skips files that are already there and never overwrites a different file with the same name
+- **Guarded execution** (Settings → General, on by default): a running task keeps the settings it started with; small changes (how much to read) apply from its next step, the rest from the next task. Clearing the cache, the library index or History waits until running tasks finish or are cancelled. Deleting an article cancels its task first
 - **More file types**: My library and Open with AIRAG read Word, PowerPoint (with speaker notes), Excel (every sheet as a table), OpenDocument, RTF, CSV, JSON and SQLite databases (read-only): text, tables and web links. Nothing in a file is run. Older .doc/.xls/.ppt files say to save them in the newer format
 - **Save dialog**: tags (type them, or *Suggest tags* with the AI), which translations to keep, pictures and the explainer. Tags go in the Markdown file's properties, so Obsidian sees them too
 - **Tags and language switcher** under an article's byline: edit tags any time (a saved copy is updated), tap a tag to see saved articles with it; switch between the original and its translations
