@@ -198,8 +198,12 @@ export async function openSettings(tab = "general") {
   wireSystem(dlg);
   wireUsage(dlg);
   $("#saveSettings").onclick = save;
+  const touch = matchMedia("(pointer: coarse)").matches || matchMedia("(hover: none)").matches || navigator.maxTouchPoints > 0;
+  if (touch) $(`.dlg-tabs [data-tab="${TAB_OF[tab] || "general"}"]`, dlg)?.setAttribute("autofocus", "");   // not the search box
   if (!dlg.open) dlg.showModal();
   showTab(TAB_OF[tab] ? tab : "general");      // after opening, so a section link can scroll to it
+  // touch screens: don't start in the search box (it would pop up the keyboard); tap it to search
+  if (touch && document.activeElement === $("#setSearch", dlg)) $(".dlg-tabs button.on", dlg)?.focus({ preventScroll: true });
 }
 
 function collect() {
