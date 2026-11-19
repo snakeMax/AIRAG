@@ -49,8 +49,20 @@ function go(q, mode = state.mode, library = state.library, fromId = null, dates 
   else location.hash = hash;
 }
 
+function goQuick(q, library = state.library) {
+  q = (q || "").trim();
+  if (!q) { $("#homeSearch input").focus(); return; }
+  const hash = `#/quick?q=${encodeURIComponent(q)}${library ? "&lib=1" : ""}`;
+  if (location.hash === hash) route();
+  else location.hash = hash;
+}
+
 function route() {
   const hash = location.hash || "#/";
+  if (hash.startsWith("#/quick")) {
+    const p = new URLSearchParams(hash.split("?")[1] || "");
+    if (p.get("q")) { startResearch(p.get("q"), "article", p.get("lib") === "1", null, undefined, null, false, null, {}); return; }
+  }
   if (hash.startsWith("#/search")) {
     const p = new URLSearchParams(hash.split("?")[1] || "");
     const q = p.get("q");
@@ -133,6 +145,12 @@ async function refreshStatus() {
 // wiring
 function wire() {
   $("#homeSearch").onsubmit = e => { e.preventDefault(); go(e.target.q.value); };
+  $("#quickBtn").onclick = () => goQuick($("#homeSearch input").value);
+  $("#quickBtn2").onclick = () => goQuick($("#homeSearch input").value);      // phones: buttons under the box
+  $("#searchBtn2").onclick = () => go($("#homeSearch input").value);
+  $("#homeSearch input").addEventListener("keydown", e => {   // Shift+Enter: a quick search
+    if (e.key === "Enter" && e.shiftKey && !e.isComposing) { e.preventDefault(); goQuick(e.target.value); }
+  });
   $("#topSearch").onsubmit = e => { e.preventDefault(); e.target.q.blur(); go(e.target.q.value); };
   // these only change the next searches; the permanent choice is in Settings -> Defaults
   $$("#modes button").forEach(b => (b.onclick = () => { state.mode = b.dataset.mode; renderModes(); }));

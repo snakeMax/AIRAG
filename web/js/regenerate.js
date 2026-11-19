@@ -59,7 +59,7 @@ export async function openRegenerate(R, focusVersions = false) {
   else setTimeout(() => ta.focus(), 40);
 }
 
-const KIND = k => t("regen.kind." + (["first", "rewrite", "answer", "more", "regenerated", "edit"].includes(k) ? k : "edit"));
+const KIND = k => t("regen.kind." + (["first", "rewrite", "answer", "more", "quick", "regenerated", "edit"].includes(k) ? k : "edit"));
 
 async function loadVersions(R, d) {
   const side = $("#regenSide", d);

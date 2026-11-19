@@ -44,8 +44,13 @@
         <form class="searchbox lg" id="homeSearch" autocomplete="off">
           <span class="sb-icon" data-icon="search"></span>
           <input name="q" type="search" data-i18n-ph="home.placeholder" aria-label="Search" autofocus>
+          <button class="sb-quick" type="button" id="quickBtn" data-icon="bolt" data-i18n-title="quick.homeTip"><span data-i18n="quick.button"></span></button>
           <button class="sb-go" type="submit" aria-label="Search" data-icon="arrow"></button>
         </form>
+        <div class="home-go-row">
+          <button type="button" class="btn home-quick" id="quickBtn2" data-icon="bolt"><span data-i18n="quick.button"></span></button>
+          <button type="button" class="btn primary" id="searchBtn2" data-icon="search"><span data-i18n="home.searchBtn"></span></button>
+        </div>
         <div class="home-opts">
           <div class="modes" id="modes" role="radiogroup">
             <button type="button" data-mode="auto" data-i18n="mode.auto" data-i18n-title="mode.auto.tip"></button>

@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- **Quick search** (backend): a short cited answer from 2-3 pages without an AI planning step; on an article it can add the answer as a new short section (kept in Version history). Runs as its own job, so it doesn't wait behind a full search
+- **Quick search**: a short cited answer from 2-3 pages in seconds, with far fewer tokens than a full search. *Quick* next to the home search box (Shift+Enter; on phones a Quick and a Search button under the box). If nothing usable is found, the AI tries 3 simpler searches close to the question. Under a quick answer: *Add to this* (another quick question, added as a section) and *Research this properly* (a full search). In an article: *Sources → Quick search…*, which by default adds the answer to the article as a new section (the old text stays in Version history). Runs as its own task, so it doesn't wait behind a full search
+- **Settings in 7 tabs**: General · Look & sound · AI · Searching · Library & storage · Tools & agents · System, each with titled sections and a jump list. *Search settings…* finds any setting by name or help text and jumps to it (the tab opens and the setting is highlighted)
 
 ## [0.4.1] - 2026-11-19
 

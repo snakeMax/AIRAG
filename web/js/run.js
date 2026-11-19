@@ -1,4 +1,5 @@
 // A research run: live progress, then results / article / suggestions. Also re-opens saved runs.
+import { openQuickDialog, quickBox } from "./quick.js";
 import { $, $$, h, safeUrl, favicon, shortUrl, stripThink, rafThrottle, icon, toast, api, apiStream, fmtDate } from "./util.js";
 import { render, allowLinks } from "./markdown.js";
 import { chipHtml, openDatePicker, emptyRange } from "./dates.js";
@@ -72,13 +73,16 @@ export async function cancelRun(id) {
 // the explainer button follows background explainer jobs
 window.addEventListener("airag:jobs", () => { if (RUN.current?.finished) updateInteractiveButton(RUN.current); });
 
-export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true, extendId = null) {
+/** quick: { contextId, update } runs a Quick search (a short answer, or a short new section on that article). */
+export async function startResearch(query, mode, library, fromId = null, dates = emptyRange(), mergeId = null, extras = true, extendId = null, quick = null) {
   RUN.ctrl?.abort();
   const ctrl = new AbortController();
   RUN.ctrl = ctrl;
   const R = newRun(query, mode, library, dates, extras);
   R.ctrl = ctrl;
   R.extend = extendId;
+  R.quick = !!quick && !(quick.contextId && quick.update);
+  R.quickInto = !!(quick?.contextId && quick.update);
   RUN.current = R;
   hooks.showView("run");
   scrollTo(0, 0);
@@ -86,8 +90,12 @@ export async function startResearch(query, mode, library, fromId = null, dates =
   document.title = `${query} - AIRAG`;
   renderShell(R);
   try {
-    await apiStream("/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId,
-      date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId, extras, extend_id: extendId }, ev => {
+    const [url, body] = quick
+      ? ["/api/quick", { query, ui_lang: uiLang(), context_id: quick.contextId || null, update: quick.update !== false,
+                         include_library: !!library }]
+      : ["/api/research", { query, mode, include_library: !!library, ui_lang: uiLang(), from_id: fromId,
+          date_from: dates?.from || "", date_to: dates?.to || "", merge_id: mergeId, extras, extend_id: extendId }];
+    await apiStream(url, body, ev => {
       if (RUN.current !== R) return false;
       onEvent(R, ev);
     }, ctrl.signal);
@@ -137,7 +145,8 @@ function onEvent(R, ev) {
       R.elapsed = ev.elapsed;
       finish(R);
       if (ev.extended !== undefined) {   // "Locate more sources": show the updated article
-        toast(ev.extended ? t(R.outcome === "results" ? "more.addedResults" : "more.added", { n: ev.extended }) : t("more.none"), 4500);
+        if (ev.quick) toast(t(ev.extended ? "quick.added" : "quick.none"), 4500);
+        else toast(ev.extended ? t(R.outcome === "results" ? "more.addedResults" : "more.added", { n: ev.extended }) : t("more.none"), 4500);
         history.replaceState(null, "", `#/view/${encodeURIComponent(ev.id)}`);
         RUN.current = null;
         openRecord(ev.id);
@@ -355,6 +364,13 @@ $("#runMain").addEventListener("click", e => {
   }
   else if (act === "listen-stop") ttsStop();
   else if (act === "pin" && R.id) togglePin(R);
+  else if (act === "quick" && R.id && R.finished) openQuickDialog(R, (q, update) => startResearch(q, "article", R.library, null, emptyRange(), null, false, null, { contextId: R.id, update }));
+  else if (act === "quick-more" && R.id && R.finished) {
+    const q = ($("#quickAdd")?.value || "").trim();
+    if (q) startResearch(q, "article", R.library, null, emptyRange(), null, false, null, { contextId: R.id, update: true });
+    else $("#quickAdd")?.focus();
+  }
+  else if (act === "quick-full") hooks.go(R.query, "auto", R.library);
   else if (act === "more-sources" && R.id && R.finished) startResearch(R.query, R.outcome === "article" ? "article" : "results", R.library, null, R.dates, null, false, R.id);
   else if (act === "export-html") exportHtml(R, $("article.article"));
   else if (act === "save") openSavePop(b, R);
@@ -482,7 +498,7 @@ function renderArticle(R) {
   const [hero, ...rest] = R.images || [];
   $("#output").innerHTML = `
     <article class="article">
-      <div class="a-kicker"><span class="pill">${h(t("art.kicker"))}</span><span>${h(t("art.compiled", { n }))}</span></div>
+      <div class="a-kicker"><span class="pill">${R.quick ? icon("bolt") : ""}${h(t(R.quick ? "quick.kicker" : "art.kicker"))}</span><span>${h(t("art.compiled", { n }))}</span></div>
       <h1 class="a-title" id="aTitle">${h(R.query)}</h1>
       <p class="a-dek" id="aDek"></p>
       <div class="a-byline"><span class="avatar">A</span><div><div class="by-name">${h(t("art.by"))}</div><div class="muted">${h(fmtDate(R.created, uiLang()))} · ${h(R.model)}<span id="aStats"></span></div></div>
@@ -496,6 +512,7 @@ function renderArticle(R) {
         <figure data-img><a href="${h(safeUrl(im.page_url || im.src))}" target="_blank" rel="noopener noreferrer"><img src="${h(im.thumb || im.src)}" alt="${h(im.title)}" loading="lazy" referrerpolicy="no-referrer" ${imgOnErr}></a>
         <figcaption>${h(im.title)} - ${h(im.credit)}</figcaption></figure>`).join("")}</div></section>` : ""}
       <section class="a-sources"><h2>${h(t("art.sources"))}</h2><ol>${R.articleSources.map(sourceEntry).join("")}</ol></section>
+      ${R.quick && !R.savedFile ? quickBox() : ""}
       ${R.related?.length ? `<section class="a-related"><h2>${h(t("art.related"))}</h2><div class="chips">${R.related.map(q => `<button class="chip" data-act="search" data-q="${h(q)}">${icon("search")}${h(q)}</button>`).join("")}</div></section>` : ""}
     </article>`;
   renderArticleSide(R);
@@ -531,7 +548,8 @@ function articleActions(R) {
         + item("translate-article", "globe", t("tr.button"), "", `id="trArtBtn" title="${h(t("tr.tip"))}"`)
         + item("sum-article", "sparkle", t("sum.button")))}
       ${group("sources", "search", t("grp.sources"),
-        (R.savedFile ? "" : item("more-sources", "search", t("more.button"), "", `title="${h(t("more.tip"))}"`))
+        (R.savedFile || R.outcome !== "article" ? "" : item("quick", "bolt", t("quick.inArticle"), t("quick.inArticleDesc")))
+        + (R.savedFile ? "" : item("more-sources", "search", t("more.button"), "", `title="${h(t("more.tip"))}"`))
         + item("results", "list", t("art.results"))
         + item("again", "refresh", t("run.again"), "", `title="${h(t("run.againTip"))}"`))}
       <button class="btn sm ghost" data-act="pin" id="pinBtn" ${R.savedFile ? "hidden" : ""} title="${h(t("pin.tip"))}">${icon("pin")}<span>${h(t(R.pinned ? "pin.unpin" : "pin.pin"))}</span></button>
@@ -890,7 +908,7 @@ function showRecord(rec) {
     results: rec.results || null, suggestions: rec.suggestions || null, elapsed: rec.elapsed, interactive: rec.interactive || null,
     savedPath: rec.saved_path || null, savedFile: rec.saved_file || null, interactiveHtml: rec.interactive_html || "",
     openedFile: rec.opened_file || null, tags: rec.tags || [], translations: rec.translations || {},
-    pinned: !!rec.pinned,
+    pinned: !!rec.pinned, quick: !!rec.quick,
   });
   (rec.sources || []).forEach(s => (R.sources[s.id] = s));
   RUN.current = R;

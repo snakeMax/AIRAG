@@ -28,12 +28,17 @@ Everything works with the defaults. If you only change one thing, pick the AI mo
 [Background work and notifications](#background-work-and-notifications) ·
 [Recommended setups](#recommended-setups)
 
+**Where things are in Settings (0.4.2):** seven tabs, each split into titled sections with a jump list at the top: **General** (General, Defaults, About) · **Look & sound** · **AI** (AI model, Usage, Prompts) · **Searching** (Search, Research) · **Library & storage** · **Tools & agents** · **System**. *Search settings…* at the top of Settings finds any setting by its name or help text and jumps to it. Old links such as "Settings → Research" now open the matching section.
+
 *Developer settings (coming with the autonomous agent in 0.5) will get one group of their own at the end of this guide, with a subsection per setting.*
 
 ---
 
 ## Searching
-The controls under the search box. Each can be changed for one search; the defaults are set in **Settings → Defaults**.
+The controls under the search box. Each can be changed for one search; the defaults are set in **Settings → General → Defaults**.
+
+### Quick (home page) and Quick search… (article → Sources)
+A short cited answer (about 80-200 words) from 2-3 pages, in a few seconds and with far fewer tokens than a full search: no AI planning step, one round of 1-2 searches, a lower relevance bar. **Shift+Enter** in the home search box runs a quick search; on phones the Quick and Search buttons sit under the box. If nothing usable is found, the AI writes **3 simpler searches** close to your question and tries once more under the same quick rules. Under a quick answer, **Add to this** asks a short follow-up (added as a new section) and **Research this properly** starts a full search. In an article, *Sources → Quick search…* asks a short question about it; **Update the article with the results** (on by default) adds the answer as a new section with its sources, and the old text stays in Version history. Untick it to get a separate quick answer in History instead. Quick searches run as their own kind of task, so they don't wait behind a full search.
 
 ### Auto / Article / Results (search mode)
 - **Auto:** writes an article when the answer is spread over several pages. When one page answers the question directly, it shows ranked results instead.
@@ -63,7 +68,7 @@ Speak your search instead of typing. See [Speech](#speech-microphone-and-read-al
 ---
 
 ## Article and result tools
-Buttons on articles, result pages and individual sources. Hide the ones you don't use in **Settings → Tools**; all are shown by default.
+Buttons on articles, result pages and individual sources. Hide the ones you don't use in **Settings → Tools & agents**; all are shown by default.
 
 ### Summarize
 A short summary of the article, the result list or one source, focused on your question. Uses a few tokens.
@@ -106,7 +111,7 @@ Saves a small file with just the summary and the sources' links. See [Saving and
 ### How the article tools are grouped
 - **Computer:** *Explainer* and *Listen* are buttons of their own. *Export options* (Export web page, Copy as Markdown, Download summary, Save), *Rewrite* (Regenerate article, Version history, Translate, Summarize) and *Sources* (Locate more sources, Search results, Search again) open small menus. *Pin* stays a button.
 - **Phone:** one row of four big buttons: *Explainer*, *Listen*, *Export* and *More*. Menus open as a sheet from the bottom of the screen; tap outside or ✕ to close.
-- A group whose buttons you've all hidden (Settings → Tools) disappears.
+- A group whose buttons you've all hidden (Settings → Tools & agents) disappears.
 
 ### Regenerate article
 Writes the whole article again **from the same sources** (no new search). Type or say what should be different, or tap a quick choice (Simpler, Shorter, More detail…). *Skip, just improve it* writes a clearer version without instructions. Uses about as many tokens as writing the article once, and runs in the background like a search.
@@ -144,13 +149,13 @@ Explainers are small programs written by the AI, so they run locked away from ev
 ### Data charts
 When the article or its sources give related numbers (prices or stock values over time, figures for different groups or years), the explainer can be an interactive line or bar chart of that data. Each point shows its source number. Only numbers from the sources are plotted.
 
-### Explainer detail (Settings → Prompts)
+### Explainer detail (Settings → AI → Prompts)
 **Simple**, **medium** (default) or **detailed**. Detailed makes richer simulations but uses more tokens.
 
-### Learn from code in My library (Settings → Research)
+### Learn from code in My library (Settings → Searching → Research)
 On (default): JavaScript in your own My library files that matches the explainer is used as a reference. Nothing is fetched from the web.
 
-### Look up code examples on the web (Settings → Research)
+### Look up code examples on the web (Settings → Searching → Research)
 Off (default). When on, it's still only used when your search itself is about programming. Code from the web can hide instructions aimed at the AI or contain mistakes, so normal explainers never fetch it.
 
 ---
@@ -188,7 +193,7 @@ Selecting text in an article (title and subheading included) shows a small menu 
 - **Calculate:** only appears when the selection looks like maths.
 - **Voice (microphone):** say what to do with the selected text. A question becomes a follow-up; "fact-check this" runs a fact-check, and so on.
 
-### Citation style (Settings → Defaults)
+### Citation style (Settings → General → Defaults)
 APA (default), MLA or BibTeX. Used by Cite and Copy with source.
 
 ### Analyze image (press and hold, or right-click)
@@ -197,7 +202,7 @@ On a picture or drawing in an article, choose *Analyze image*. The answer appear
 ---
 
 ## What the AI may use (tools)
-**Settings → Tools**, at the top. Tools are things the AI can call while it answers, like the calculator.
+**Settings → Tools & agents**, at the top. Tools are things the AI can call while it answers, like the calculator.
 
 ### Agent
 Pick which kind of agent you're changing. Each has its own set, and AIRAG remembers your last pick. Opens on *Autonomous* until you pick another.
@@ -239,17 +244,17 @@ Pinned articles appear at the top of the home page, and history never deletes th
 ### Pin source
 Saves a copy of a web page and lists it under *Pinned sources* on the home page until you unpin it.
 
-### Open pinned sources as (Settings → Defaults)
+### Open pinned sources as (Settings → General → Defaults)
 - **Saved page** (default): the copy saved when you pinned it.
 - **AI version:** a short version written by the AI, focused on your search. Uses a few tokens each time.
 
-### Use pinned sources in searches (Settings → Research)
+### Use pinned sources in searches (Settings → Searching → Research)
 New searches first read pinned pages that match the question, from the saved copy (no download). They can be cited like any other source. On by default.
 
 ---
 
 ## AI model
-**Settings → AI model.** This has the biggest effect on quality, speed and cost.
+**Settings → AI → AI model.** This has the biggest effect on quality, speed and cost.
 
 ### Provider
 - **Anthropic Claude, OpenAI, DeepSeek:** need an API key from that company. Strong quality, and you pay per use.
@@ -270,7 +275,7 @@ Stored only on your device and never shown to the AI.
 ---
 
 ## Usage and budget
-**Settings → Usage.**
+**Settings → AI → Usage.**
 
 ### This month
 The total at the top, with a bar for the budget, what's left, and a small chart of each day.
@@ -312,7 +317,7 @@ A hard stop: new searches are refused until you raise the budget or it's a new m
 ---
 
 ## Search engine and wikis
-**Settings → Search.**
+**Settings → Searching → Search.**
 
 ### Web search
 - **DuckDuckGo** (default): free, no key.
@@ -338,7 +343,7 @@ Add any wiki built on MediaWiki (Fandom wikis, PsychonautWiki, the Minecraft wik
 ---
 
 ## Blocked and favourite sites
-**Settings → Research.** Both lists are comma-separated, and use the same rules:
+**Settings → Searching → Research.** Both lists are comma-separated, and use the same rules:
 - `example.com` covers the whole site and all its subdomains (`news.example.com`).
 - `example.com/forum` covers only that directory and everything below it (`example.com/forum/thread/1`), not the rest of the site.
 
@@ -351,7 +356,7 @@ Pages from these start with a higher trust score (+2), so they're more likely to
 ---
 
 ## How hard each search works
-**Settings → Research.** Higher numbers mean better coverage, more tokens and more time.
+**Settings → Searching → Research.** Higher numbers mean better coverage, more tokens and more time.
 
 ### Max search rounds (default 3)
 - **Round 1:** direct searches.
@@ -388,7 +393,7 @@ How many pictures an article can show.
 ---
 
 ## Reading pages and videos
-**Settings → Research → Page reader.**
+**Settings → Searching → Research → Page reader.**
 
 ### Page reader
 - **auto:** fast download first, and a full browser for pages that need JavaScript (on PC with the optional browser installed; the phone app uses its own built-in browser).
@@ -413,7 +418,7 @@ How AIRAG identifies itself to websites. Only change this if a site you need ref
 ---
 
 ## My library (your own files)
-**Settings → Library.** AIRAG can only read the file types listed here, inside the folders you picked, nothing else.
+**Settings → Library & storage.** AIRAG can only read the file types listed here, inside the folders you picked, nothing else.
 
 ### Offline mode
 Nothing is searched or read on the web. Answers come only from My library, your library folders, pinned pages and earlier articles in History (these are marked "Your earlier article (AI-written)"). Turn it on with the **Offline** chip next to the search options on the home page, or here under *Offline mode*. Turning it on asks who writes the answers:
@@ -450,7 +455,7 @@ How much your notes are trusted to start with (default 6/10). The AI still judge
 ---
 
 ## Writing style and instructions
-**Settings → Prompts.**
+**Settings → AI → Prompts.**
 
 ### Writing style / Article length
 - **Writing style:** a balanced, simple or technical tone.
@@ -468,7 +473,7 @@ Replaces the main article instructions. Safety rules and the answer language are
 ---
 
 ## Look: theme and colours
-**Settings → Appearance.** Changes apply right away.
+**Settings → Look & sound.** Changes apply right away.
 
 ### Theme
 System, light or dark.
@@ -482,7 +487,7 @@ The colour of buttons and highlights; pick one or choose your own. *Reset* goes 
 ---
 
 ## Sound effects
-**Settings → Appearance → Customize audio.** Nothing here takes effect until you press **Save**; Cancel leaves everything as it was, including your phone's volume.
+**Settings → Look & sound → Customize audio.** Nothing here takes effect until you press **Save**; Cancel leaves everything as it was, including your phone's volume.
 
 ### Play sound effects
 Turns all sound effects on or off.
@@ -511,10 +516,10 @@ Restores all volumes and built-in sounds, once you press Save.
 ### Microphone (search box)
 Speak your search. On the phone it uses Android's speech recognition; on computers it uses the browser's (the desktop window may not offer it).
 
-### Search as soon as you stop speaking (Settings → Defaults)
+### Search as soon as you stop speaking (Settings → General → Defaults)
 The search starts by itself when you stop talking. Turn it off to check or edit the text first. On by default.
 
-### Read aloud: Voice (Settings → Appearance)
+### Read aloud: Voice (Settings → Look & sound)
 *Female* or *Male* picks the best matching voice for the article's language, or you can choose a specific voice installed on your device. Install more voices in your phone's or computer's text-to-speech settings.
 
 ### Read aloud: Speed and Test
@@ -542,7 +547,7 @@ Saving again updates the same file.
 - **Recently removed** (in the same window): unsaved articles are kept for 30 days in AIRAG's private app folder, outside My library (so they aren't searched or synced). *Restore* puts the article back exactly as it was, with its tags and translations; × deletes that copy for good (the article stays in History). At most 50 are kept.
 - On phones, the delete and unsave buttons in History lists are always shown (they used to appear only when a mouse hovered over them).
 
-### Save articles with pictures and the explainer (Settings → Defaults)
+### Save articles with pictures and the explainer (Settings → General → Defaults)
 Also keeps pictures and the interactive explainer in the saved copy, so they work offline. This makes larger files.
 
 ### Export web page

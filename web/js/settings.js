@@ -57,11 +57,92 @@ function field(f, sec, path, value) {
 }
 const fields = (list, sec, base, values) => list.map(f => field(f, sec, `${base}.${f.key}`, values?.[f.key])).join("");
 
-// dialog
+// dialog: 7 tabs, each made of titled sections (the older, smaller tabs). Old tab names still work as links:
+// openSettings("model") opens the AI tab at its AI model section.
 const TABS = [
-  ["general", "home"], ["defaults", "check"], ["appearance", "palette"], ["model", "cpu"], ["search", "globe"],
-  ["library", "folder"], ["research", "sliders"], ["prompts", "doc"], ["tools", "tool"], ["usage", "coin"], ["system", "cpu2"], ["about", "info"],
+  ["general", "home", ["general", "defaults", "about"]],
+  ["look", "palette", ["appearance"]],
+  ["ai", "cpu", ["model", "usage", "prompts"]],
+  ["searching", "globe", ["search", "research"]],
+  ["storage", "folder", ["library"]],
+  ["tools", "tool", ["tools"]],
+  ["system", "cpu2", ["system"]],
 ];
+const TAB_OF = Object.fromEntries(TABS.flatMap(([k, , subs]) => [[k, k], ...subs.map(x => [x, k])]));
+const REFRESH = {
+  model: () => { refreshOllama(); refreshPcLink(); },
+  library: () => { refreshLibrary(); import("./offline.js").then(m => m.refreshOffline()); },
+  research: () => refreshBrowser(),
+  usage: () => refreshUsage(),
+  system: () => { refreshSystem(); refreshStorage(); refreshLog(); },
+};
+const subTitle = x => t("tab." + x);
+
+const SUBPANE = {
+  general: (sc, st) => generalPane(sc, st),
+  defaults: (sc, st) => defaultsPane(sc, st),
+  about: () => aboutPane(),
+  appearance: () => appearancePane() + audioPane(S.settings.audio) + readAloudPane(S.settings.speech),
+  model: (sc, st) => modelPane(sc, st),
+  usage: (sc, st) => usagePane(sc, st),
+  prompts: (sc, st) => `<h3>${h(t("tab.prompts"))}</h3><p>${h(t("set.promptsIntro"))}</p>${fields(sc.prompts, "prompts", "prompts", st.prompts)}`,
+  search: (sc, st) => searchPane(sc, st),
+  research: (sc, st) => `<h3>${h(t("tab.research"))}</h3><p>${h(t("set.researchIntro"))}</p>
+            <div class="field-grid">${fields(sc.research.filter(f => f.type === "number"), "research", "research", st.research)}</div>
+            ${fields(sc.research.filter(f => f.type !== "number"), "research", "research", st.research)}
+            ${fetchPane(sc, st)}`,
+  library: (sc, st) => libraryPane(sc, st),
+  tools: (sc, st) => agentToolsPane() + buttonsPane(sc, st),
+  system: (sc, st) => systemPane(sc, st),
+};
+
+// "Search settings…": every label, heading and help text, across all tabs; a result opens its tab and
+// highlights the setting for a moment
+function wireSettingsSearch(dlg, showTab) {
+  const box = $("#setSearch", dlg), out = $("#setResults", dlg);
+  const norm = x => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const index = () => {
+    const items = [];
+    $$("[data-sub]", dlg).forEach(sec => {
+      const sub = sec.dataset.sub, tab = TAB_OF[sub];
+      let heading = "";
+      $$("h3, h4, .field > label, label.check, .check > span, .field .help, .help", sec).forEach(el => {
+        if (/^H[34]$/.test(el.tagName)) heading = el.textContent.trim();
+        const text = el.textContent.replace(/\s+/g, " ").trim();
+        if (!text || text.length > 400) return;
+        const target = el.closest(".field, label.check, .check, h3, h4") || el;
+        if (items.some(x => x.target === target)) return;
+        const label = (target.querySelector?.(":scope > label, :scope > span") || target).textContent.replace(/\s+/g, " ").trim().slice(0, 90);
+        items.push({ tab, sub, target, label, where: [t("tab." + tab), heading].filter(Boolean).join(" › "), text: norm(text) });
+      });
+    });
+    return items;
+  };
+  let items = null;
+  box.oninput = () => {
+    const q = norm(box.value.trim());
+    if (!q) { out.hidden = true; $$("[data-pane]", dlg).forEach(p => (p.hidden = !$$(".dlg-tabs button.on", dlg).some(b => b.dataset.tab === p.dataset.pane))); return; }
+    items ||= index();
+    const words = q.split(/\s+/);
+    const hits = items.filter(x => words.every(w => x.text.includes(w) || norm(x.where).includes(w))).slice(0, 30);
+    $$("[data-pane]", dlg).forEach(p => (p.hidden = true));
+    out.hidden = false;
+    out.innerHTML = `<p class="muted">${h(t(hits.length === 1 ? "set.searchOne" : "set.searchMany", { n: hits.length, q: box.value.trim() }))}</p>`
+      + hits.map((x, i) => `<button type="button" class="set-hit" data-hit="${i}"><b>${h(x.label)}</b><small>${h(x.where)}</small></button>`).join("");
+    $$("[data-hit]", out).forEach(b => (b.onclick = () => {
+      const x = hits[+b.dataset.hit];
+      box.value = "";
+      showTab(x.sub, x.sub);
+      x.target.scrollIntoView({ block: "center" });
+      x.target.classList.add("set-flash");
+      setTimeout(() => x.target.classList.remove("set-flash"), 1800);
+    }));
+  };
+  box.onkeydown = e => {
+    if (e.key === "Enter") { e.preventDefault(); $(".set-hit", out)?.click(); }
+    if (e.key === "Escape" && box.value) { e.preventDefault(); e.stopPropagation(); box.value = ""; box.oninput(); }
+  };
+}
 
 export async function openSettings(tab = "general") {
   const dlg = $("#settingsDlg");
@@ -73,25 +154,16 @@ export async function openSettings(tab = "general") {
   const sc = S.schema, st = S.settings;
   dlg.innerHTML = `
     <form method="dialog" id="settingsForm">
-      <div class="dlg-head"><h2>${h(t("set.title"))}</h2><button class="icon-btn" value="cancel" formnovalidate>${icon("x")}</button></div>
+      <div class="dlg-head"><h2>${h(t("set.title"))}</h2>
+        <label class="set-search"><span class="visually-hidden">${h(t("set.search"))}</span>${icon("search")}<input type="search" id="setSearch" autocomplete="off" placeholder="${h(t("set.searchPh"))}"></label>
+        <button class="icon-btn" value="cancel" formnovalidate aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
       <div class="dlg-main">
-        <nav class="dlg-tabs">${TABS.map(([k, ic]) => `<button type="button" data-tab="${k}" title="${h(t(`tab.${k}.tip`))}">${icon(ic)}${h(t("tab." + k))}</button>`).join("")}</nav>
-        <div class="dlg-body">
-          <section data-pane="general">${generalPane(sc, st)}</section>
-          <section data-pane="defaults" hidden>${defaultsPane(sc, st)}</section>
-          <section data-pane="appearance" hidden>${appearancePane()}${audioPane(S.settings.audio)}${readAloudPane(S.settings.speech)}</section>
-          <section data-pane="tools" hidden>${agentToolsPane()}${buttonsPane(sc, st)}</section>
-          <section data-pane="model" hidden>${modelPane(sc, st)}</section>
-          <section data-pane="search" hidden>${searchPane(sc, st)}</section>
-          <section data-pane="library" hidden>${libraryPane(sc, st)}</section>
-          <section data-pane="prompts" hidden><h3>${h(t("tab.prompts"))}</h3><p>${h(t("set.promptsIntro"))}</p>${fields(sc.prompts, "prompts", "prompts", st.prompts)}</section>
-          <section data-pane="research" hidden><h3>${h(t("tab.research"))}</h3><p>${h(t("set.researchIntro"))}</p>
-            <div class="field-grid">${fields(sc.research.filter(f => f.type === "number"), "research", "research", st.research)}</div>
-            ${fields(sc.research.filter(f => f.type !== "number"), "research", "research", st.research)}
-            ${fetchPane(sc, st)}</section>
-          <section data-pane="usage" hidden>${usagePane(sc, st)}</section>
-          <section data-pane="system" hidden>${systemPane(sc, st)}</section>
-          <section data-pane="about" hidden>${aboutPane()}</section>
+        <nav class="dlg-tabs" aria-label="${h(t("set.title"))}">${TABS.map(([k, ic]) => `<button type="button" data-tab="${k}" title="${h(t(`tab.${k}.tip`))}">${icon(ic)}<span class="tab-long">${h(t("tab." + k))}</span><span class="tab-short">${h(t("tab." + k + ".short"))}</span></button>`).join("")}</nav>
+        <div class="dlg-body set-body">
+          ${TABS.map(([k, , subs]) => `<div data-pane="${k}" hidden>
+            ${subs.length > 1 ? `<nav class="set-jump" aria-label="${h(t("set.onThisTab"))}"><span>${h(t("set.onThisTab"))}</span>${subs.map(x => `<button type="button" data-jump="${x}">${h(subTitle(x))}</button>`).join("")}</nav>` : ""}
+            ${subs.map(x => `<section data-sub="${x}">${SUBPANE[x](sc, st)}</section>`).join("")}</div>`).join("")}
+          <div class="set-results" id="setResults" hidden></div>
         </div>
       </div>
       <div class="dlg-foot"><span class="muted" title="${h(S.info.config_dir)}">${h(t("set.storedIn", { dir: S.info.config_dir }))}</span>
@@ -99,16 +171,21 @@ export async function openSettings(tab = "general") {
         <button type="button" class="btn primary" id="saveSettings">${h(t("common.save"))}</button></div>
     </form>`;
 
-  const showTab = k => {
-    $$(".dlg-tabs button", dlg).forEach(b => b.classList.toggle("on", b.dataset.tab === k));
-    $$("[data-pane]", dlg).forEach(p => (p.hidden = p.dataset.pane !== k));
-    if (k === "model") { refreshOllama(); refreshPcLink(); }
-    if (k === "library") { refreshLibrary(); import("./offline.js").then(m => m.refreshOffline()); }
-    if (k === "research") refreshBrowser();
-    if (k === "usage") refreshUsage();
-    if (k === "system") { refreshSystem(); refreshStorage(); refreshLog(); }
+  const showTab = (k, sub = null) => {
+    const tab = TAB_OF[k] || "general";
+    $$(".dlg-tabs button", dlg).forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+    $$("[data-pane]", dlg).forEach(p => (p.hidden = p.dataset.pane !== tab));
+    $("#setResults").hidden = true;
+    TABS.find(x => x[0] === tab)[2].forEach(x => REFRESH[x]?.());
+    const target = sub || (k !== tab ? k : null);
+    const body = $(".set-body", dlg);
+    if (target) $(`[data-sub="${target}"]`, dlg)?.scrollIntoView({ block: "start" });
+    else body.scrollTop = 0;
   };
+  S.showTab = showTab;
   $$(".dlg-tabs button", dlg).forEach(b => (b.onclick = () => showTab(b.dataset.tab)));
+  $$("[data-jump]", dlg).forEach(b => (b.onclick = () => showTab(b.dataset.jump, b.dataset.jump)));
+  wireSettingsSearch(dlg, showTab);
   wireGeneral(dlg);
   wireAppearance(dlg);
   wireAudio(dlg);
@@ -121,8 +198,8 @@ export async function openSettings(tab = "general") {
   wireSystem(dlg);
   wireUsage(dlg);
   $("#saveSettings").onclick = save;
-  showTab(TABS.some(x => x[0] === tab) ? tab : "general");
   if (!dlg.open) dlg.showModal();
+  showTab(TAB_OF[tab] ? tab : "general");      // after opening, so a section link can scroll to it
 }
 
 function collect() {
