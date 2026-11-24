@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased] - Notes Mode ("Lookup Update")
+
+- **Notes Mode**: a Research | Notes switch in the top bar. Obsidian-compatible vaults (create from Research, Writing, Worldbuilding, Personal or Empty, or link an existing Obsidian vault read-only), a folder tree with recent notes, a Markdown editor with Edit / Read, properties, [[links]] (missing notes can be created from the link) and #tags, saving by itself with the last 20 versions kept and no overwriting of notes changed elsewhere
+- **Search notes**: every match, grouped by note with highlighted sections, with search words (tag:, type:, path:, prop:, linksto:, linkedfrom:, has:, modified:, created:, regex:, "exact", -word, OR) and a microphone; no AI
+- **Linked from / Mentioned but not linked / Outline** beside each note, with one-tap *Link*
+- **Voice note**: speak a note into the Inbox
+- **Notes folder**: Documents\AIRAG Notes by default (system drive), changeable in Settings → Library & storage and in the first-start setup
+- Phone: one screen at a time with a bottom bar (Notes, Search, Voice note, Graph and Ask coming next)
+
 ## [0.4.2] - 2026-11-24
 
 - **Search with AIRAG** (Android): share text or a link from any app to AIRAG and it starts a search with it. Long text is put in the search box first so you can shorten it

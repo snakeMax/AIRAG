@@ -1,4 +1,5 @@
 // Entry point: start-up, routing and the search box.
+import { showNotes, notesDirty, saveNotes } from "./notes.js";
 import { applyResourceSettings } from "./resources.js";
 import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
 import { initI18n, t, applyI18n } from "./i18n.js";
@@ -36,9 +37,12 @@ function showView(name) {
   $("#tip").hidden = true;
   $("#view-home").hidden = name !== "home";
   $("#view-run").hidden = name !== "run";
-  $("#topSearch").hidden = name === "home";
-  $("#topLib").hidden = name === "home";
+  $("#view-notes").hidden = name !== "notes";
+  $("#topSearch").hidden = name === "home" || name === "notes";
+  $("#topLib").hidden = name === "home" || name === "notes";
   document.body.classList.toggle("running", name === "run");
+  document.body.classList.toggle("notes-mode", name === "notes");
+  $$(".mode-switch a").forEach(a => a.classList.toggle("on", (a.dataset.modeto === "notes") === (name === "notes")));
 }
 
 function go(q, mode = state.mode, library = state.library, fromId = null, dates = state.dates, mergeId = null, extras = state.extras) {
@@ -61,6 +65,15 @@ function goQuick(q, library = state.library) {
 
 function route() {
   const hash = location.hash || "#/";
+  if (hash.startsWith("#/notes")) {
+    RUN.ctrl?.abort();
+    RUN.current = null;
+    showView("notes");
+    document.title = "AIRAG Notes";
+    showNotes();
+    return;
+  }
+  if (notesDirty()) saveNotes();         // leaving Notes: unsaved typing is saved first
   if (hash.startsWith("#/quick")) {
     const p = new URLSearchParams(hash.split("?")[1] || "");
     if (p.get("q")) { startResearch(p.get("q"), "article", p.get("lib") === "1", null, undefined, null, false, null, {}); return; }

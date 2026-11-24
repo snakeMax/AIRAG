@@ -7429,6 +7429,11 @@
   "main.js": {
    "exports": [],
    "imports": {
+    "notes.js": [
+     "showNotes",
+     "notesDirty",
+     "saveNotes"
+    ],
     "resources.js": [
      "applyResourceSettings"
     ],
@@ -7539,6 +7544,34 @@
     "slug"
    ],
    "imports": {}
+  },
+  "notes.js": {
+   "exports": [
+    "notesDirty",
+    "openNote",
+    "saveNotes",
+    "showNotes"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ],
+    "markdown.js": [
+     "render",
+     "allowLinks"
+    ],
+    "speech.js": [
+     "micButton"
+    ]
+   }
   },
   "notesfolder.js": {
    "exports": [
@@ -8353,5 +8386,5 @@
   "vision",
   "misc"
  ],
- "i18n_keys": 1130
+ "i18n_keys": 1207
 }

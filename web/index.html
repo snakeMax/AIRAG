@@ -22,6 +22,7 @@
 
   <header class="topbar">
     <a class="brand" href="#/" aria-label="AIRAG"><img class="brand-img" src="/static/icon.png" alt=""><span>airag</span></a>
+    <nav class="mode-switch" aria-label="Mode"><a href="#/" data-modeto="research" data-i18n="mode.research"></a><a href="#/notes" data-modeto="notes" data-i18n="mode.notes"></a></nav>
     <form class="searchbox sm" id="topSearch" autocomplete="off" hidden>
       <span class="sb-icon" data-icon="search"></span>
       <input name="q" type="search" data-i18n-ph="home.placeholder" aria-label="Search">
@@ -69,6 +70,7 @@
       </div>
     </section>
 
+    <section id="view-notes" class="view" hidden></section>
     <section id="view-run" class="view" hidden>
       <div class="run">
         <div class="run-main" id="runMain"></div>

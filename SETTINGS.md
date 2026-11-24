@@ -547,6 +547,24 @@ On articles, *Listen*, *Pause*, *Resume* and *Stop* control the reading.
 
 ## Notes
 
+### Research | Notes (top bar)
+Switches between searching the web (Research) and your notes (Notes). Both keep running in the background; unsaved typing in a note is saved when you switch.
+
+### Vaults
+A vault is a folder of Markdown notes (Obsidian-compatible). **+** next to the vault picker: *Create a vault* (name, what it's for, and how it starts: Research, Writing, Worldbuilding (no folders, make your own), Personal or Empty), or *Link an Obsidian vault* you already have. AIRAG reads a linked vault where it is; changes there need your approval (that arrives in a later test), and its `.obsidian` settings are never touched. AIRAG's own index for a vault lives in a hidden `.airag` folder inside it (for linked vaults: in AIRAG's own data folder).
+
+### New note, Edit / Read, saving
+*New note* asks for a name and opens it ready to write. **Edit** shows the Markdown (properties between the `---` lines, `[[Note name]]` links, `#tags`); **Read** shows it formatted with a properties table, and links you can tap. A link to a note that doesn't exist offers to create it. Notes save by themselves a moment after you stop typing (Ctrl+S saves at once). If the note changed in another app since you opened it, AIRAG doesn't overwrite it and asks you to reload. The last 20 versions of each note are kept.
+
+### Linked from, Mentioned but not linked, Outline (right side; below the note on phones)
+Notes that link to this one; notes that mention its name without a link (*Link* turns the first mention into a link); the note's headings; and links to notes that don't exist yet.
+
+### Search notes (with microphone)
+Lists **every** match, grouped by note, with every matching section and the words highlighted. No AI. Search words: `"exact phrase"`, `-leave out`, `OR`, `tag:status/draft`, `type:claim`, `path:Notes/`, `prop:year>1800` (or `prop:status=done`), `linksto:"Note"`, `linkedfrom:"Note"`, `has:image`, `modified:>2026-11-01`, `created:<2026-01-01`, `regex:pattern`, `case:yes`. The microphone fills the box and searches when you stop speaking.
+
+### Voice note
+Speak (or type) a note; it's saved as a new note in the vault's Inbox (or its top folder) named "Voice note" with the date and time, then opened so you can edit or move it. Letting the AI title, sort and link a voice note comes in a later test, with a preview before anything is saved.
+
 ### Notes folder (Settings → Library & storage, and the first-start setup)
 Where your notes vaults are kept. Default: **Documents\AIRAG Notes** on your system drive (C: on Windows; Documents/AIRAG Notes on Android). *Change…* picks another folder (for example on another drive); *Use the default* goes back. Changing it doesn't move vaults you already have, and switching back finds them again. The first-start setup shows the same choice.
 

@@ -888,6 +888,7 @@ or removing them.
 - `interactive.js`: openInteractive
 - `main.js`: (no exports)
 - `markdown.js`: allowLinks, inline, render, slug
+- `notes.js`: notesDirty, openNote, saveNotes, showNotes
 - `notesfolder.js`: notesFolderCard, refreshNotesFolder
 - `offline.js`: initOffline, isOffline, onOfflineChange, openOfflineDialog, refreshOffline
 - `openfile.js`: initOpenFile, pickFile
@@ -936,4 +937,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, misc  
-i18n keys (en): 1130
+i18n keys (en): 1207
