@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.2] - 2026-11-24
 
 - **Search with AIRAG** (Android): share text or a link from any app to AIRAG and it starts a search with it. Long text is put in the search box first so you can shorten it
 - **Links in your question are read first**: put a web address in a search (typed or shared) and that page is read as a source before the search engine's results, with the usual checks (offline mode, blocked sites)

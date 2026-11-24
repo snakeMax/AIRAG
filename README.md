@@ -25,6 +25,7 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 
 - **Answers, not just links**: shows the best pages when one answers your question, writes a cited article when the answer is scattered across many pages, or suggests better searches when nothing useful turns up.
 - **Source ratings**: every source gets a relevance, coverage and reliability rating, with the key findings quoted.
+- **Quick search**: a short cited answer from a few pages in seconds; on an article it can add the answer as a new section.
 - **Summarize** any article, result list or single source, focused on what you searched for.
 - **Interactive explainers**: for articles where it helps (physics, statistics, how things work...), AIRAG can generate a small simulation you can play with. It runs sandboxed, with no network access.
 - **Library ("Retrieve & Get")**: add your own folders (Obsidian vaults, PDFs, Word documents, notes) and tick *My library* to include them in searches. Indexed locally.
@@ -37,7 +38,9 @@ You type a search like you would on Google. AIRAG searches the web (and optional
 - **Search engines**: DuckDuckGo (no key needed), Brave, Google Programmable Search, or your own SearXNG.
 - **Desktop window or browser tab + tray icon**, chosen during install and switchable in Settings.
 - **9 interface languages** (English, Norsk, Svenska, Dansk, Deutsch, Français, Español, 日本語, 简体中文); answers in 20+ languages.
-- **Themes**: light/dark, four gray palettes and any accent colour.
+- **Themes and text**: light/dark, four gray palettes, any accent colour, interface and article fonts (including an easy-reading font) and five text sizes.
+- **Models per task** (Claude): a cheaper or stronger model for each kind of work.
+- **Snap panels**: drag the Answers panel and Calculator into place; minimize them to a tray.
 - **Custom prompts**: writing style, length, your own instructions, or a fully replaced article prompt (safety rules always stay on).
 - **Automatic updates** from GitHub Releases, on Windows and Android.
 
@@ -55,6 +58,10 @@ Everything works out of the box. **[SETTINGS.md](SETTINGS.md)** explains every s
 ## Updates
 
 Newest first. Full technical details are in [CHANGELOG.md](CHANGELOG.md).
+
+### 0.4.2 (24 Nov 2026)
+Quick search: a short answer with sources in seconds, for far fewer tokens (Quick button or Shift+Enter; from an article it can add the answer as a new section). Settings are now 7 tabs with sections and a search box. Pick a Claude model per kind of work, choose the interface and article font (including an easy-reading font) and the text size, and turn on live graphs of processor, memory and AI use. The Answers panel and Calculator can be dragged, snapped into place and minimized. Share text or a link to AIRAG on Android to search it, and links in your question are read first.
+Safety: AIRAG never reads pages on your own computer or home network unless you allow it, other websites can't use AIRAG or show it in a frame, and phone links only open web and mail links.
 
 ### 0.4.1 (19 Nov 2026)
 Much better at finding information, especially for medical and scientific questions: bot-check pages are recognised, research papers on blocked sites are read through Europe PMC, unreadable pages are replaced by others, and sources count when they answer any part of your question. Open Word, PowerPoint, Excel, OpenDocument, RTF, CSV, JSON and SQLite files, or any saved article or exported page, without the AI. Article tools are grouped into menus; Regenerate an article your way with version history (Undo, Compare, Restore). A Save dialog with tags (and Suggest tags) and translations to keep, a language switcher, Unsave with a Saved articles window and Recently removed. Offline mode answers from your own files, with a local model or your usual one. Guarded execution keeps running tasks safe while you change settings, and every AI tool runs in the background.
