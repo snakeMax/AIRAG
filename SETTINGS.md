@@ -545,6 +545,11 @@ On articles, *Listen*, *Pause*, *Resume* and *Stop* control the reading.
 
 ---
 
+## Notes
+
+### Notes folder (Settings → Library & storage, and the first-start setup)
+Where your notes vaults are kept. Default: **Documents\AIRAG Notes** on your system drive (C: on Windows; Documents/AIRAG Notes on Android). *Change…* picks another folder (for example on another drive); *Use the default* goes back. Changing it doesn't move vaults you already have, and switching back finds them again. The first-start setup shows the same choice.
+
 ## Saving and exporting
 
 ### Save (articles)

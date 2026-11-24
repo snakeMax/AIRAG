@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -26,6 +27,41 @@ def _vault(vid: str):
 
 def _fail(e: Exception, code: int = 400):
     return HTTPException(code, str(e))
+
+
+@router.get("/folder")
+def notes_folder():
+    return store.status(config.load())
+
+
+class FolderReq(BaseModel):
+    path: Optional[str] = None      # None = ask with the folder picker, "" = back to the default
+
+
+@router.post("/folder")
+async def set_notes_folder(req: FolderReq):
+    """Where the Notes folder is. Vaults already made stay where they are; the list of vaults is kept per
+    Notes folder (notes-index.json), so switching back finds them again."""
+    from .. import appctl
+    path = req.path
+    if path is None:
+        try:
+            path = await asyncio.to_thread(appctl.pick_folder)
+        except RuntimeError as e:
+            raise _fail(e)
+        if not path:
+            return store.status(config.load())
+    if path:
+        p = Path(path.strip().strip('"')).expanduser()
+        if not p.is_absolute():
+            raise HTTPException(400, "Pick a full folder path")
+        try:
+            p.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise HTTPException(400, f"Can't use that folder: {e}")
+        path = str(p)
+    s = config.save({"notes": {"root": path}})
+    return store.status(s)
 
 
 @router.get("/vaults")

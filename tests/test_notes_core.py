@@ -126,3 +126,12 @@ def test_notes_api_roundtrip(tmp_path, monkeypatch):
         assert c.get(f"/api/notes/{v['id']}/search", params={"q": "smith"}).json()["notes"] == 1
         assert c.get(f"/api/notes/{v['id']}/note", params={"path": "../../etc/passwd"}).status_code == 400
         assert c.get(f"/api/notes/{v['id']}/links", params={"path": n["path"]}).json()["outgoing"][0]["exists"] is False
+
+
+def test_notes_folder_defaults_to_documents_and_can_change(tmp_path, monkeypatch):
+    from pathlib import Path
+    from airag.notes import store
+    assert store.default_root() == Path.home() / "Documents" / "AIRAG Notes"     # system drive, not D:
+    assert store.status({})["custom"] is False
+    s = {"notes": {"root": str(tmp_path / "Elsewhere")}}
+    assert store.root(s) == tmp_path / "Elsewhere" and store.status(s)["custom"] is True

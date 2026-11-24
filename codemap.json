@@ -3504,7 +3504,7 @@
      "args": [
       "vid"
      ],
-     "line": 16
+     "line": 17
     },
     {
      "kind": "def",
@@ -3513,19 +3513,39 @@
       "e",
       "code"
      ],
-     "line": 27
+     "line": 28
+    },
+    {
+     "kind": "def",
+     "name": "notes_folder",
+     "args": [],
+     "line": 33
+    },
+    {
+     "kind": "class",
+     "name": "FolderReq",
+     "methods": [],
+     "line": 37
+    },
+    {
+     "kind": "async def",
+     "name": "set_notes_folder",
+     "args": [
+      "req"
+     ],
+     "line": 42
     },
     {
      "kind": "def",
      "name": "list_vaults",
      "args": [],
-     "line": 32
+     "line": 68
     },
     {
      "kind": "class",
      "name": "NewVault",
      "methods": [],
-     "line": 38
+     "line": 74
     },
     {
      "kind": "def",
@@ -3533,13 +3553,13 @@
      "args": [
       "req"
      ],
-     "line": 45
+     "line": 81
     },
     {
      "kind": "class",
      "name": "LinkVault",
      "methods": [],
-     "line": 52
+     "line": 88
     },
     {
      "kind": "def",
@@ -3547,7 +3567,7 @@
      "args": [
       "req"
      ],
-     "line": 58
+     "line": 94
     },
     {
      "kind": "def",
@@ -3555,7 +3575,7 @@
      "args": [
       "vid"
      ],
-     "line": 66
+     "line": 102
     },
     {
      "kind": "def",
@@ -3563,7 +3583,7 @@
      "args": [
       "vid"
      ],
-     "line": 72
+     "line": 108
     },
     {
      "kind": "async def",
@@ -3571,7 +3591,7 @@
      "args": [
       "vid"
      ],
-     "line": 78
+     "line": 114
     },
     {
      "kind": "def",
@@ -3580,13 +3600,13 @@
       "vid",
       "path"
      ],
-     "line": 87
+     "line": 123
     },
     {
      "kind": "class",
      "name": "SaveNote",
      "methods": [],
-     "line": 102
+     "line": 138
     },
     {
      "kind": "async def",
@@ -3595,13 +3615,13 @@
       "vid",
       "req"
      ],
-     "line": 110
+     "line": 146
     },
     {
      "kind": "class",
      "name": "NewNote",
      "methods": [],
-     "line": 122
+     "line": 158
     },
     {
      "kind": "async def",
@@ -3610,7 +3630,7 @@
       "vid",
       "req"
      ],
-     "line": 130
+     "line": 166
     },
     {
      "kind": "async def",
@@ -3620,7 +3640,7 @@
       "q",
       "sort"
      ],
-     "line": 141
+     "line": 177
     },
     {
      "kind": "def",
@@ -3629,7 +3649,7 @@
       "vid",
       "path"
      ],
-     "line": 150
+     "line": 186
     },
     {
      "kind": "def",
@@ -3637,7 +3657,7 @@
      "args": [
       "vid"
      ],
-     "line": 160
+     "line": 196
     }
    ]
   },
@@ -4039,11 +4059,19 @@
     },
     {
      "kind": "def",
+     "name": "status",
+     "args": [
+      "settings"
+     ],
+     "line": 60
+    },
+    {
+     "kind": "def",
      "name": "root",
      "args": [
       "settings"
      ],
-     "line": 66
+     "line": 67
     },
     {
      "kind": "def",
@@ -4051,7 +4079,7 @@
      "args": [
       "settings"
      ],
-     "line": 72
+     "line": 73
     },
     {
      "kind": "def",
@@ -4059,7 +4087,7 @@
      "args": [
       "settings"
      ],
-     "line": 76
+     "line": 77
     },
     {
      "kind": "def",
@@ -4068,7 +4096,7 @@
       "settings",
       "data"
      ],
-     "line": 87
+     "line": 88
     },
     {
      "kind": "def",
@@ -4076,7 +4104,7 @@
      "args": [
       "settings"
      ],
-     "line": 92
+     "line": 93
     },
     {
      "kind": "def",
@@ -4085,7 +4113,7 @@
       "settings",
       "v"
      ],
-     "line": 101
+     "line": 102
     },
     {
      "kind": "def",
@@ -4094,7 +4122,7 @@
       "settings",
       "vid"
      ],
-     "line": 105
+     "line": 106
     },
     {
      "kind": "def",
@@ -4105,7 +4133,7 @@
       "template",
       "purpose"
      ],
-     "line": 112
+     "line": 113
     },
     {
      "kind": "def",
@@ -4115,7 +4143,7 @@
       "folder",
       "name"
      ],
-     "line": 133
+     "line": 134
     },
     {
      "kind": "def",
@@ -4124,7 +4152,7 @@
       "settings",
       "vid"
      ],
-     "line": 150
+     "line": 151
     },
     {
      "kind": "def",
@@ -4133,7 +4161,7 @@
       "settings",
       "v"
      ],
-     "line": 159
+     "line": 160
     },
     {
      "kind": "def",
@@ -4143,7 +4171,7 @@
       "v",
       "limit"
      ],
-     "line": 166
+     "line": 167
     },
     {
      "kind": "def",
@@ -4153,7 +4181,7 @@
       "v",
       "rel"
      ],
-     "line": 191
+     "line": 192
     },
     {
      "kind": "def",
@@ -4164,7 +4192,7 @@
       "rel",
       "old"
      ],
-     "line": 200
+     "line": 201
     },
     {
      "kind": "def",
@@ -4177,7 +4205,7 @@
       "expected_hash",
       "approved"
      ],
-     "line": 212
+     "line": 213
     },
     {
      "kind": "def",
@@ -4185,7 +4213,7 @@
      "args": [
       "title"
      ],
-     "line": 236
+     "line": 237
     },
     {
      "kind": "def",
@@ -4196,7 +4224,7 @@
       "folder",
       "title"
      ],
-     "line": 244
+     "line": 245
     },
     {
      "kind": "def",
@@ -4210,7 +4238,7 @@
       "props",
       "approved"
      ],
-     "line": 256
+     "line": 257
     },
     {
      "kind": "def",
@@ -4218,7 +4246,7 @@
      "args": [
       "v"
      ],
-     "line": 265
+     "line": 266
     }
    ]
   },
@@ -6923,6 +6951,62 @@
   ],
   [
    "GET",
+   "/api/notes/folder"
+  ],
+  [
+   "POST",
+   "/api/notes/folder"
+  ],
+  [
+   "GET",
+   "/api/notes/vaults"
+  ],
+  [
+   "POST",
+   "/api/notes/vaults"
+  ],
+  [
+   "POST",
+   "/api/notes/vaults/link"
+  ],
+  [
+   "DELETE",
+   "/api/notes/vaults/{vid}"
+  ],
+  [
+   "GET",
+   "/api/notes/{vid}/links"
+  ],
+  [
+   "POST",
+   "/api/notes/{vid}/new"
+  ],
+  [
+   "GET",
+   "/api/notes/{vid}/note"
+  ],
+  [
+   "PUT",
+   "/api/notes/{vid}/note"
+  ],
+  [
+   "POST",
+   "/api/notes/{vid}/reindex"
+  ],
+  [
+   "GET",
+   "/api/notes/{vid}/search"
+  ],
+  [
+   "GET",
+   "/api/notes/{vid}/stats"
+  ],
+  [
+   "GET",
+   "/api/notes/{vid}/tree"
+  ],
+  [
+   "GET",
    "/api/offline"
   ],
   [
@@ -7456,6 +7540,24 @@
    ],
    "imports": {}
   },
+  "notesfolder.js": {
+   "exports": [
+    "notesFolderCard",
+    "refreshNotesFolder"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
   "offline.js": {
    "exports": [
     "initOffline",
@@ -7712,6 +7814,10 @@
     "setSettingsHooks"
    ],
    "imports": {
+    "notesfolder.js": [
+     "notesFolderCard",
+     "refreshNotesFolder"
+    ],
     "taskmodels.js": [
      "taskModelsPane",
      "taskModelsValue",
@@ -7773,6 +7879,9 @@
     "setSetupHooks"
    ],
    "imports": {
+    "notesfolder.js": [
+     "refreshNotesFolder"
+    ],
     "util.js": [
      "$",
      "$$",
@@ -8244,5 +8353,5 @@
   "vision",
   "misc"
  ],
- "i18n_keys": 1123
+ "i18n_keys": 1130
 }

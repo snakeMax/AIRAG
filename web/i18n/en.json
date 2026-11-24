@@ -1032,5 +1032,12 @@
  "snap.willSnapResize": "{b} will snap here and resize to fit",
  "snap.calc": "Calculator",
  "f.fetch.allow_local_network": "Read pages on my local network",
- "h.fetch.allow_local_network": "Off: links to this computer (127.0.0.1, localhost) or your local network (router, NAS, 192.168.x.x) are never read, so their contents can't reach the AI. Turn on only if you search your own intranet pages."
+ "h.fetch.allow_local_network": "Off: links to this computer (127.0.0.1, localhost) or your local network (router, NAS, 192.168.x.x) are never read, so their contents can't reach the AI. Turn on only if you search your own intranet pages.",
+ "nf.title": "Notes folder",
+ "nf.intro": "Where your notes vaults are kept. Changing it doesn't move vaults you already have; switching back finds them again.",
+ "nf.vaults": "{n} vaults",
+ "nf.notYet": "Made when you create your first vault",
+ "nf.change": "Change\u2026",
+ "nf.default": "Use the default",
+ "nf.setupLabel": "Where to keep your notes (you can change this later in Settings)"
 }

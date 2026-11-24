@@ -1,4 +1,5 @@
 // First-run setup, and the "API key missing" popup shown at launch when needed.
+import { refreshNotesFolder } from "./notesfolder.js";
 import { $, $$, h, icon, api, toast } from "./util.js";
 import { t, uiLang, uiLanguages } from "./i18n.js";
 
@@ -46,6 +47,8 @@ export async function openSetup(reason = "welcome") {
             <button type="button" class="choice ${choice === "cloud" ? "on" : ""}" data-choice="cloud"><b>${icon("globe")}${h(t("setup.cloud"))}</b><span>${h(t("setup.cloudDesc"))}</span></button>
           </div>
           ${choice === "local" ? localPart(oll, settings) : cloudPart(cloud, provider, settings)}
+          ${reason === "welcome" ? `<div class="field" style="margin-top:12px"><label>${h(t("nf.setupLabel"))}</label>
+            <div class="status-card" id="suNotesFolder"><div class="grow">${h(t("common.loading"))}</div></div></div>` : ""}
           <details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;font-size:13.5px">${h(t("setup.searchKeys"))}</summary>
             <p class="muted" style="font-size:12.5px">${h(t("setup.searchKeysDesc"))}</p>
             <div class="field"><label>Brave Search API key</label><input class="input" type="password" id="suBrave" autocomplete="off" placeholder="${h(settings.search.backends.brave?.api_key || "")}">
@@ -57,8 +60,8 @@ export async function openSetup(reason = "welcome") {
           <button class="btn ghost" value="skip">${h(t("setup.skip"))}</button>
           <button type="button" class="btn primary" id="suDone">${h(t("setup.done"))}</button></div>
       </form>`;
-    $$("[data-choice]", dlg).forEach(b => (b.onclick = () => { choice = b.dataset.choice; render(); }));
-    $("#suProv")?.addEventListener("change", e => { provider = e.target.value; render(); });
+    $$("[data-choice]", dlg).forEach(b => (b.onclick = () => { choice = b.dataset.choice; render(); refreshNotesFolder(dlg); }));
+    $("#suProv")?.addEventListener("change", e => { provider = e.target.value; render(); refreshNotesFolder(dlg); });
     $("#suStart")?.addEventListener("click", async e => {
       e.currentTarget.innerHTML = `<span class="spinner sm"></span>`;
       Object.assign(oll, await api("/api/ollama/start", { method: "POST" }).catch(() => oll));
@@ -74,6 +77,7 @@ export async function openSetup(reason = "welcome") {
   };
   render();
   if (!dlg.open) dlg.showModal();
+  refreshNotesFolder(dlg);
 }
 
 function localPart(oll, settings) {

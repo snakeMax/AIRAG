@@ -51,16 +51,17 @@ class NotesError(Exception):
 
 
 def default_root() -> Path:
+    """Documents/AIRAG Notes on the system drive (C: on Windows). Changeable in Settings and at first start."""
     if paths.ANDROID:
         return Path("/storage/emulated/0/Documents/AIRAG Notes")
-    if os.name == "nt":
-        d = Path("D:/")          # the user's data drive when there is one (keeps C: free)
-        try:
-            if d.exists() and os.access(d, os.W_OK):
-                return d / "AIRAG Notes"
-        except OSError:
-            pass
     return Path.home() / "Documents" / "AIRAG Notes"
+
+
+def status(settings: dict) -> dict:
+    r = root(settings)
+    custom = bool(str((settings.get("notes") or {}).get("root") or "").strip())
+    return {"path": str(r), "default": str(default_root()), "custom": custom, "exists": r.is_dir(),
+            "vaults": len(load_index(settings)["vaults"]) if r.is_dir() else 0}
 
 
 def root(settings: dict) -> Path:

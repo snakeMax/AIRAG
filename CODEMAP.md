@@ -62,6 +62,20 @@ or removing them.
 - `GET /api/mylibrary/saved`
 - `GET /api/mylibrary/saved/{name}`
 - `POST /api/mylibrary/unsave`
+- `GET /api/notes/folder`
+- `POST /api/notes/folder`
+- `GET /api/notes/vaults`
+- `POST /api/notes/vaults`
+- `POST /api/notes/vaults/link`
+- `DELETE /api/notes/vaults/{vid}`
+- `GET /api/notes/{vid}/links`
+- `POST /api/notes/{vid}/new`
+- `GET /api/notes/{vid}/note`
+- `PUT /api/notes/{vid}/note`
+- `POST /api/notes/{vid}/reindex`
+- `GET /api/notes/{vid}/search`
+- `GET /api/notes/{vid}/stats`
+- `GET /api/notes/{vid}/tree`
 - `GET /api/offline`
 - `POST /api/offline`
 - `POST /api/ollama/delete`
@@ -524,6 +538,9 @@ or removing them.
 - async def `check(url, allow_local)`
 
 ### airag/notes/api.py
+- def `notes_folder()`
+- class `FolderReq` ()
+- async def `set_notes_folder(req)`
 - def `list_vaults()`
 - class `NewVault` ()
 - def `new_vault(req)`
@@ -580,6 +597,7 @@ or removing them.
 ### airag/notes/store.py
 - class `NotesError` ()
 - def `default_root()`
+- def `status(settings)`
 - def `root(settings)`
 - def `load_index(settings)`
 - def `vaults(settings)`
@@ -870,6 +888,7 @@ or removing them.
 - `interactive.js`: openInteractive
 - `main.js`: (no exports)
 - `markdown.js`: allowLinks, inline, render, slug
+- `notesfolder.js`: notesFolderCard, refreshNotesFolder
 - `offline.js`: initOffline, isOffline, onOfflineChange, openOfflineDialog, refreshOffline
 - `openfile.js`: initOpenFile, pickFile
 - `pins.js`: PINS, isPinned, loadPins, openPinned, pinButton, pinnedCards, setPinHooks, togglePinSource
@@ -917,4 +936,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, misc  
-i18n keys (en): 1123
+i18n keys (en): 1130

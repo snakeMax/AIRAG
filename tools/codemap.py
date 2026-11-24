@@ -41,9 +41,19 @@ def py_modules():
 ROUTE = re.compile(r'@app\.(get|post|put|delete)\("([^"]+)"')
 
 
+ROUTER = re.compile(r'@router\.(get|post|put|delete)\("([^"]*)"')
+PREFIX = re.compile(r'APIRouter\(\s*prefix\s*=\s*"([^"]+)"')
+
+
 def routes():
     src = (ROOT / "airag" / "main.py").read_text(encoding="utf-8")
-    return sorted({(m.group(1).upper(), m.group(2)) for m in ROUTE.finditer(src)}, key=lambda r: (r[1], r[0]))
+    out = {(m.group(1).upper(), m.group(2)) for m in ROUTE.finditer(src)}
+    for p in (ROOT / "airag").rglob("*.py"):         # feature routers (e.g. airag/notes/api.py)
+        s = p.read_text(encoding="utf-8")
+        pre = PREFIX.search(s)
+        if pre:
+            out |= {(m.group(1).upper(), pre.group(1) + m.group(2)) for m in ROUTER.finditer(s)}
+    return sorted(out, key=lambda r: (r[1], r[0]))
 
 
 EXPORT = re.compile(r"^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)", re.M)

@@ -1,6 +1,7 @@
 // Settings dialog. Generic fields are rendered from the server's schema, so new
 // providers/backends/options show up automatically; a few tabs have custom panels
 // (Ollama models, library folders, headless browser, appearance, updates).
+import { notesFolderCard, refreshNotesFolder } from "./notesfolder.js";
 import { taskModelsPane, taskModelsValue, wireTaskModels, addLoadedModels } from "./taskmodels.js";
 import { $, $$, h, icon, api, toast, pollJob, progressBar, fmtBytes, fmtAgo } from "./util.js";
 import { t, has, uiLang, uiLanguages } from "./i18n.js";
@@ -902,6 +903,7 @@ function libraryPane(sc, st) {
   return `<h3>${h(t("lib.title"))}</h3><p>${h(t("lib.intro"))}</p>
     <h4>${h(t("off.settingsTitle"))}</h4>
     <div class="status-card" id="offCard"><div class="grow">${h(t("common.loading"))}</div></div>
+    ${notesFolderCard()}
     <h4>${h(t("my.title"))}</h4><p class="muted" style="font-size:13px">${h(t("my.intro"))}</p>
     <div class="status-card" id="myLibCard"><div class="grow">${h(t("common.loading"))}</div></div>
     <div class="row" style="margin:8px 0 18px"><span class="muted" style="font-size:13px">${h(t("my.addFiles"))}</span>
@@ -937,6 +939,7 @@ async function refreshMyLibrary() {
 
 async function refreshLibrary() {
   refreshMyLibrary();
+  refreshNotesFolder();
   const box = $("#libFolders");
   if (!box) return;
   const s = await api("/api/library/status").catch(() => null);
