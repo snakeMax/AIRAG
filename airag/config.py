@@ -103,6 +103,10 @@ GENERAL_SCHEMA: dict = {
         {"key": "subagents", "label": "", "type": "hidden", "default": "medium"},
     ],
     # token and cost tracking (Settings -> Usage)
+    # Notes Mode: where the Notes folder is (empty = Documents/AIRAG Notes, or D:\\AIRAG Notes on a PC with a D: drive)
+    "notes": [
+        {"key": "root", "label": "", "type": "hidden", "default": ""},
+    ],
     # groundwork for 0.5.0 agents (airag.agents.Limits reads these; not shown in Settings yet)
     "agents": [
         {"key": "max_steps", "label": "", "type": "hidden", "default": 30},
@@ -274,6 +278,7 @@ def _base_defaults() -> dict:
         "buttons": field_defaults(GENERAL_SCHEMA["buttons"]),
         "agent_tools": field_defaults(GENERAL_SCHEMA["agent_tools"]),
         "effort": field_defaults(GENERAL_SCHEMA["effort"]),
+        "notes": field_defaults(GENERAL_SCHEMA["notes"]),
         "agents": field_defaults(GENERAL_SCHEMA["agents"]),
         "enterprise": field_defaults(GENERAL_SCHEMA["enterprise"]),
     }

@@ -523,6 +523,79 @@ or removing them.
 - def `check_sync(url, allow_local)`
 - async def `check(url, allow_local)`
 
+### airag/notes/api.py
+- def `list_vaults()`
+- class `NewVault` ()
+- def `new_vault(req)`
+- class `LinkVault` ()
+- def `link_vault(req)`
+- def `forget_vault(vid)`
+- def `tree(vid)`
+- async def `reindex(vid)`
+- def `get_note(vid, path)`
+- class `SaveNote` ()
+- async def `save_note(vid, req)`
+- class `NewNote` ()
+- async def `new_note(vid, req)`
+- async def `search_notes(vid, q, sort)`
+- def `links(vid, path)`
+- def `vault_stats(vid)`
+
+### airag/notes/index.py
+- def `connect(settings, v)`
+- def `has_fts(c)`
+- def `index_note(c, rel, text, mtime, size)`
+- def `update(settings, v, max_notes)`
+- def `remove(c, rel)`
+- def `reindex_one(settings, v, rel)`
+- def `resolve_target(c, target)`
+- def `backlinks(settings, v, rel)`
+- def `outgoing(settings, v, rel)`
+- def `stats(settings, v)`
+
+### airag/notes/parser.py
+- class `Link` ()
+- class `Section` ()
+- class `Note` ()
+- def `split_front_matter(text)`
+- def `sections_of(body)`
+- def `links_of(body)`
+- def `tags_of(body, props)`
+- def `gist_of(body, limit)`
+- def `parse(text, name)`
+
+### airag/notes/pathguard.py
+- class `PathError` ()
+- def `check_name(name)`
+- def `clean_rel(rel, allow_private)`
+- def `resolve(root, rel, allow_private)`
+
+### airag/notes/search.py
+- class `QueryError` ()
+- class `Query` ()
+- def `safe_regex(pattern, case)`
+- def `parse_query(q)`
+- def `run(settings, v, q, sort, limit)`
+
+### airag/notes/store.py
+- class `NotesError` ()
+- def `default_root()`
+- def `root(settings)`
+- def `load_index(settings)`
+- def `vaults(settings)`
+- def `vault_dir(settings, v)`
+- def `get_vault(settings, vid)`
+- def `create_vault(settings, name, template, purpose)`
+- def `link_vault(settings, folder, name)`
+- def `forget_vault(settings, vid)`
+- def `private_dir(settings, v)`
+- def `tree(settings, v, limit)`
+- def `read_note(settings, v, rel)`
+- def `write_note(settings, v, rel, text, expected_hash, approved)`
+- def `safe_title(title)`
+- def `free_path(settings, v, folder, title)`
+- def `create_note(settings, v, folder, title, body, props, approved)`
+
 ### airag/offline.py
 - class `Offline` ()
 - def `on(settings)`
@@ -830,6 +903,7 @@ or removing them.
 - `speech`: voice, rate
 - `agent_tools`: picker, sets
 - `effort`: standard, autonomous, subagents
+- `notes`: root
 - `agents`: max_steps, max_tool_calls, retries, tool_timeout, cost_cap, token_limit, subagents, subagent_token_share
 - `enterprise`: server_url, organization
 - `usage`: monthly_budget, tell_model, stop_at_budget

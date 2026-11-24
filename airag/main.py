@@ -244,6 +244,10 @@ def _open_path(p: Path, reveal: bool = False) -> None:
         subprocess.Popen(["xdg-open", str(p.parent if reveal else p)])
 
 
+# Notes Mode (vaults, index, built-in search)
+from .notes.api import router as notes_router  # noqa: E402
+app.include_router(notes_router)
+
 # settings
 from .llm import tasks as llm_tasks
 

@@ -321,19 +321,19 @@
      "args": [
       "fields"
      ],
-     "line": 239
+     "line": 243
     },
     {
      "kind": "def",
      "name": "defaults",
      "args": [],
-     "line": 243
+     "line": 247
     },
     {
      "kind": "def",
      "name": "_base_defaults",
      "args": [],
-     "line": 256
+     "line": 260
     },
     {
      "kind": "def",
@@ -342,13 +342,13 @@
       "base",
       "over"
      ],
-     "line": 282
+     "line": 287
     },
     {
      "kind": "def",
      "name": "_secret_fields",
      "args": [],
-     "line": 292
+     "line": 297
     },
     {
      "kind": "def",
@@ -357,7 +357,7 @@
       "d",
       "path"
      ],
-     "line": 305
+     "line": 310
     },
     {
      "kind": "def",
@@ -367,7 +367,7 @@
       "path",
       "v"
      ],
-     "line": 313
+     "line": 318
     },
     {
      "kind": "def",
@@ -375,31 +375,31 @@
      "args": [
       "s"
      ],
-     "line": 319
+     "line": 324
     },
     {
      "kind": "def",
      "name": "_backup_path",
      "args": [],
-     "line": 334
+     "line": 339
     },
     {
      "kind": "def",
      "name": "load_raw",
      "args": [],
-     "line": 338
+     "line": 343
     },
     {
      "kind": "def",
      "name": "guarded",
      "args": [],
-     "line": 392
+     "line": 397
     },
     {
      "kind": "def",
      "name": "begin_job",
      "args": [],
-     "line": 399
+     "line": 404
     },
     {
      "kind": "def",
@@ -407,13 +407,13 @@
      "args": [
       "token"
      ],
-     "line": 407
+     "line": 412
     },
     {
      "kind": "def",
      "name": "in_job",
      "args": [],
-     "line": 412
+     "line": 417
     },
     {
      "kind": "def",
@@ -421,7 +421,7 @@
      "args": [
       "current"
      ],
-     "line": 416
+     "line": 421
     },
     {
      "kind": "def",
@@ -430,7 +430,7 @@
       "before",
       "after"
      ],
-     "line": 438
+     "line": 443
     },
     {
      "kind": "def",
@@ -438,7 +438,7 @@
      "args": [
       "with_env"
      ],
-     "line": 457
+     "line": 462
     },
     {
      "kind": "def",
@@ -446,7 +446,7 @@
      "args": [
       "s"
      ],
-     "line": 485
+     "line": 490
     },
     {
      "kind": "def",
@@ -455,7 +455,7 @@
       "new",
       "current"
      ],
-     "line": 494
+     "line": 499
     },
     {
      "kind": "def",
@@ -463,7 +463,7 @@
      "args": [
       "incoming"
      ],
-     "line": 502
+     "line": 507
     },
     {
      "kind": "def",
@@ -473,7 +473,7 @@
       "llm_provider",
       "provider_cfg"
      ],
-     "line": 521
+     "line": 526
     }
    ]
   },
@@ -2118,7 +2118,7 @@
      "kind": "class",
      "name": "PricesReq",
      "methods": [],
-     "line": 251
+     "line": 255
     },
     {
      "kind": "def",
@@ -2126,25 +2126,25 @@
      "args": [
       "req"
      ],
-     "line": 257
+     "line": 261
     },
     {
      "kind": "def",
      "name": "live_resources",
      "args": [],
-     "line": 272
+     "line": 276
     },
     {
      "kind": "def",
      "name": "schema",
      "args": [],
-     "line": 279
+     "line": 283
     },
     {
      "kind": "def",
      "name": "get_settings",
      "args": [],
-     "line": 303
+     "line": 307
     },
     {
      "kind": "def",
@@ -2152,7 +2152,7 @@
      "args": [
       "what"
      ],
-     "line": 307
+     "line": 311
     },
     {
      "kind": "def",
@@ -2160,7 +2160,7 @@
      "args": [
       "body"
      ],
-     "line": 316
+     "line": 320
     },
     {
      "kind": "def",
@@ -2168,19 +2168,19 @@
      "args": [
       "s"
      ],
-     "line": 326
+     "line": 330
     },
     {
      "kind": "async def",
      "name": "status",
      "args": [],
-     "line": 337
+     "line": 341
     },
     {
      "kind": "class",
      "name": "ProviderReq",
      "methods": [],
-     "line": 362
+     "line": 366
     },
     {
      "kind": "async def",
@@ -2188,7 +2188,7 @@
      "args": [
       "req"
      ],
-     "line": 369
+     "line": 373
     },
     {
      "kind": "async def",
@@ -2196,7 +2196,7 @@
      "args": [
       "req"
      ],
-     "line": 380
+     "line": 384
     },
     {
      "kind": "def",
@@ -2204,7 +2204,7 @@
      "args": [
       "job_id"
      ],
-     "line": 396
+     "line": 400
     },
     {
      "kind": "def",
@@ -2212,7 +2212,7 @@
      "args": [
       "key"
      ],
-     "line": 404
+     "line": 408
     },
     {
      "kind": "def",
@@ -2220,7 +2220,7 @@
      "args": [
       "job_id"
      ],
-     "line": 409
+     "line": 413
     },
     {
      "kind": "def",
@@ -2228,13 +2228,13 @@
      "args": [
       "refresh"
      ],
-     "line": 414
+     "line": 418
     },
     {
      "kind": "class",
      "name": "ExportReq",
      "methods": [],
-     "line": 420
+     "line": 424
     },
     {
      "kind": "def",
@@ -2242,19 +2242,19 @@
      "args": [
       "req"
      ],
-     "line": 425
+     "line": 429
     },
     {
      "kind": "async def",
      "name": "backup_import",
      "args": [],
-     "line": 435
+     "line": 439
     },
     {
      "kind": "def",
      "name": "clear_cache",
      "args": [],
-     "line": 459
+     "line": 463
     },
     {
      "kind": "def",
@@ -2263,13 +2263,13 @@
       "lines",
       "level"
      ],
-     "line": 474
+     "line": 478
     },
     {
      "kind": "def",
      "name": "_secret_values",
      "args": [],
-     "line": 501
+     "line": 505
     },
     {
      "kind": "def",
@@ -2278,7 +2278,7 @@
       "d",
       "prefix"
      ],
-     "line": 511
+     "line": 515
     },
     {
      "kind": "def",
@@ -2286,7 +2286,7 @@
      "args": [
       "override"
      ],
-     "line": 520
+     "line": 524
     },
     {
      "kind": "async def",
@@ -2294,7 +2294,7 @@
      "args": [
       "url"
      ],
-     "line": 525
+     "line": 529
     },
     {
      "kind": "async def",
@@ -2302,19 +2302,19 @@
      "args": [
       "url"
      ],
-     "line": 530
+     "line": 534
     },
     {
      "kind": "class",
      "name": "PcLinkReq",
      "methods": [],
-     "line": 539
+     "line": 543
     },
     {
      "kind": "def",
      "name": "pclink_status",
      "args": [],
-     "line": 546
+     "line": 550
     },
     {
      "kind": "def",
@@ -2322,19 +2322,19 @@
      "args": [
       "req"
      ],
-     "line": 552
+     "line": 556
     },
     {
      "kind": "def",
      "name": "ollama_recommended",
      "args": [],
-     "line": 569
+     "line": 573
     },
     {
      "kind": "class",
      "name": "ModelReq",
      "methods": [],
-     "line": 573
+     "line": 577
     },
     {
      "kind": "async def",
@@ -2342,7 +2342,7 @@
      "args": [
       "req"
      ],
-     "line": 579
+     "line": 583
     },
     {
      "kind": "async def",
@@ -2350,25 +2350,25 @@
      "args": [
       "req"
      ],
-     "line": 588
+     "line": 592
     },
     {
      "kind": "def",
      "name": "browser_status",
      "args": [],
-     "line": 598
+     "line": 602
     },
     {
      "kind": "async def",
      "name": "browser_install_start",
      "args": [],
-     "line": 603
+     "line": 607
     },
     {
      "kind": "async def",
      "name": "browser_uninstall",
      "args": [],
-     "line": 608
+     "line": 612
     },
     {
      "kind": "async def",
@@ -2376,49 +2376,49 @@
      "args": [
       "force"
      ],
-     "line": 615
+     "line": 619
     },
     {
      "kind": "async def",
      "name": "update_install",
      "args": [],
-     "line": 620
+     "line": 624
     },
     {
      "kind": "async def",
      "name": "repair_check",
      "args": [],
-     "line": 626
+     "line": 630
     },
     {
      "kind": "async def",
      "name": "repair_run",
      "args": [],
-     "line": 634
+     "line": 638
     },
     {
      "kind": "async def",
      "name": "repair_reinstall",
      "args": [],
-     "line": 640
+     "line": 644
     },
     {
      "kind": "def",
      "name": "_reindex_soon",
      "args": [],
-     "line": 644
+     "line": 648
     },
     {
      "kind": "def",
      "name": "mylibrary_status",
      "args": [],
-     "line": 658
+     "line": 662
     },
     {
      "kind": "class",
      "name": "MyFolderReq",
      "methods": [],
-     "line": 663
+     "line": 667
     },
     {
      "kind": "async def",
@@ -2426,13 +2426,13 @@
      "args": [
       "req"
      ],
-     "line": 668
+     "line": 672
     },
     {
      "kind": "class",
      "name": "SaveReq",
      "methods": [],
-     "line": 689
+     "line": 693
     },
     {
      "kind": "async def",
@@ -2440,19 +2440,19 @@
      "args": [
       "req"
      ],
-     "line": 697
+     "line": 701
     },
     {
      "kind": "async def",
      "name": "offline_state",
      "args": [],
-     "line": 716
+     "line": 720
     },
     {
      "kind": "class",
      "name": "OfflineReq",
      "methods": [],
-     "line": 741
+     "line": 745
     },
     {
      "kind": "async def",
@@ -2460,13 +2460,13 @@
      "args": [
       "req"
      ],
-     "line": 749
+     "line": 753
     },
     {
      "kind": "class",
      "name": "TagsReq",
      "methods": [],
-     "line": 769
+     "line": 773
     },
     {
      "kind": "async def",
@@ -2475,7 +2475,7 @@
       "rid",
       "req"
      ],
-     "line": 774
+     "line": 778
     },
     {
      "kind": "async def",
@@ -2483,7 +2483,7 @@
      "args": [
       "rid"
      ],
-     "line": 791
+     "line": 795
     },
     {
      "kind": "async def",
@@ -2492,13 +2492,13 @@
       "s",
       "rec"
      ],
-     "line": 801
+     "line": 805
     },
     {
      "kind": "def",
      "name": "mylibrary_saved",
      "args": [],
-     "line": 807
+     "line": 811
     },
     {
      "kind": "def",
@@ -2506,13 +2506,13 @@
      "args": [
       "name"
      ],
-     "line": 813
+     "line": 817
     },
     {
      "kind": "class",
      "name": "UnsaveReq",
      "methods": [],
-     "line": 821
+     "line": 825
     },
     {
      "kind": "def",
@@ -2520,19 +2520,19 @@
      "args": [
       "req"
      ],
-     "line": 828
+     "line": 832
     },
     {
      "kind": "def",
      "name": "mylibrary_removed",
      "args": [],
-     "line": 849
+     "line": 853
     },
     {
      "kind": "class",
      "name": "RestoreReq",
      "methods": [],
-     "line": 855
+     "line": 859
     },
     {
      "kind": "def",
@@ -2540,7 +2540,7 @@
      "args": [
       "req"
      ],
-     "line": 860
+     "line": 864
     },
     {
      "kind": "def",
@@ -2548,13 +2548,13 @@
      "args": [
       "rid"
      ],
-     "line": 873
+     "line": 877
     },
     {
      "kind": "class",
      "name": "SaveSourceReq",
      "methods": [],
-     "line": 878
+     "line": 882
     },
     {
      "kind": "async def",
@@ -2562,13 +2562,13 @@
      "args": [
       "req"
      ],
-     "line": 884
+     "line": 888
     },
     {
      "kind": "class",
      "name": "ImportReq",
      "methods": [],
-     "line": 901
+     "line": 905
     },
     {
      "kind": "async def",
@@ -2576,31 +2576,31 @@
      "args": [
       "req"
      ],
-     "line": 906
+     "line": 910
     },
     {
      "kind": "def",
      "name": "mylibrary_open",
      "args": [],
-     "line": 925
+     "line": 929
     },
     {
      "kind": "def",
      "name": "library_status",
      "args": [],
-     "line": 933
+     "line": 937
     },
     {
      "kind": "async def",
      "name": "library_pick",
      "args": [],
-     "line": 943
+     "line": 947
     },
     {
      "kind": "class",
      "name": "FolderReq",
      "methods": [],
-     "line": 951
+     "line": 955
     },
     {
      "kind": "def",
@@ -2608,7 +2608,7 @@
      "args": [
       "req"
      ],
-     "line": 956
+     "line": 960
     },
     {
      "kind": "def",
@@ -2616,7 +2616,7 @@
      "args": [
       "req"
      ],
-     "line": 969
+     "line": 973
     },
     {
      "kind": "def",
@@ -2624,19 +2624,19 @@
      "args": [
       "job"
      ],
-     "line": 976
+     "line": 980
     },
     {
      "kind": "async def",
      "name": "library_sync",
      "args": [],
-     "line": 988
+     "line": 992
     },
     {
      "kind": "def",
      "name": "library_clear",
      "args": [],
-     "line": 993
+     "line": 997
     },
     {
      "kind": "def",
@@ -2644,7 +2644,7 @@
      "args": [
       "fid"
      ],
-     "line": 999
+     "line": 1003
     },
     {
      "kind": "def",
@@ -2652,13 +2652,13 @@
      "args": [
       "fid"
      ],
-     "line": 1010
+     "line": 1014
     },
     {
      "kind": "class",
      "name": "OpenFileReq",
      "methods": [],
-     "line": 1018
+     "line": 1022
     },
     {
      "kind": "def",
@@ -2666,7 +2666,7 @@
      "args": [
       "req"
      ],
-     "line": 1024
+     "line": 1028
     },
     {
      "kind": "def",
@@ -2674,13 +2674,13 @@
      "args": [
       "gen_factory"
      ],
-     "line": 1030
+     "line": 1034
     },
     {
      "kind": "class",
      "name": "ResearchReq",
      "methods": [],
-     "line": 1064
+     "line": 1068
     },
     {
      "kind": "async def",
@@ -2688,13 +2688,13 @@
      "args": [
       "req"
      ],
-     "line": 1078
+     "line": 1082
     },
     {
      "kind": "class",
      "name": "QuickReq",
      "methods": [],
-     "line": 1113
+     "line": 1117
     },
     {
      "kind": "async def",
@@ -2702,13 +2702,13 @@
      "args": [
       "req"
      ],
-     "line": 1122
+     "line": 1126
     },
     {
      "kind": "class",
      "name": "SoundReq",
      "methods": [],
-     "line": 1154
+     "line": 1158
     },
     {
      "kind": "def",
@@ -2717,7 +2717,7 @@
       "name",
       "builtin"
      ],
-     "line": 1160
+     "line": 1164
     },
     {
      "kind": "def",
@@ -2726,7 +2726,7 @@
       "name",
       "req"
      ],
-     "line": 1170
+     "line": 1174
     },
     {
      "kind": "def",
@@ -2734,25 +2734,25 @@
      "args": [
       "name"
      ],
-     "line": 1179
+     "line": 1183
     },
     {
      "kind": "async def",
      "name": "usage_summary",
      "args": [],
-     "line": 1186
+     "line": 1190
     },
     {
      "kind": "def",
      "name": "usage_reset",
      "args": [],
-     "line": 1193
+     "line": 1197
     },
     {
      "kind": "async def",
      "name": "usage_prices",
      "args": [],
-     "line": 1200
+     "line": 1204
     },
     {
      "kind": "def",
@@ -2763,7 +2763,7 @@
       "title",
       "ref"
      ],
-     "line": 1205
+     "line": 1209
     },
     {
      "kind": "async def",
@@ -2774,7 +2774,7 @@
       "title",
       "ref"
      ],
-     "line": 1218
+     "line": 1222
     },
     {
      "kind": "def",
@@ -2782,13 +2782,13 @@
      "args": [
       "run"
      ],
-     "line": 1239
+     "line": 1243
     },
     {
      "kind": "def",
      "name": "research_active",
      "args": [],
-     "line": 1250
+     "line": 1254
     },
     {
      "kind": "def",
@@ -2796,7 +2796,7 @@
      "args": [
       "rid"
      ],
-     "line": 1256
+     "line": 1260
     },
     {
      "kind": "def",
@@ -2804,19 +2804,19 @@
      "args": [
       "rid"
      ],
-     "line": 1265
+     "line": 1269
     },
     {
      "kind": "class",
      "name": "TranslateReq",
      "methods": [],
-     "line": 1270
+     "line": 1274
     },
     {
      "kind": "class",
      "name": "FollowupReq",
      "methods": [],
-     "line": 1278
+     "line": 1282
     },
     {
      "kind": "async def",
@@ -2824,7 +2824,7 @@
      "args": [
       "req"
      ],
-     "line": 1288
+     "line": 1292
     },
     {
      "kind": "def",
@@ -2832,13 +2832,13 @@
      "args": [
       "rid"
      ],
-     "line": 1301
+     "line": 1305
     },
     {
      "kind": "class",
      "name": "AddAnswerReq",
      "methods": [],
-     "line": 1306
+     "line": 1310
     },
     {
      "kind": "def",
@@ -2847,13 +2847,13 @@
       "rid",
       "req"
      ],
-     "line": 1311
+     "line": 1315
     },
     {
      "kind": "class",
      "name": "CalcReq",
      "methods": [],
-     "line": 1319
+     "line": 1323
     },
     {
      "kind": "async def",
@@ -2861,13 +2861,13 @@
      "args": [
       "req"
      ],
-     "line": 1324
+     "line": 1328
     },
     {
      "kind": "class",
      "name": "RewriteReq",
      "methods": [],
-     "line": 1336
+     "line": 1340
     },
     {
      "kind": "async def",
@@ -2875,13 +2875,13 @@
      "args": [
       "req"
      ],
-     "line": 1344
+     "line": 1348
     },
     {
      "kind": "class",
      "name": "RegenerateReq",
      "methods": [],
-     "line": 1354
+     "line": 1358
     },
     {
      "kind": "async def",
@@ -2889,7 +2889,7 @@
      "args": [
       "req"
      ],
-     "line": 1363
+     "line": 1367
     },
     {
      "kind": "def",
@@ -2897,7 +2897,7 @@
      "args": [
       "rid"
      ],
-     "line": 1379
+     "line": 1383
     },
     {
      "kind": "def",
@@ -2906,13 +2906,13 @@
       "rid",
       "n"
      ],
-     "line": 1385
+     "line": 1389
     },
     {
      "kind": "class",
      "name": "VersionReq",
      "methods": [],
-     "line": 1393
+     "line": 1397
     },
     {
      "kind": "def",
@@ -2921,7 +2921,7 @@
       "rid",
       "req"
      ],
-     "line": 1398
+     "line": 1402
     },
     {
      "kind": "def",
@@ -2929,13 +2929,13 @@
      "args": [
       "rid"
      ],
-     "line": 1406
+     "line": 1410
     },
     {
      "kind": "class",
      "name": "RewriteApplyReq",
      "methods": [],
-     "line": 1413
+     "line": 1417
     },
     {
      "kind": "def",
@@ -2943,13 +2943,13 @@
      "args": [
       "req"
      ],
-     "line": 1421
+     "line": 1425
     },
     {
      "kind": "class",
      "name": "ImageReq",
      "methods": [],
-     "line": 1429
+     "line": 1433
     },
     {
      "kind": "async def",
@@ -2957,19 +2957,19 @@
      "args": [
       "req"
      ],
-     "line": 1437
+     "line": 1441
     },
     {
      "kind": "class",
      "name": "AgentToolsReq",
      "methods": [],
-     "line": 1476
+     "line": 1480
     },
     {
      "kind": "def",
      "name": "agent_tools",
      "args": [],
-     "line": 1484
+     "line": 1488
     },
     {
      "kind": "def",
@@ -2977,7 +2977,7 @@
      "args": [
       "req"
      ],
-     "line": 1497
+     "line": 1501
     },
     {
      "kind": "async def",
@@ -2985,7 +2985,7 @@
      "args": [
       "req"
      ],
-     "line": 1521
+     "line": 1525
     },
     {
      "kind": "async def",
@@ -2993,13 +2993,13 @@
      "args": [
       "req"
      ],
-     "line": 1533
+     "line": 1537
     },
     {
      "kind": "class",
      "name": "SummaryReq",
      "methods": [],
-     "line": 1541
+     "line": 1545
     },
     {
      "kind": "async def",
@@ -3007,13 +3007,13 @@
      "args": [
       "req"
      ],
-     "line": 1549
+     "line": 1553
     },
     {
      "kind": "class",
      "name": "InteractiveReq",
      "methods": [],
-     "line": 1560
+     "line": 1564
     },
     {
      "kind": "async def",
@@ -3021,7 +3021,7 @@
      "args": [
       "req"
      ],
-     "line": 1567
+     "line": 1571
     },
     {
      "kind": "async def",
@@ -3029,19 +3029,19 @@
      "args": [
       "req"
      ],
-     "line": 1600
+     "line": 1604
     },
     {
      "kind": "def",
      "name": "history_list",
      "args": [],
-     "line": 1611
+     "line": 1615
     },
     {
      "kind": "class",
      "name": "ExportReq",
      "methods": [],
-     "line": 1615
+     "line": 1619
     },
     {
      "kind": "async def",
@@ -3049,19 +3049,19 @@
      "args": [
       "req"
      ],
-     "line": 1627
+     "line": 1631
     },
     {
      "kind": "class",
      "name": "ExportOpenReq",
      "methods": [],
-     "line": 1640
+     "line": 1644
     },
     {
      "kind": "class",
      "name": "SummaryFileReq",
      "methods": [],
-     "line": 1646
+     "line": 1650
     },
     {
      "kind": "def",
@@ -3069,7 +3069,7 @@
      "args": [
       "req"
      ],
-     "line": 1655
+     "line": 1659
     },
     {
      "kind": "def",
@@ -3077,13 +3077,13 @@
      "args": [
       "req"
      ],
-     "line": 1666
+     "line": 1670
     },
     {
      "kind": "class",
      "name": "WikiReq",
      "methods": [],
-     "line": 1676
+     "line": 1680
     },
     {
      "kind": "async def",
@@ -3091,7 +3091,7 @@
      "args": [
       "req"
      ],
-     "line": 1683
+     "line": 1687
     },
     {
      "kind": "async def",
@@ -3099,19 +3099,19 @@
      "args": [
       "req"
      ],
-     "line": 1693
+     "line": 1697
     },
     {
      "kind": "class",
      "name": "PinSourceReq",
      "methods": [],
-     "line": 1712
+     "line": 1716
     },
     {
      "kind": "def",
      "name": "pinned_sources",
      "args": [],
-     "line": 1724
+     "line": 1728
     },
     {
      "kind": "async def",
@@ -3119,7 +3119,7 @@
      "args": [
       "req"
      ],
-     "line": 1730
+     "line": 1734
     },
     {
      "kind": "def",
@@ -3127,7 +3127,7 @@
      "args": [
       "pid"
      ],
-     "line": 1748
+     "line": 1752
     },
     {
      "kind": "def",
@@ -3135,13 +3135,13 @@
      "args": [
       "pid"
      ],
-     "line": 1754
+     "line": 1758
     },
     {
      "kind": "class",
      "name": "PinReq",
      "methods": [],
-     "line": 1762
+     "line": 1766
     },
     {
      "kind": "def",
@@ -3150,7 +3150,7 @@
       "rid",
       "req"
      ],
-     "line": 1767
+     "line": 1771
     },
     {
      "kind": "def",
@@ -3158,7 +3158,7 @@
      "args": [
       "rid"
      ],
-     "line": 1775
+     "line": 1779
     },
     {
      "kind": "def",
@@ -3166,13 +3166,13 @@
      "args": [
       "rid"
      ],
-     "line": 1783
+     "line": 1787
     },
     {
      "kind": "def",
      "name": "history_clear",
      "args": [],
-     "line": 1789
+     "line": 1793
     }
    ]
   },
@@ -3490,6 +3490,735 @@
       "allow_local"
      ],
      "line": 79
+    }
+   ]
+  },
+  "airag/notes/__init__.py": {
+   "items": []
+  },
+  "airag/notes/api.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_vault",
+     "args": [
+      "vid"
+     ],
+     "line": 16
+    },
+    {
+     "kind": "def",
+     "name": "_fail",
+     "args": [
+      "e",
+      "code"
+     ],
+     "line": 27
+    },
+    {
+     "kind": "def",
+     "name": "list_vaults",
+     "args": [],
+     "line": 32
+    },
+    {
+     "kind": "class",
+     "name": "NewVault",
+     "methods": [],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "new_vault",
+     "args": [
+      "req"
+     ],
+     "line": 45
+    },
+    {
+     "kind": "class",
+     "name": "LinkVault",
+     "methods": [],
+     "line": 52
+    },
+    {
+     "kind": "def",
+     "name": "link_vault",
+     "args": [
+      "req"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "forget_vault",
+     "args": [
+      "vid"
+     ],
+     "line": 66
+    },
+    {
+     "kind": "def",
+     "name": "tree",
+     "args": [
+      "vid"
+     ],
+     "line": 72
+    },
+    {
+     "kind": "async def",
+     "name": "reindex",
+     "args": [
+      "vid"
+     ],
+     "line": 78
+    },
+    {
+     "kind": "def",
+     "name": "get_note",
+     "args": [
+      "vid",
+      "path"
+     ],
+     "line": 87
+    },
+    {
+     "kind": "class",
+     "name": "SaveNote",
+     "methods": [],
+     "line": 102
+    },
+    {
+     "kind": "async def",
+     "name": "save_note",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 110
+    },
+    {
+     "kind": "class",
+     "name": "NewNote",
+     "methods": [],
+     "line": 122
+    },
+    {
+     "kind": "async def",
+     "name": "new_note",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 130
+    },
+    {
+     "kind": "async def",
+     "name": "search_notes",
+     "args": [
+      "vid",
+      "q",
+      "sort"
+     ],
+     "line": 141
+    },
+    {
+     "kind": "def",
+     "name": "links",
+     "args": [
+      "vid",
+      "path"
+     ],
+     "line": 150
+    },
+    {
+     "kind": "def",
+     "name": "vault_stats",
+     "args": [
+      "vid"
+     ],
+     "line": 160
+    }
+   ]
+  },
+  "airag/notes/index.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_db_path",
+     "args": [
+      "settings",
+      "v"
+     ],
+     "line": 37
+    },
+    {
+     "kind": "def",
+     "name": "connect",
+     "args": [
+      "settings",
+      "v"
+     ],
+     "line": 43
+    },
+    {
+     "kind": "def",
+     "name": "has_fts",
+     "args": [
+      "c"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "_lock_for",
+     "args": [
+      "v"
+     ],
+     "line": 63
+    },
+    {
+     "kind": "def",
+     "name": "_aliases",
+     "args": [
+      "props"
+     ],
+     "line": 67
+    },
+    {
+     "kind": "def",
+     "name": "index_note",
+     "args": [
+      "c",
+      "rel",
+      "text",
+      "mtime",
+      "size"
+     ],
+     "line": 74
+    },
+    {
+     "kind": "def",
+     "name": "update",
+     "args": [
+      "settings",
+      "v",
+      "max_notes"
+     ],
+     "line": 108
+    },
+    {
+     "kind": "def",
+     "name": "remove",
+     "args": [
+      "c",
+      "rel"
+     ],
+     "line": 146
+    },
+    {
+     "kind": "def",
+     "name": "reindex_one",
+     "args": [
+      "settings",
+      "v",
+      "rel"
+     ],
+     "line": 158
+    },
+    {
+     "kind": "def",
+     "name": "resolve_target",
+     "args": [
+      "c",
+      "target"
+     ],
+     "line": 172
+    },
+    {
+     "kind": "def",
+     "name": "_like",
+     "args": [
+      "s"
+     ],
+     "line": 189
+    },
+    {
+     "kind": "def",
+     "name": "backlinks",
+     "args": [
+      "settings",
+      "v",
+      "rel"
+     ],
+     "line": 193
+    },
+    {
+     "kind": "def",
+     "name": "outgoing",
+     "args": [
+      "settings",
+      "v",
+      "rel"
+     ],
+     "line": 219
+    },
+    {
+     "kind": "def",
+     "name": "stats",
+     "args": [
+      "settings",
+      "v"
+     ],
+     "line": 238
+    }
+   ]
+  },
+  "airag/notes/parser.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Link",
+     "methods": [],
+     "line": 27
+    },
+    {
+     "kind": "class",
+     "name": "Section",
+     "methods": [],
+     "line": 36
+    },
+    {
+     "kind": "class",
+     "name": "Note",
+     "methods": [],
+     "line": 47
+    },
+    {
+     "kind": "def",
+     "name": "_scalar",
+     "args": [
+      "v"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "_inline_list",
+     "args": [
+      "v"
+     ],
+     "line": 79
+    },
+    {
+     "kind": "def",
+     "name": "split_front_matter",
+     "args": [
+      "text"
+     ],
+     "line": 100
+    },
+    {
+     "kind": "def",
+     "name": "_strip_code",
+     "args": [
+      "text"
+     ],
+     "line": 131
+    },
+    {
+     "kind": "def",
+     "name": "sections_of",
+     "args": [
+      "body"
+     ],
+     "line": 149
+    },
+    {
+     "kind": "def",
+     "name": "links_of",
+     "args": [
+      "body"
+     ],
+     "line": 172
+    },
+    {
+     "kind": "def",
+     "name": "tags_of",
+     "args": [
+      "body",
+      "props"
+     ],
+     "line": 195
+    },
+    {
+     "kind": "def",
+     "name": "gist_of",
+     "args": [
+      "body",
+      "limit"
+     ],
+     "line": 212
+    },
+    {
+     "kind": "def",
+     "name": "parse",
+     "args": [
+      "text",
+      "name"
+     ],
+     "line": 226
+    }
+   ]
+  },
+  "airag/notes/pathguard.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "PathError",
+     "methods": [],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "check_name",
+     "args": [
+      "name"
+     ],
+     "line": 26
+    },
+    {
+     "kind": "def",
+     "name": "clean_rel",
+     "args": [
+      "rel",
+      "allow_private"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "resolve",
+     "args": [
+      "root",
+      "rel",
+      "allow_private"
+     ],
+     "line": 60
+    }
+   ]
+  },
+  "airag/notes/search.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "QueryError",
+     "methods": [],
+     "line": 29
+    },
+    {
+     "kind": "class",
+     "name": "Query",
+     "methods": [],
+     "line": 34
+    },
+    {
+     "kind": "def",
+     "name": "safe_regex",
+     "args": [
+      "pattern",
+      "case"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "parse_query",
+     "args": [
+      "q"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "_fts_term",
+     "args": [
+      "w",
+      "prefix"
+     ],
+     "line": 84
+    },
+    {
+     "kind": "def",
+     "name": "_fts_expr",
+     "args": [
+      "qq"
+     ],
+     "line": 89
+    },
+    {
+     "kind": "def",
+     "name": "_num",
+     "args": [
+      "s"
+     ],
+     "line": 100
+    },
+    {
+     "kind": "def",
+     "name": "_date",
+     "args": [
+      "s"
+     ],
+     "line": 107
+    },
+    {
+     "kind": "def",
+     "name": "_prop_ok",
+     "args": [
+      "props",
+      "spec"
+     ],
+     "line": 114
+    },
+    {
+     "kind": "def",
+     "name": "_note_ok",
+     "args": [
+      "c",
+      "row",
+      "flt"
+     ],
+     "line": 133
+    },
+    {
+     "kind": "def",
+     "name": "_marks",
+     "args": [
+      "text",
+      "qq"
+     ],
+     "line": 178
+    },
+    {
+     "kind": "def",
+     "name": "_snippet",
+     "args": [
+      "text",
+      "marks"
+     ],
+     "line": 203
+    },
+    {
+     "kind": "def",
+     "name": "run",
+     "args": [
+      "settings",
+      "v",
+      "q",
+      "sort",
+      "limit"
+     ],
+     "line": 222
+    }
+   ]
+  },
+  "airag/notes/store.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "NotesError",
+     "methods": [],
+     "line": 49
+    },
+    {
+     "kind": "def",
+     "name": "default_root",
+     "args": [],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "root",
+     "args": [
+      "settings"
+     ],
+     "line": 66
+    },
+    {
+     "kind": "def",
+     "name": "_index_path",
+     "args": [
+      "settings"
+     ],
+     "line": 72
+    },
+    {
+     "kind": "def",
+     "name": "load_index",
+     "args": [
+      "settings"
+     ],
+     "line": 76
+    },
+    {
+     "kind": "def",
+     "name": "_save_index",
+     "args": [
+      "settings",
+      "data"
+     ],
+     "line": 87
+    },
+    {
+     "kind": "def",
+     "name": "vaults",
+     "args": [
+      "settings"
+     ],
+     "line": 92
+    },
+    {
+     "kind": "def",
+     "name": "vault_dir",
+     "args": [
+      "settings",
+      "v"
+     ],
+     "line": 101
+    },
+    {
+     "kind": "def",
+     "name": "get_vault",
+     "args": [
+      "settings",
+      "vid"
+     ],
+     "line": 105
+    },
+    {
+     "kind": "def",
+     "name": "create_vault",
+     "args": [
+      "settings",
+      "name",
+      "template",
+      "purpose"
+     ],
+     "line": 112
+    },
+    {
+     "kind": "def",
+     "name": "link_vault",
+     "args": [
+      "settings",
+      "folder",
+      "name"
+     ],
+     "line": 133
+    },
+    {
+     "kind": "def",
+     "name": "forget_vault",
+     "args": [
+      "settings",
+      "vid"
+     ],
+     "line": 150
+    },
+    {
+     "kind": "def",
+     "name": "private_dir",
+     "args": [
+      "settings",
+      "v"
+     ],
+     "line": 159
+    },
+    {
+     "kind": "def",
+     "name": "tree",
+     "args": [
+      "settings",
+      "v",
+      "limit"
+     ],
+     "line": 166
+    },
+    {
+     "kind": "def",
+     "name": "read_note",
+     "args": [
+      "settings",
+      "v",
+      "rel"
+     ],
+     "line": 191
+    },
+    {
+     "kind": "def",
+     "name": "_keep_version",
+     "args": [
+      "settings",
+      "v",
+      "rel",
+      "old"
+     ],
+     "line": 200
+    },
+    {
+     "kind": "def",
+     "name": "write_note",
+     "args": [
+      "settings",
+      "v",
+      "rel",
+      "text",
+      "expected_hash",
+      "approved"
+     ],
+     "line": 212
+    },
+    {
+     "kind": "def",
+     "name": "safe_title",
+     "args": [
+      "title"
+     ],
+     "line": 236
+    },
+    {
+     "kind": "def",
+     "name": "free_path",
+     "args": [
+      "settings",
+      "v",
+      "folder",
+      "title"
+     ],
+     "line": 244
+    },
+    {
+     "kind": "def",
+     "name": "create_note",
+     "args": [
+      "settings",
+      "v",
+      "folder",
+      "title",
+      "body",
+      "props",
+      "approved"
+     ],
+     "line": 256
+    },
+    {
+     "kind": "def",
+     "name": "_yaml_value",
+     "args": [
+      "v"
+     ],
+     "line": 265
     }
    ]
   },
@@ -7399,6 +8128,9 @@
    "standard",
    "autonomous",
    "subagents"
+  ],
+  "notes": [
+   "root"
   ],
   "agents": [
    "max_steps",
