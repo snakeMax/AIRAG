@@ -1024,5 +1024,11 @@
  "res.battery": "Battery",
  "res.charging": "charging",
  "res.task": "1 task",
- "res.tasks": "{n} tasks"
+ "res.tasks": "{n} tasks",
+ "snap.minimize": "Minimize",
+ "snap.restore": "Bring back",
+ "snap.tray": "Minimized boxes",
+ "snap.willSnap": "{b} will snap here",
+ "snap.willSnapResize": "{b} will snap here and resize to fit",
+ "snap.calc": "Calculator"
 }

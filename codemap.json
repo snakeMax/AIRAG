@@ -1,0 +1,7469 @@
+{
+ "python": {
+  "airag/__init__.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "build_info",
+     "args": [],
+     "line": 7
+    }
+   ]
+  },
+  "airag/__main__.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "main",
+     "args": [],
+     "line": 18
+    }
+   ]
+  },
+  "airag/agents/__init__.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "AgentType",
+     "methods": [],
+     "line": 32
+    },
+    {
+     "kind": "def",
+     "name": "available",
+     "args": [
+      "app_version"
+     ],
+     "line": 48
+    },
+    {
+     "kind": "class",
+     "name": "Limits",
+     "methods": [
+      "from_settings"
+     ],
+     "line": 56
+    },
+    {
+     "kind": "class",
+     "name": "Step",
+     "methods": [],
+     "line": 90
+    },
+    {
+     "kind": "class",
+     "name": "Agent",
+     "methods": [
+      "run",
+      "cancel"
+     ],
+     "line": 99
+    }
+   ]
+  },
+  "airag/android_bridge.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_bridge",
+     "args": [],
+     "line": 16
+    },
+    {
+     "kind": "def",
+     "name": "pick_folder",
+     "args": [],
+     "line": 21
+    },
+    {
+     "kind": "def",
+     "name": "import_files",
+     "args": [
+      "dest_dir",
+      "move"
+     ],
+     "line": 31
+    },
+    {
+     "kind": "def",
+     "name": "open_path",
+     "args": [
+      "path",
+      "reveal"
+     ],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "render_page",
+     "args": [
+      "url",
+      "timeout_s"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "device_info",
+     "args": [],
+     "line": 48
+    },
+    {
+     "kind": "def",
+     "name": "clear_web_cache",
+     "args": [],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "install_apk",
+     "args": [
+      "path"
+     ],
+     "line": 57
+    },
+    {
+     "kind": "def",
+     "name": "_jobs_changed",
+     "args": [],
+     "line": 66
+    },
+    {
+     "kind": "def",
+     "name": "cancel_all",
+     "args": [],
+     "line": 105
+    },
+    {
+     "kind": "def",
+     "name": "start",
+     "args": [
+      "data_dir",
+      "time_zone"
+     ],
+     "line": 111
+    },
+    {
+     "kind": "def",
+     "name": "stop",
+     "args": [],
+     "line": 139
+    }
+   ]
+  },
+  "airag/appctl.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "show",
+     "args": [],
+     "line": 31
+    },
+    {
+     "kind": "def",
+     "name": "quit_app",
+     "args": [
+      "delay"
+     ],
+     "line": 36
+    },
+    {
+     "kind": "def",
+     "name": "self_command",
+     "args": [],
+     "line": 46
+    },
+    {
+     "kind": "def",
+     "name": "restart",
+     "args": [
+      "new_mode"
+     ],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "pick_folder",
+     "args": [],
+     "line": 66
+    },
+    {
+     "kind": "def",
+     "name": "pick_files",
+     "args": [],
+     "line": 95
+    },
+    {
+     "kind": "def",
+     "name": "run_files_dialog",
+     "args": [
+      "outfile"
+     ],
+     "line": 120
+    },
+    {
+     "kind": "def",
+     "name": "run_folder_dialog",
+     "args": [
+      "outfile"
+     ],
+     "line": 137
+    }
+   ]
+  },
+  "airag/backup.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_secret_paths",
+     "args": [
+      "settings"
+     ],
+     "line": 21
+    },
+    {
+     "kind": "def",
+     "name": "_drop",
+     "args": [
+      "d",
+      "path"
+     ],
+     "line": 35
+    },
+    {
+     "kind": "def",
+     "name": "export",
+     "args": [
+      "dest_dir",
+      "include_keys"
+     ],
+     "line": 44
+    },
+    {
+     "kind": "def",
+     "name": "import_file",
+     "args": [
+      "path"
+     ],
+     "line": 63
+    }
+   ]
+  },
+  "airag/browser_install.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "package_available",
+     "args": [],
+     "line": 20
+    },
+    {
+     "kind": "def",
+     "name": "browser_installed",
+     "args": [],
+     "line": 28
+    },
+    {
+     "kind": "def",
+     "name": "installed",
+     "args": [],
+     "line": 35
+    },
+    {
+     "kind": "def",
+     "name": "status",
+     "args": [],
+     "line": 39
+    },
+    {
+     "kind": "def",
+     "name": "_driver_cmd",
+     "args": [],
+     "line": 45
+    },
+    {
+     "kind": "def",
+     "name": "_driver_env",
+     "args": [],
+     "line": 51
+    },
+    {
+     "kind": "def",
+     "name": "_run",
+     "args": [
+      "cmd",
+      "env",
+      "job"
+     ],
+     "line": 62
+    },
+    {
+     "kind": "def",
+     "name": "install",
+     "args": [
+      "job"
+     ],
+     "line": 87
+    },
+    {
+     "kind": "def",
+     "name": "uninstall",
+     "args": [],
+     "line": 111
+    }
+   ]
+  },
+  "airag/config.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "field_defaults",
+     "args": [
+      "fields"
+     ],
+     "line": 237
+    },
+    {
+     "kind": "def",
+     "name": "defaults",
+     "args": [],
+     "line": 241
+    },
+    {
+     "kind": "def",
+     "name": "_base_defaults",
+     "args": [],
+     "line": 254
+    },
+    {
+     "kind": "def",
+     "name": "deep_merge",
+     "args": [
+      "base",
+      "over"
+     ],
+     "line": 280
+    },
+    {
+     "kind": "def",
+     "name": "_secret_fields",
+     "args": [],
+     "line": 290
+    },
+    {
+     "kind": "def",
+     "name": "_get",
+     "args": [
+      "d",
+      "path"
+     ],
+     "line": 303
+    },
+    {
+     "kind": "def",
+     "name": "_set",
+     "args": [
+      "d",
+      "path",
+      "v"
+     ],
+     "line": 311
+    },
+    {
+     "kind": "def",
+     "name": "_coerce",
+     "args": [
+      "s"
+     ],
+     "line": 317
+    },
+    {
+     "kind": "def",
+     "name": "_backup_path",
+     "args": [],
+     "line": 332
+    },
+    {
+     "kind": "def",
+     "name": "load_raw",
+     "args": [],
+     "line": 336
+    },
+    {
+     "kind": "def",
+     "name": "guarded",
+     "args": [],
+     "line": 390
+    },
+    {
+     "kind": "def",
+     "name": "begin_job",
+     "args": [],
+     "line": 397
+    },
+    {
+     "kind": "def",
+     "name": "end_job",
+     "args": [
+      "token"
+     ],
+     "line": 405
+    },
+    {
+     "kind": "def",
+     "name": "in_job",
+     "args": [],
+     "line": 410
+    },
+    {
+     "kind": "def",
+     "name": "live_update",
+     "args": [
+      "current"
+     ],
+     "line": 414
+    },
+    {
+     "kind": "def",
+     "name": "changed_for_running",
+     "args": [
+      "before",
+      "after"
+     ],
+     "line": 436
+    },
+    {
+     "kind": "def",
+     "name": "load",
+     "args": [
+      "with_env"
+     ],
+     "line": 455
+    },
+    {
+     "kind": "def",
+     "name": "masked",
+     "args": [
+      "s"
+     ],
+     "line": 483
+    },
+    {
+     "kind": "def",
+     "name": "unmask_into",
+     "args": [
+      "new",
+      "current"
+     ],
+     "line": 492
+    },
+    {
+     "kind": "def",
+     "name": "save",
+     "args": [
+      "incoming"
+     ],
+     "line": 500
+    },
+    {
+     "kind": "def",
+     "name": "with_overrides",
+     "args": [
+      "settings",
+      "llm_provider",
+      "provider_cfg"
+     ],
+     "line": 519
+    }
+   ]
+  },
+  "airag/desktop.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "setup_logging",
+     "args": [
+      "verbose"
+     ],
+     "line": 30
+    },
+    {
+     "kind": "def",
+     "name": "apply_pending_mode",
+     "args": [],
+     "line": 50
+    },
+    {
+     "kind": "def",
+     "name": "choose_port",
+     "args": [
+      "preferred"
+     ],
+     "line": 64
+    },
+    {
+     "kind": "def",
+     "name": "_acquire_mutex",
+     "args": [],
+     "line": 76
+    },
+    {
+     "kind": "def",
+     "name": "read_running",
+     "args": [],
+     "line": 86
+    },
+    {
+     "kind": "def",
+     "name": "write_runtime",
+     "args": [
+      "port",
+      "mode"
+     ],
+     "line": 97
+    },
+    {
+     "kind": "def",
+     "name": "clear_runtime",
+     "args": [],
+     "line": 106
+    },
+    {
+     "kind": "def",
+     "name": "wait_for_pid",
+     "args": [
+      "pid",
+      "timeout"
+     ],
+     "line": 115
+    },
+    {
+     "kind": "def",
+     "name": "_pid_alive",
+     "args": [
+      "pid"
+     ],
+     "line": 123
+    },
+    {
+     "kind": "class",
+     "name": "ServerThread",
+     "methods": [
+      "__init__",
+      "run",
+      "wait_ready",
+      "stop"
+     ],
+     "line": 141
+    },
+    {
+     "kind": "def",
+     "name": "_tray_labels",
+     "args": [],
+     "line": 165
+    },
+    {
+     "kind": "def",
+     "name": "run_tray",
+     "args": [
+      "url",
+      "open_ui"
+     ],
+     "line": 182
+    },
+    {
+     "kind": "def",
+     "name": "_block_until_quit",
+     "args": [],
+     "line": 210
+    },
+    {
+     "kind": "def",
+     "name": "run_desktop",
+     "args": [
+      "url",
+      "minimized"
+     ],
+     "line": 219
+    },
+    {
+     "kind": "def",
+     "name": "_open_at_start",
+     "args": [
+      "path"
+     ],
+     "line": 295
+    },
+    {
+     "kind": "def",
+     "name": "_in_my_library",
+     "args": [
+      "path"
+     ],
+     "line": 306
+    },
+    {
+     "kind": "def",
+     "name": "launch",
+     "args": [
+      "mode",
+      "port",
+      "host",
+      "open_ui",
+      "wait_pid",
+      "verbose",
+      "open_path"
+     ],
+     "line": 315
+    }
+   ]
+  },
+  "airag/editions.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "edition",
+     "args": [],
+     "line": 19
+    },
+    {
+     "kind": "def",
+     "name": "is_enterprise",
+     "args": [],
+     "line": 28
+    },
+    {
+     "kind": "class",
+     "name": "User",
+     "methods": [],
+     "line": 33
+    },
+    {
+     "kind": "def",
+     "name": "current_user",
+     "args": [
+      "request"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "allowed",
+     "args": [
+      "action",
+      "user"
+     ],
+     "line": 60
+    }
+   ]
+  },
+  "airag/effort.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "level",
+     "args": [
+      "settings",
+      "agent"
+     ],
+     "line": 32
+    },
+    {
+     "kind": "def",
+     "name": "params",
+     "args": [
+      "settings",
+      "agent"
+     ],
+     "line": 37
+    },
+    {
+     "kind": "def",
+     "name": "scale_research",
+     "args": [
+      "research",
+      "settings",
+      "agent"
+     ],
+     "line": 41
+    }
+   ]
+  },
+  "airag/export_html.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_clean",
+     "args": [
+      "body_html"
+     ],
+     "line": 29
+    },
+    {
+     "kind": "def",
+     "name": "_embed_images",
+     "args": [
+      "soup"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "build",
+     "args": [
+      "rec",
+      "body_html",
+      "title",
+      "include_explainer",
+      "lang",
+      "summary_html",
+      "pictures"
+     ],
+     "line": 79
+    },
+    {
+     "kind": "def",
+     "name": "export",
+     "args": [
+      "rec",
+      "settings",
+      "body_html",
+      "title",
+      "include_explainer",
+      "lang",
+      "summary_html",
+      "pictures"
+     ],
+     "line": 124
+    },
+    {
+     "kind": "def",
+     "name": "find",
+     "args": [
+      "settings",
+      "name"
+     ],
+     "line": 135
+    }
+   ]
+  },
+  "airag/fetch.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Page",
+     "methods": [],
+     "line": 29
+    },
+    {
+     "kind": "def",
+     "name": "looks_blocked",
+     "args": [
+      "text",
+      "title"
+     ],
+     "line": 62
+    },
+    {
+     "kind": "def",
+     "name": "note_blocked",
+     "args": [
+      "url"
+     ],
+     "line": 70
+    },
+    {
+     "kind": "def",
+     "name": "recently_blocked",
+     "args": [
+      "url"
+     ],
+     "line": 81
+    },
+    {
+     "kind": "async def",
+     "name": "fetch_page",
+     "args": [
+      "url",
+      "cfg",
+      "title"
+     ],
+     "line": 90
+    },
+    {
+     "kind": "def",
+     "name": "browser_available",
+     "args": [],
+     "line": 141
+    },
+    {
+     "kind": "async def",
+     "name": "_fetch_http",
+     "args": [
+      "url",
+      "cfg"
+     ],
+     "line": 147
+    },
+    {
+     "kind": "def",
+     "name": "_parse_pdf",
+     "args": [
+      "url",
+      "final",
+      "data"
+     ],
+     "line": 183
+    },
+    {
+     "kind": "def",
+     "name": "_int",
+     "args": [
+      "v"
+     ],
+     "line": 201
+    },
+    {
+     "kind": "def",
+     "name": "parse_html",
+     "args": [
+      "url",
+      "final",
+      "html",
+      "via"
+     ],
+     "line": 208
+    },
+    {
+     "kind": "async def",
+     "name": "_get_browser",
+     "args": [],
+     "line": 290
+    },
+    {
+     "kind": "async def",
+     "name": "_fetch_webview",
+     "args": [
+      "url",
+      "cfg"
+     ],
+     "line": 303
+    },
+    {
+     "kind": "async def",
+     "name": "_fetch_browser",
+     "args": [
+      "url",
+      "cfg"
+     ],
+     "line": 316
+    },
+    {
+     "kind": "async def",
+     "name": "shutdown",
+     "args": [],
+     "line": 345
+    }
+   ]
+  },
+  "airag/filereaders.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Unreadable",
+     "methods": [],
+     "line": 42
+    },
+    {
+     "kind": "class",
+     "name": "Doc",
+     "methods": [],
+     "line": 47
+    },
+    {
+     "kind": "def",
+     "name": "decode",
+     "args": [
+      "raw"
+     ],
+     "line": 57
+    },
+    {
+     "kind": "def",
+     "name": "_cell",
+     "args": [
+      "v"
+     ],
+     "line": 71
+    },
+    {
+     "kind": "def",
+     "name": "md_table",
+     "args": [
+      "rows",
+      "header"
+     ],
+     "line": 77
+    },
+    {
+     "kind": "def",
+     "name": "links_in",
+     "args": [
+      "text"
+     ],
+     "line": 96
+    },
+    {
+     "kind": "def",
+     "name": "_x",
+     "args": [
+      "s"
+     ],
+     "line": 108
+    },
+    {
+     "kind": "def",
+     "name": "_zip_read",
+     "args": [
+      "z",
+      "name",
+      "budget"
+     ],
+     "line": 113
+    },
+    {
+     "kind": "def",
+     "name": "_zip",
+     "args": [
+      "data"
+     ],
+     "line": 127
+    },
+    {
+     "kind": "def",
+     "name": "_rels",
+     "args": [
+      "z",
+      "path",
+      "budget"
+     ],
+     "line": 134
+    },
+    {
+     "kind": "def",
+     "name": "_outside",
+     "args": [
+      "rels"
+     ],
+     "line": 146
+    },
+    {
+     "kind": "def",
+     "name": "_read_text",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 151
+    },
+    {
+     "kind": "def",
+     "name": "_read_csv",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 156
+    },
+    {
+     "kind": "def",
+     "name": "_records",
+     "args": [
+      "v"
+     ],
+     "line": 176
+    },
+    {
+     "kind": "def",
+     "name": "_read_json",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 189
+    },
+    {
+     "kind": "def",
+     "name": "_read_sqlite",
+     "args": [
+      "data",
+      "name",
+      "path"
+     ],
+     "line": 211
+    },
+    {
+     "kind": "def",
+     "name": "_docx_par",
+     "args": [
+      "p",
+      "rels"
+     ],
+     "line": 253
+    },
+    {
+     "kind": "def",
+     "name": "_read_docx",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 277
+    },
+    {
+     "kind": "def",
+     "name": "_col",
+     "args": [
+      "ref"
+     ],
+     "line": 303
+    },
+    {
+     "kind": "def",
+     "name": "_read_xlsx",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 310
+    },
+    {
+     "kind": "def",
+     "name": "_paras",
+     "args": [
+      "xml"
+     ],
+     "line": 372
+    },
+    {
+     "kind": "def",
+     "name": "_read_pptx",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 376
+    },
+    {
+     "kind": "def",
+     "name": "_odf_grid",
+     "args": [
+      "table_xml"
+     ],
+     "line": 400
+    },
+    {
+     "kind": "def",
+     "name": "_read_odf",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 417
+    },
+    {
+     "kind": "def",
+     "name": "_read_pdf",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 472
+    },
+    {
+     "kind": "def",
+     "name": "_read_html",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 482
+    },
+    {
+     "kind": "def",
+     "name": "_read_rtf",
+     "args": [
+      "data",
+      "name"
+     ],
+     "line": 496
+    },
+    {
+     "kind": "def",
+     "name": "supported",
+     "args": [
+      "name"
+     ],
+     "line": 524
+    },
+    {
+     "kind": "def",
+     "name": "read",
+     "args": [
+      "name",
+      "data",
+      "path"
+     ],
+     "line": 528
+    },
+    {
+     "kind": "def",
+     "name": "read_path",
+     "args": [
+      "p",
+      "max_bytes"
+     ],
+     "line": 549
+    }
+   ]
+  },
+  "airag/followup.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_sources_block",
+     "args": [
+      "rec",
+      "fence",
+      "limit"
+     ],
+     "line": 61
+    },
+    {
+     "kind": "async def",
+     "name": "answer",
+     "args": [
+      "settings",
+      "rid",
+      "question",
+      "mode",
+      "selection",
+      "ui_lang",
+      "extra"
+     ],
+     "line": 73
+    },
+    {
+     "kind": "async def",
+     "name": "calculate",
+     "args": [
+      "settings",
+      "text"
+     ],
+     "line": 146
+    },
+    {
+     "kind": "async def",
+     "name": "add_to_article",
+     "args": [
+      "settings",
+      "rid",
+      "index"
+     ],
+     "line": 157
+    },
+    {
+     "kind": "def",
+     "name": "thread_of",
+     "args": [
+      "rid"
+     ],
+     "line": 179
+    }
+   ]
+  },
+  "airag/givenurls.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "clean",
+     "args": [
+      "url"
+     ],
+     "line": 19
+    },
+    {
+     "kind": "def",
+     "name": "urls_in",
+     "args": [
+      "text",
+      "limit"
+     ],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "only_links",
+     "args": [
+      "text"
+     ],
+     "line": 49
+    }
+   ]
+  },
+  "airag/guard.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "configured_secrets",
+     "args": [
+      "settings"
+     ],
+     "line": 44
+    },
+    {
+     "kind": "def",
+     "name": "redact",
+     "args": [
+      "text",
+      "extra"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "neutralise",
+     "args": [
+      "text"
+     ],
+     "line": 65
+    },
+    {
+     "kind": "def",
+     "name": "clean",
+     "args": [
+      "text",
+      "settings"
+     ],
+     "line": 76
+    },
+    {
+     "kind": "class",
+     "name": "Fence",
+     "methods": [
+      "__init__",
+      "wrap",
+      "rule"
+     ],
+     "line": 83
+    },
+    {
+     "kind": "def",
+     "name": "restrict_links",
+     "args": [
+      "markdown",
+      "allowed"
+     ],
+     "line": 104
+    }
+   ]
+  },
+  "airag/hardware.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_cpu_name",
+     "args": [],
+     "line": 18
+    },
+    {
+     "kind": "def",
+     "name": "_nvidia",
+     "args": [],
+     "line": 36
+    },
+    {
+     "kind": "def",
+     "name": "_windows_gpus",
+     "args": [],
+     "line": 57
+    },
+    {
+     "kind": "def",
+     "name": "_gpus",
+     "args": [],
+     "line": 94
+    },
+    {
+     "kind": "def",
+     "name": "_disk",
+     "args": [
+      "path"
+     ],
+     "line": 103
+    },
+    {
+     "kind": "def",
+     "name": "info",
+     "args": [
+      "refresh"
+     ],
+     "line": 114
+    },
+    {
+     "kind": "def",
+     "name": "best_vram_gb",
+     "args": [],
+     "line": 144
+    }
+   ]
+  },
+  "airag/history.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_lock",
+     "args": [
+      "rid"
+     ],
+     "line": 17
+    },
+    {
+     "kind": "def",
+     "name": "_limit",
+     "args": [
+      "limit"
+     ],
+     "line": 21
+    },
+    {
+     "kind": "def",
+     "name": "pins",
+     "args": [],
+     "line": 35
+    },
+    {
+     "kind": "def",
+     "name": "set_pin",
+     "args": [
+      "rid",
+      "pinned"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "_write",
+     "args": [
+      "record"
+     ],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "save",
+     "args": [
+      "record",
+      "limit"
+     ],
+     "line": 60
+    },
+    {
+     "kind": "def",
+     "name": "update",
+     "args": [
+      "rid",
+      "change",
+      "limit"
+     ],
+     "line": 67
+    },
+    {
+     "kind": "def",
+     "name": "prune",
+     "args": [
+      "limit"
+     ],
+     "line": 84
+    },
+    {
+     "kind": "def",
+     "name": "_forget_versions",
+     "args": [
+      "rid"
+     ],
+     "line": 100
+    },
+    {
+     "kind": "def",
+     "name": "clear",
+     "args": [],
+     "line": 105
+    },
+    {
+     "kind": "def",
+     "name": "_unlink_all",
+     "args": [],
+     "line": 112
+    },
+    {
+     "kind": "def",
+     "name": "get",
+     "args": [
+      "rid"
+     ],
+     "line": 123
+    },
+    {
+     "kind": "def",
+     "name": "delete",
+     "args": [
+      "rid"
+     ],
+     "line": 136
+    },
+    {
+     "kind": "def",
+     "name": "listing",
+     "args": [
+      "limit"
+     ],
+     "line": 147
+    }
+   ]
+  },
+  "airag/interactive.py": {
+   "items": [
+    {
+     "kind": "async def",
+     "name": "check",
+     "args": [
+      "llm",
+      "query",
+      "article_md"
+     ],
+     "line": 34
+    },
+    {
+     "kind": "def",
+     "name": "safe",
+     "args": [
+      "html"
+     ],
+     "line": 46
+    },
+    {
+     "kind": "def",
+     "name": "clean_html",
+     "args": [
+      "text"
+     ],
+     "line": 51
+    },
+    {
+     "kind": "def",
+     "name": "code_related",
+     "args": [
+      "query"
+     ],
+     "line": 81
+    },
+    {
+     "kind": "def",
+     "name": "local_examples",
+     "args": [
+      "settings",
+      "idea",
+      "limit"
+     ],
+     "line": 85
+    },
+    {
+     "kind": "async def",
+     "name": "code_examples",
+     "args": [
+      "settings",
+      "idea",
+      "pages"
+     ],
+     "line": 109
+    },
+    {
+     "kind": "def",
+     "name": "source_figures",
+     "args": [
+      "rec",
+      "limit"
+     ],
+     "line": 140
+    },
+    {
+     "kind": "async def",
+     "name": "generate",
+     "args": [
+      "settings",
+      "rid",
+      "ui_lang",
+      "force"
+     ],
+     "line": 158
+    }
+   ]
+  },
+  "airag/jobs.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Job",
+     "methods": [
+      "__init__",
+      "public"
+     ],
+     "line": 19
+    },
+    {
+     "kind": "def",
+     "name": "running",
+     "args": [
+      "key"
+     ],
+     "line": 44
+    },
+    {
+     "kind": "def",
+     "name": "start",
+     "args": [
+      "key",
+      "fn"
+     ],
+     "line": 51
+    },
+    {
+     "kind": "def",
+     "name": "start_thread",
+     "args": [
+      "key",
+      "fn"
+     ],
+     "line": 77
+    },
+    {
+     "kind": "def",
+     "name": "cancel",
+     "args": [
+      "job_id"
+     ],
+     "line": 84
+    },
+    {
+     "kind": "def",
+     "name": "_prune",
+     "args": [
+      "keep"
+     ],
+     "line": 94
+    }
+   ]
+  },
+  "airag/jsguard.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_tokens",
+     "args": [
+      "code"
+     ],
+     "line": 36
+    },
+    {
+     "kind": "def",
+     "name": "_skip_template",
+     "args": [
+      "code",
+      "i"
+     ],
+     "line": 106
+    },
+    {
+     "kind": "def",
+     "name": "_regex_allowed",
+     "args": [
+      "code",
+      "toks"
+     ],
+     "line": 135
+    },
+    {
+     "kind": "def",
+     "name": "guard_loops",
+     "args": [
+      "code"
+     ],
+     "line": 147
+    },
+    {
+     "kind": "def",
+     "name": "guard_html",
+     "args": [
+      "html"
+     ],
+     "line": 188
+    }
+   ]
+  },
+  "airag/languages.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "normalize",
+     "args": [
+      "code"
+     ],
+     "line": 41
+    },
+    {
+     "kind": "def",
+     "name": "name",
+     "args": [
+      "code"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "region",
+     "args": [
+      "code"
+     ],
+     "line": 59
+    },
+    {
+     "kind": "def",
+     "name": "public_list",
+     "args": [],
+     "line": 64
+    },
+    {
+     "kind": "def",
+     "name": "answer_language",
+     "args": [
+      "settings",
+      "ui_lang",
+      "query"
+     ],
+     "line": 68
+    }
+   ]
+  },
+  "airag/library.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "cjk_space",
+     "args": [
+      "text"
+     ],
+     "line": 30
+    },
+    {
+     "kind": "def",
+     "name": "_read_text",
+     "args": [
+      "p"
+     ],
+     "line": 36
+    },
+    {
+     "kind": "def",
+     "name": "extract",
+     "args": [
+      "p"
+     ],
+     "line": 46
+    },
+    {
+     "kind": "def",
+     "name": "title_of",
+     "args": [
+      "p",
+      "text"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "chunks_of",
+     "args": [
+      "text"
+     ],
+     "line": 62
+    },
+    {
+     "kind": "class",
+     "name": "Library",
+     "methods": [
+      "__init__",
+      "_conn",
+      "sync",
+      "_match_expr",
+      "search",
+      "_plain_search",
+      "get_file",
+      "stats",
+      "last_sync",
+      "clear"
+     ],
+     "line": 84
+    },
+    {
+     "kind": "def",
+     "name": "_protected_roots",
+     "args": [],
+     "line": 330
+    },
+    {
+     "kind": "def",
+     "name": "is_secret_file",
+     "args": [
+      "p"
+     ],
+     "line": 343
+    },
+    {
+     "kind": "def",
+     "name": "allowed_file",
+     "args": [
+      "path",
+      "settings"
+     ],
+     "line": 354
+    },
+    {
+     "kind": "def",
+     "name": "settings_args",
+     "args": [
+      "settings"
+     ],
+     "line": 379
+    }
+   ]
+  },
+  "airag/llm/__init__.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "register",
+     "args": [
+      "cls"
+     ],
+     "line": 15
+    },
+    {
+     "kind": "def",
+     "name": "get_llm",
+     "args": [
+      "settings",
+      "task"
+     ],
+     "line": 20
+    }
+   ]
+  },
+  "airag/llm/anthropic_provider.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Anthropic",
+     "methods": [
+      "_headers",
+      "_url",
+      "vision_content",
+      "_body",
+      "complete",
+      "stream",
+      "list_models"
+     ],
+     "line": 13
+    }
+   ]
+  },
+  "airag/llm/base.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "report_usage",
+     "args": [
+      "input_tokens",
+      "output_tokens"
+     ],
+     "line": 9
+    },
+    {
+     "kind": "class",
+     "name": "LLMError",
+     "methods": [],
+     "line": 15
+    },
+    {
+     "kind": "def",
+     "name": "strip_think",
+     "args": [
+      "text"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "http_timeout",
+     "args": [
+      "read"
+     ],
+     "line": 27
+    },
+    {
+     "kind": "def",
+     "name": "short_error",
+     "args": [
+      "status",
+      "body"
+     ],
+     "line": 31
+    },
+    {
+     "kind": "class",
+     "name": "LLMProvider",
+     "methods": [
+      "__init__",
+      "vision_content",
+      "describe",
+      "complete",
+      "stream",
+      "list_models"
+     ],
+     "line": 36
+    }
+   ]
+  },
+  "airag/llm/jsonutil.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "extract_json",
+     "args": [
+      "text"
+     ],
+     "line": 12
+    },
+    {
+     "kind": "async def",
+     "name": "complete_json",
+     "args": [
+      "llm",
+      "system",
+      "user",
+      "max_tokens",
+      "retries"
+     ],
+     "line": 25
+    }
+   ]
+  },
+  "airag/llm/ollama.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Ollama",
+     "methods": [
+      "_url",
+      "_body",
+      "_ensure",
+      "_think_unsupported",
+      "_unreachable",
+      "complete",
+      "stream",
+      "_reachable",
+      "stream_body",
+      "list_models"
+     ],
+     "line": 13
+    }
+   ]
+  },
+  "airag/llm/openai_compat.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "_OpenAIBase",
+     "methods": [
+      "_is_reasoning",
+      "_url",
+      "_headers",
+      "_body",
+      "complete",
+      "stream",
+      "list_models"
+     ],
+     "line": 14
+    },
+    {
+     "kind": "class",
+     "name": "OpenAI",
+     "methods": [
+      "vision_content"
+     ],
+     "line": 119
+    },
+    {
+     "kind": "class",
+     "name": "DeepSeek",
+     "methods": [],
+     "line": 139
+    },
+    {
+     "kind": "class",
+     "name": "OpenRouter",
+     "methods": [
+      "vision_content",
+      "_headers",
+      "list_models"
+     ],
+     "line": 153
+    },
+    {
+     "kind": "class",
+     "name": "OpenAICompatible",
+     "methods": [],
+     "line": 185
+    },
+    {
+     "kind": "class",
+     "name": "PcLink",
+     "methods": [
+      "_url",
+      "_headers"
+     ],
+     "line": 197
+    }
+   ]
+  },
+  "airag/llm/tasks.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "task_ids",
+     "args": [],
+     "line": 34
+    },
+    {
+     "kind": "def",
+     "name": "model_for",
+     "args": [
+      "settings",
+      "provider",
+      "task"
+     ],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "clean_table",
+     "args": [
+      "raw"
+     ],
+     "line": 49
+    }
+   ]
+  },
+  "airag/main.py": {
+   "items": [
+    {
+     "kind": "async def",
+     "name": "only_local",
+     "args": [
+      "request",
+      "call_next"
+     ],
+     "line": 52
+    },
+    {
+     "kind": "async def",
+     "name": "_startup",
+     "args": [],
+     "line": 74
+    },
+    {
+     "kind": "async def",
+     "name": "_shutdown",
+     "args": [],
+     "line": 88
+    },
+    {
+     "kind": "def",
+     "name": "index",
+     "args": [],
+     "line": 96
+    },
+    {
+     "kind": "def",
+     "name": "_err",
+     "args": [
+      "e",
+      "code"
+     ],
+     "line": 102
+    },
+    {
+     "kind": "def",
+     "name": "ping",
+     "args": [],
+     "line": 108
+    },
+    {
+     "kind": "def",
+     "name": "app_info",
+     "args": [],
+     "line": 113
+    },
+    {
+     "kind": "def",
+     "name": "app_show",
+     "args": [],
+     "line": 122
+    },
+    {
+     "kind": "class",
+     "name": "OpenPathReq",
+     "methods": [],
+     "line": 127
+    },
+    {
+     "kind": "def",
+     "name": "app_open_path",
+     "args": [
+      "req",
+      "request"
+     ],
+     "line": 132
+    },
+    {
+     "kind": "def",
+     "name": "app_inbox",
+     "args": [],
+     "line": 151
+    },
+    {
+     "kind": "class",
+     "name": "OpenFileBody",
+     "methods": [],
+     "line": 157
+    },
+    {
+     "kind": "async def",
+     "name": "open_file",
+     "args": [
+      "req"
+     ],
+     "line": 164
+    },
+    {
+     "kind": "class",
+     "name": "RestartReq",
+     "methods": [],
+     "line": 183
+    },
+    {
+     "kind": "def",
+     "name": "app_restart",
+     "args": [
+      "req"
+     ],
+     "line": 188
+    },
+    {
+     "kind": "def",
+     "name": "app_quit",
+     "args": [],
+     "line": 198
+    },
+    {
+     "kind": "def",
+     "name": "storage",
+     "args": [],
+     "line": 204
+    },
+    {
+     "kind": "class",
+     "name": "OpenReq",
+     "methods": [],
+     "line": 211
+    },
+    {
+     "kind": "def",
+     "name": "open_folder",
+     "args": [
+      "req"
+     ],
+     "line": 216
+    },
+    {
+     "kind": "def",
+     "name": "_open_path",
+     "args": [
+      "p",
+      "reveal"
+     ],
+     "line": 225
+    },
+    {
+     "kind": "class",
+     "name": "PricesReq",
+     "methods": [],
+     "line": 244
+    },
+    {
+     "kind": "def",
+     "name": "model_prices",
+     "args": [
+      "req"
+     ],
+     "line": 250
+    },
+    {
+     "kind": "def",
+     "name": "live_resources",
+     "args": [],
+     "line": 265
+    },
+    {
+     "kind": "def",
+     "name": "schema",
+     "args": [],
+     "line": 272
+    },
+    {
+     "kind": "def",
+     "name": "get_settings",
+     "args": [],
+     "line": 296
+    },
+    {
+     "kind": "def",
+     "name": "_busy_guard",
+     "args": [
+      "what"
+     ],
+     "line": 300
+    },
+    {
+     "kind": "def",
+     "name": "save_settings",
+     "args": [
+      "body"
+     ],
+     "line": 309
+    },
+    {
+     "kind": "def",
+     "name": "_needs_key",
+     "args": [
+      "s"
+     ],
+     "line": 319
+    },
+    {
+     "kind": "async def",
+     "name": "status",
+     "args": [],
+     "line": 330
+    },
+    {
+     "kind": "class",
+     "name": "ProviderReq",
+     "methods": [],
+     "line": 355
+    },
+    {
+     "kind": "async def",
+     "name": "models",
+     "args": [
+      "req"
+     ],
+     "line": 362
+    },
+    {
+     "kind": "async def",
+     "name": "test_llm",
+     "args": [
+      "req"
+     ],
+     "line": 373
+    },
+    {
+     "kind": "def",
+     "name": "job_get",
+     "args": [
+      "job_id"
+     ],
+     "line": 389
+    },
+    {
+     "kind": "def",
+     "name": "job_list",
+     "args": [
+      "key"
+     ],
+     "line": 397
+    },
+    {
+     "kind": "def",
+     "name": "job_cancel",
+     "args": [
+      "job_id"
+     ],
+     "line": 402
+    },
+    {
+     "kind": "def",
+     "name": "system_info",
+     "args": [
+      "refresh"
+     ],
+     "line": 407
+    },
+    {
+     "kind": "class",
+     "name": "ExportReq",
+     "methods": [],
+     "line": 413
+    },
+    {
+     "kind": "def",
+     "name": "backup_export",
+     "args": [
+      "req"
+     ],
+     "line": 418
+    },
+    {
+     "kind": "async def",
+     "name": "backup_import",
+     "args": [],
+     "line": 428
+    },
+    {
+     "kind": "def",
+     "name": "clear_cache",
+     "args": [],
+     "line": 452
+    },
+    {
+     "kind": "def",
+     "name": "app_log",
+     "args": [
+      "lines",
+      "level"
+     ],
+     "line": 467
+    },
+    {
+     "kind": "def",
+     "name": "_secret_values",
+     "args": [],
+     "line": 494
+    },
+    {
+     "kind": "def",
+     "name": "_walk",
+     "args": [
+      "d",
+      "prefix"
+     ],
+     "line": 504
+    },
+    {
+     "kind": "def",
+     "name": "_ollama_url",
+     "args": [
+      "override"
+     ],
+     "line": 513
+    },
+    {
+     "kind": "async def",
+     "name": "ollama_status",
+     "args": [
+      "url"
+     ],
+     "line": 518
+    },
+    {
+     "kind": "async def",
+     "name": "ollama_start",
+     "args": [
+      "url"
+     ],
+     "line": 523
+    },
+    {
+     "kind": "class",
+     "name": "PcLinkReq",
+     "methods": [],
+     "line": 532
+    },
+    {
+     "kind": "def",
+     "name": "pclink_status",
+     "args": [],
+     "line": 539
+    },
+    {
+     "kind": "def",
+     "name": "pclink_set",
+     "args": [
+      "req"
+     ],
+     "line": 545
+    },
+    {
+     "kind": "def",
+     "name": "ollama_recommended",
+     "args": [],
+     "line": 562
+    },
+    {
+     "kind": "class",
+     "name": "ModelReq",
+     "methods": [],
+     "line": 566
+    },
+    {
+     "kind": "async def",
+     "name": "ollama_pull",
+     "args": [
+      "req"
+     ],
+     "line": 572
+    },
+    {
+     "kind": "async def",
+     "name": "ollama_delete",
+     "args": [
+      "req"
+     ],
+     "line": 581
+    },
+    {
+     "kind": "def",
+     "name": "browser_status",
+     "args": [],
+     "line": 591
+    },
+    {
+     "kind": "async def",
+     "name": "browser_install_start",
+     "args": [],
+     "line": 596
+    },
+    {
+     "kind": "async def",
+     "name": "browser_uninstall",
+     "args": [],
+     "line": 601
+    },
+    {
+     "kind": "async def",
+     "name": "update_check",
+     "args": [
+      "force"
+     ],
+     "line": 608
+    },
+    {
+     "kind": "async def",
+     "name": "update_install",
+     "args": [],
+     "line": 613
+    },
+    {
+     "kind": "async def",
+     "name": "repair_check",
+     "args": [],
+     "line": 619
+    },
+    {
+     "kind": "async def",
+     "name": "repair_run",
+     "args": [],
+     "line": 627
+    },
+    {
+     "kind": "async def",
+     "name": "repair_reinstall",
+     "args": [],
+     "line": 633
+    },
+    {
+     "kind": "def",
+     "name": "_reindex_soon",
+     "args": [],
+     "line": 637
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_status",
+     "args": [],
+     "line": 651
+    },
+    {
+     "kind": "class",
+     "name": "MyFolderReq",
+     "methods": [],
+     "line": 656
+    },
+    {
+     "kind": "async def",
+     "name": "mylibrary_folder",
+     "args": [
+      "req"
+     ],
+     "line": 661
+    },
+    {
+     "kind": "class",
+     "name": "SaveReq",
+     "methods": [],
+     "line": 682
+    },
+    {
+     "kind": "async def",
+     "name": "mylibrary_save",
+     "args": [
+      "req"
+     ],
+     "line": 690
+    },
+    {
+     "kind": "async def",
+     "name": "offline_state",
+     "args": [],
+     "line": 709
+    },
+    {
+     "kind": "class",
+     "name": "OfflineReq",
+     "methods": [],
+     "line": 734
+    },
+    {
+     "kind": "async def",
+     "name": "offline_set",
+     "args": [
+      "req"
+     ],
+     "line": 742
+    },
+    {
+     "kind": "class",
+     "name": "TagsReq",
+     "methods": [],
+     "line": 762
+    },
+    {
+     "kind": "async def",
+     "name": "set_tags",
+     "args": [
+      "rid",
+      "req"
+     ],
+     "line": 767
+    },
+    {
+     "kind": "async def",
+     "name": "suggest_tags",
+     "args": [
+      "rid"
+     ],
+     "line": 784
+    },
+    {
+     "kind": "async def",
+     "name": "_suggest",
+     "args": [
+      "s",
+      "rec"
+     ],
+     "line": 794
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_saved",
+     "args": [],
+     "line": 800
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_saved_one",
+     "args": [
+      "name"
+     ],
+     "line": 806
+    },
+    {
+     "kind": "class",
+     "name": "UnsaveReq",
+     "methods": [],
+     "line": 814
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_unsave",
+     "args": [
+      "req"
+     ],
+     "line": 821
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_removed",
+     "args": [],
+     "line": 842
+    },
+    {
+     "kind": "class",
+     "name": "RestoreReq",
+     "methods": [],
+     "line": 848
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_restore",
+     "args": [
+      "req"
+     ],
+     "line": 853
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_forget_removed",
+     "args": [
+      "rid"
+     ],
+     "line": 866
+    },
+    {
+     "kind": "class",
+     "name": "SaveSourceReq",
+     "methods": [],
+     "line": 871
+    },
+    {
+     "kind": "async def",
+     "name": "mylibrary_save_source",
+     "args": [
+      "req"
+     ],
+     "line": 877
+    },
+    {
+     "kind": "class",
+     "name": "ImportReq",
+     "methods": [],
+     "line": 894
+    },
+    {
+     "kind": "async def",
+     "name": "mylibrary_import",
+     "args": [
+      "req"
+     ],
+     "line": 899
+    },
+    {
+     "kind": "def",
+     "name": "mylibrary_open",
+     "args": [],
+     "line": 918
+    },
+    {
+     "kind": "def",
+     "name": "library_status",
+     "args": [],
+     "line": 926
+    },
+    {
+     "kind": "async def",
+     "name": "library_pick",
+     "args": [],
+     "line": 936
+    },
+    {
+     "kind": "class",
+     "name": "FolderReq",
+     "methods": [],
+     "line": 944
+    },
+    {
+     "kind": "def",
+     "name": "library_add",
+     "args": [
+      "req"
+     ],
+     "line": 949
+    },
+    {
+     "kind": "def",
+     "name": "library_remove",
+     "args": [
+      "req"
+     ],
+     "line": 962
+    },
+    {
+     "kind": "def",
+     "name": "_sync_job",
+     "args": [
+      "job"
+     ],
+     "line": 969
+    },
+    {
+     "kind": "async def",
+     "name": "library_sync",
+     "args": [],
+     "line": 981
+    },
+    {
+     "kind": "def",
+     "name": "library_clear",
+     "args": [],
+     "line": 986
+    },
+    {
+     "kind": "def",
+     "name": "_library_file",
+     "args": [
+      "fid"
+     ],
+     "line": 992
+    },
+    {
+     "kind": "def",
+     "name": "library_file",
+     "args": [
+      "fid"
+     ],
+     "line": 1003
+    },
+    {
+     "kind": "class",
+     "name": "OpenFileReq",
+     "methods": [],
+     "line": 1011
+    },
+    {
+     "kind": "def",
+     "name": "library_open",
+     "args": [
+      "req"
+     ],
+     "line": 1017
+    },
+    {
+     "kind": "def",
+     "name": "_ndjson",
+     "args": [
+      "gen_factory"
+     ],
+     "line": 1023
+    },
+    {
+     "kind": "class",
+     "name": "ResearchReq",
+     "methods": [],
+     "line": 1057
+    },
+    {
+     "kind": "async def",
+     "name": "research",
+     "args": [
+      "req"
+     ],
+     "line": 1071
+    },
+    {
+     "kind": "class",
+     "name": "QuickReq",
+     "methods": [],
+     "line": 1106
+    },
+    {
+     "kind": "async def",
+     "name": "quick_search",
+     "args": [
+      "req"
+     ],
+     "line": 1115
+    },
+    {
+     "kind": "class",
+     "name": "SoundReq",
+     "methods": [],
+     "line": 1147
+    },
+    {
+     "kind": "def",
+     "name": "sound_file",
+     "args": [
+      "name",
+      "builtin"
+     ],
+     "line": 1153
+    },
+    {
+     "kind": "def",
+     "name": "sound_upload",
+     "args": [
+      "name",
+      "req"
+     ],
+     "line": 1163
+    },
+    {
+     "kind": "def",
+     "name": "sound_remove",
+     "args": [
+      "name"
+     ],
+     "line": 1172
+    },
+    {
+     "kind": "async def",
+     "name": "usage_summary",
+     "args": [],
+     "line": 1179
+    },
+    {
+     "kind": "def",
+     "name": "usage_reset",
+     "args": [],
+     "line": 1186
+    },
+    {
+     "kind": "async def",
+     "name": "usage_prices",
+     "args": [],
+     "line": 1193
+    },
+    {
+     "kind": "def",
+     "name": "_job",
+     "args": [
+      "gen_factory",
+      "kind",
+      "title",
+      "ref"
+     ],
+     "line": 1198
+    },
+    {
+     "kind": "async def",
+     "name": "_job_result",
+     "args": [
+      "coro_factory",
+      "kind",
+      "title",
+      "ref"
+     ],
+     "line": 1211
+    },
+    {
+     "kind": "def",
+     "name": "_follow",
+     "args": [
+      "run"
+     ],
+     "line": 1232
+    },
+    {
+     "kind": "def",
+     "name": "research_active",
+     "args": [],
+     "line": 1243
+    },
+    {
+     "kind": "def",
+     "name": "research_stream",
+     "args": [
+      "rid"
+     ],
+     "line": 1249
+    },
+    {
+     "kind": "def",
+     "name": "research_cancel",
+     "args": [
+      "rid"
+     ],
+     "line": 1258
+    },
+    {
+     "kind": "class",
+     "name": "TranslateReq",
+     "methods": [],
+     "line": 1263
+    },
+    {
+     "kind": "class",
+     "name": "FollowupReq",
+     "methods": [],
+     "line": 1271
+    },
+    {
+     "kind": "async def",
+     "name": "followup_route",
+     "args": [
+      "req"
+     ],
+     "line": 1281
+    },
+    {
+     "kind": "def",
+     "name": "followup_thread",
+     "args": [
+      "rid"
+     ],
+     "line": 1294
+    },
+    {
+     "kind": "class",
+     "name": "AddAnswerReq",
+     "methods": [],
+     "line": 1299
+    },
+    {
+     "kind": "def",
+     "name": "followup_add",
+     "args": [
+      "rid",
+      "req"
+     ],
+     "line": 1304
+    },
+    {
+     "kind": "class",
+     "name": "CalcReq",
+     "methods": [],
+     "line": 1312
+    },
+    {
+     "kind": "async def",
+     "name": "tools_calculate",
+     "args": [
+      "req"
+     ],
+     "line": 1317
+    },
+    {
+     "kind": "class",
+     "name": "RewriteReq",
+     "methods": [],
+     "line": 1329
+    },
+    {
+     "kind": "async def",
+     "name": "rewrite_route",
+     "args": [
+      "req"
+     ],
+     "line": 1337
+    },
+    {
+     "kind": "class",
+     "name": "RegenerateReq",
+     "methods": [],
+     "line": 1347
+    },
+    {
+     "kind": "async def",
+     "name": "regenerate_route",
+     "args": [
+      "req"
+     ],
+     "line": 1356
+    },
+    {
+     "kind": "def",
+     "name": "versions_list",
+     "args": [
+      "rid"
+     ],
+     "line": 1372
+    },
+    {
+     "kind": "def",
+     "name": "versions_get",
+     "args": [
+      "rid",
+      "n"
+     ],
+     "line": 1378
+    },
+    {
+     "kind": "class",
+     "name": "VersionReq",
+     "methods": [],
+     "line": 1386
+    },
+    {
+     "kind": "def",
+     "name": "versions_restore",
+     "args": [
+      "rid",
+      "req"
+     ],
+     "line": 1391
+    },
+    {
+     "kind": "def",
+     "name": "versions_undo",
+     "args": [
+      "rid"
+     ],
+     "line": 1399
+    },
+    {
+     "kind": "class",
+     "name": "RewriteApplyReq",
+     "methods": [],
+     "line": 1406
+    },
+    {
+     "kind": "def",
+     "name": "rewrite_apply",
+     "args": [
+      "req"
+     ],
+     "line": 1414
+    },
+    {
+     "kind": "class",
+     "name": "ImageReq",
+     "methods": [],
+     "line": 1422
+    },
+    {
+     "kind": "async def",
+     "name": "analyze_image",
+     "args": [
+      "req"
+     ],
+     "line": 1430
+    },
+    {
+     "kind": "class",
+     "name": "AgentToolsReq",
+     "methods": [],
+     "line": 1469
+    },
+    {
+     "kind": "def",
+     "name": "agent_tools",
+     "args": [],
+     "line": 1477
+    },
+    {
+     "kind": "def",
+     "name": "agent_tools_save",
+     "args": [
+      "req"
+     ],
+     "line": 1490
+    },
+    {
+     "kind": "async def",
+     "name": "translate_article",
+     "args": [
+      "req"
+     ],
+     "line": 1514
+    },
+    {
+     "kind": "async def",
+     "name": "translate_items",
+     "args": [
+      "req"
+     ],
+     "line": 1526
+    },
+    {
+     "kind": "class",
+     "name": "SummaryReq",
+     "methods": [],
+     "line": 1534
+    },
+    {
+     "kind": "async def",
+     "name": "summarize_route",
+     "args": [
+      "req"
+     ],
+     "line": 1542
+    },
+    {
+     "kind": "class",
+     "name": "InteractiveReq",
+     "methods": [],
+     "line": 1553
+    },
+    {
+     "kind": "async def",
+     "name": "interactive_start",
+     "args": [
+      "req"
+     ],
+     "line": 1560
+    },
+    {
+     "kind": "async def",
+     "name": "interactive_route",
+     "args": [
+      "req"
+     ],
+     "line": 1593
+    },
+    {
+     "kind": "def",
+     "name": "history_list",
+     "args": [],
+     "line": 1604
+    },
+    {
+     "kind": "class",
+     "name": "ExportReq",
+     "methods": [],
+     "line": 1608
+    },
+    {
+     "kind": "async def",
+     "name": "export_html_route",
+     "args": [
+      "req"
+     ],
+     "line": 1620
+    },
+    {
+     "kind": "class",
+     "name": "ExportOpenReq",
+     "methods": [],
+     "line": 1633
+    },
+    {
+     "kind": "class",
+     "name": "SummaryFileReq",
+     "methods": [],
+     "line": 1639
+    },
+    {
+     "kind": "def",
+     "name": "summary_file",
+     "args": [
+      "req"
+     ],
+     "line": 1648
+    },
+    {
+     "kind": "def",
+     "name": "export_open",
+     "args": [
+      "req"
+     ],
+     "line": 1659
+    },
+    {
+     "kind": "class",
+     "name": "WikiReq",
+     "methods": [],
+     "line": 1669
+    },
+    {
+     "kind": "async def",
+     "name": "wiki_check",
+     "args": [
+      "req"
+     ],
+     "line": 1676
+    },
+    {
+     "kind": "async def",
+     "name": "wiki_describe",
+     "args": [
+      "req"
+     ],
+     "line": 1686
+    },
+    {
+     "kind": "class",
+     "name": "PinSourceReq",
+     "methods": [],
+     "line": 1705
+    },
+    {
+     "kind": "def",
+     "name": "pinned_sources",
+     "args": [],
+     "line": 1717
+    },
+    {
+     "kind": "async def",
+     "name": "pin_source",
+     "args": [
+      "req"
+     ],
+     "line": 1723
+    },
+    {
+     "kind": "def",
+     "name": "unpin_source",
+     "args": [
+      "pid"
+     ],
+     "line": 1741
+    },
+    {
+     "kind": "def",
+     "name": "pinned_source",
+     "args": [
+      "pid"
+     ],
+     "line": 1747
+    },
+    {
+     "kind": "class",
+     "name": "PinReq",
+     "methods": [],
+     "line": 1755
+    },
+    {
+     "kind": "def",
+     "name": "history_pin",
+     "args": [
+      "rid",
+      "req"
+     ],
+     "line": 1760
+    },
+    {
+     "kind": "def",
+     "name": "history_get",
+     "args": [
+      "rid"
+     ],
+     "line": 1768
+    },
+    {
+     "kind": "def",
+     "name": "history_delete",
+     "args": [
+      "rid"
+     ],
+     "line": 1776
+    },
+    {
+     "kind": "def",
+     "name": "history_clear",
+     "args": [],
+     "line": 1782
+    }
+   ]
+  },
+  "airag/mylibrary.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "default_dir",
+     "args": [],
+     "line": 26
+    },
+    {
+     "kind": "def",
+     "name": "folder",
+     "args": [
+      "settings"
+     ],
+     "line": 33
+    },
+    {
+     "kind": "def",
+     "name": "ensure",
+     "args": [
+      "settings"
+     ],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "_safe_name",
+     "args": [
+      "text",
+      "limit"
+     ],
+     "line": 44
+    },
+    {
+     "kind": "def",
+     "name": "_yaml",
+     "args": [
+      "v"
+     ],
+     "line": 49
+    },
+    {
+     "kind": "def",
+     "name": "article_markdown",
+     "args": [
+      "rec"
+     ],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "_embed_images",
+     "args": [
+      "images"
+     ],
+     "line": 72
+    },
+    {
+     "kind": "def",
+     "name": "save_article",
+     "args": [
+      "rec",
+      "settings",
+      "rich",
+      "translations"
+     ],
+     "line": 93
+    },
+    {
+     "kind": "def",
+     "name": "list_saved",
+     "args": [
+      "settings"
+     ],
+     "line": 130
+    },
+    {
+     "kind": "def",
+     "name": "load_saved",
+     "args": [
+      "settings",
+      "name"
+     ],
+     "line": 146
+    },
+    {
+     "kind": "def",
+     "name": "_reread_markdown",
+     "args": [
+      "rec",
+      "json_file",
+      "md_file"
+     ],
+     "line": 162
+    },
+    {
+     "kind": "def",
+     "name": "_back_to_history",
+     "args": [
+      "rec"
+     ],
+     "line": 190
+    },
+    {
+     "kind": "def",
+     "name": "set_tags",
+     "args": [
+      "rec",
+      "settings"
+     ],
+     "line": 212
+    },
+    {
+     "kind": "def",
+     "name": "summary_markdown",
+     "args": [
+      "title",
+      "query",
+      "summary",
+      "sources",
+      "when"
+     ],
+     "line": 243
+    },
+    {
+     "kind": "def",
+     "name": "save_summary",
+     "args": [
+      "settings",
+      "title",
+      "query",
+      "summary",
+      "sources",
+      "when"
+     ],
+     "line": 262
+    },
+    {
+     "kind": "def",
+     "name": "find_summary",
+     "args": [
+      "settings",
+      "name"
+     ],
+     "line": 271
+    },
+    {
+     "kind": "def",
+     "name": "source_markdown",
+     "args": [
+      "page",
+      "query"
+     ],
+     "line": 277
+    },
+    {
+     "kind": "def",
+     "name": "save_source",
+     "args": [
+      "page",
+      "settings",
+      "query"
+     ],
+     "line": 293
+    },
+    {
+     "kind": "def",
+     "name": "_same_file",
+     "args": [
+      "a",
+      "b"
+     ],
+     "line": 311
+    },
+    {
+     "kind": "def",
+     "name": "import_files",
+     "args": [
+      "files",
+      "settings",
+      "move"
+     ],
+     "line": 328
+    },
+    {
+     "kind": "def",
+     "name": "status",
+     "args": [
+      "settings"
+     ],
+     "line": 362
+    },
+    {
+     "kind": "def",
+     "name": "resolve_saved",
+     "args": [
+      "rec"
+     ],
+     "line": 375
+    },
+    {
+     "kind": "def",
+     "name": "removed_dir",
+     "args": [],
+     "line": 389
+    },
+    {
+     "kind": "def",
+     "name": "_articles",
+     "args": [
+      "settings"
+     ],
+     "line": 393
+    },
+    {
+     "kind": "def",
+     "name": "find_saved",
+     "args": [
+      "settings",
+      "rid",
+      "file",
+      "md_path"
+     ],
+     "line": 397
+    },
+    {
+     "kind": "def",
+     "name": "unsave",
+     "args": [
+      "settings",
+      "json_file"
+     ],
+     "line": 420
+    },
+    {
+     "kind": "def",
+     "name": "secrets_token",
+     "args": [],
+     "line": 459
+    },
+    {
+     "kind": "def",
+     "name": "list_removed",
+     "args": [],
+     "line": 464
+    },
+    {
+     "kind": "def",
+     "name": "restore",
+     "args": [
+      "settings",
+      "rid"
+     ],
+     "line": 476
+    },
+    {
+     "kind": "def",
+     "name": "forget_removed",
+     "args": [
+      "rid"
+     ],
+     "line": 514
+    },
+    {
+     "kind": "def",
+     "name": "purge_removed",
+     "args": [],
+     "line": 524
+    }
+   ]
+  },
+  "airag/offline.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Offline",
+     "methods": [],
+     "line": 24
+    },
+    {
+     "kind": "def",
+     "name": "_settings",
+     "args": [
+      "settings"
+     ],
+     "line": 28
+    },
+    {
+     "kind": "def",
+     "name": "on",
+     "args": [
+      "settings"
+     ],
+     "line": 35
+    },
+    {
+     "kind": "def",
+     "name": "blocked",
+     "args": [
+      "settings"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "check",
+     "args": [
+      "settings"
+     ],
+     "line": 47
+    },
+    {
+     "kind": "def",
+     "name": "_is_local_url",
+     "args": [
+      "url"
+     ],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "local_choices",
+     "args": [
+      "settings"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "writer_override",
+     "args": [
+      "settings"
+     ],
+     "line": 78
+    },
+    {
+     "kind": "def",
+     "name": "history_matches",
+     "args": [
+      "terms",
+      "limit",
+      "skip_id"
+     ],
+     "line": 92
+    }
+   ]
+  },
+  "airag/ollama_manager.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "find_executable",
+     "args": [],
+     "line": 25
+    },
+    {
+     "kind": "def",
+     "name": "is_local",
+     "args": [
+      "base_url"
+     ],
+     "line": 45
+    },
+    {
+     "kind": "async def",
+     "name": "version",
+     "args": [
+      "base_url"
+     ],
+     "line": 50
+    },
+    {
+     "kind": "async def",
+     "name": "list_models",
+     "args": [
+      "base_url"
+     ],
+     "line": 59
+    },
+    {
+     "kind": "async def",
+     "name": "status",
+     "args": [
+      "base_url"
+     ],
+     "line": 72
+    },
+    {
+     "kind": "def",
+     "name": "_spawn",
+     "args": [
+      "exe"
+     ],
+     "line": 86
+    },
+    {
+     "kind": "async def",
+     "name": "ensure_running",
+     "args": [
+      "base_url",
+      "timeout"
+     ],
+     "line": 95
+    },
+    {
+     "kind": "async def",
+     "name": "pull",
+     "args": [
+      "base_url",
+      "model",
+      "job"
+     ],
+     "line": 123
+    },
+    {
+     "kind": "async def",
+     "name": "delete",
+     "args": [
+      "base_url",
+      "model"
+     ],
+     "line": 146
+    },
+    {
+     "kind": "def",
+     "name": "recommended",
+     "args": [],
+     "line": 153
+    },
+    {
+     "kind": "def",
+     "name": "total_ram_gb",
+     "args": [],
+     "line": 182
+    }
+   ]
+  },
+  "airag/openfile.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "NotOpenable",
+     "methods": [],
+     "line": 32
+    },
+    {
+     "kind": "def",
+     "name": "kind_of",
+     "args": [
+      "name"
+     ],
+     "line": 36
+    },
+    {
+     "kind": "def",
+     "name": "_front_matter",
+     "args": [
+      "text"
+     ],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "_sources",
+     "args": [
+      "block"
+     ],
+     "line": 70
+    },
+    {
+     "kind": "def",
+     "name": "parse_markdown",
+     "args": [
+      "text",
+      "name"
+     ],
+     "line": 91
+    },
+    {
+     "kind": "def",
+     "name": "_clean_sources",
+     "args": [
+      "items"
+     ],
+     "line": 114
+    },
+    {
+     "kind": "def",
+     "name": "_clean_images",
+     "args": [
+      "items"
+     ],
+     "line": 127
+    },
+    {
+     "kind": "def",
+     "name": "parse_saved_json",
+     "args": [
+      "text",
+      "trusted"
+     ],
+     "line": 135
+    },
+    {
+     "kind": "def",
+     "name": "data_block",
+     "args": [
+      "rec"
+     ],
+     "line": 158
+    },
+    {
+     "kind": "def",
+     "name": "parse_html",
+     "args": [
+      "text",
+      "name"
+     ],
+     "line": 167
+    },
+    {
+     "kind": "def",
+     "name": "parse_document",
+     "args": [
+      "name",
+      "data"
+     ],
+     "line": 200
+    },
+    {
+     "kind": "def",
+     "name": "parse",
+     "args": [
+      "name",
+      "text",
+      "trusted",
+      "data"
+     ],
+     "line": 222
+    },
+    {
+     "kind": "def",
+     "name": "to_record",
+     "args": [
+      "parsed",
+      "name"
+     ],
+     "line": 245
+    },
+    {
+     "kind": "def",
+     "name": "read_path",
+     "args": [
+      "path"
+     ],
+     "line": 258
+    },
+    {
+     "kind": "def",
+     "name": "open_file",
+     "args": [
+      "name",
+      "text",
+      "trusted",
+      "data"
+     ],
+     "line": 269
+    },
+    {
+     "kind": "def",
+     "name": "queue",
+     "args": [
+      "rid"
+     ],
+     "line": 281
+    },
+    {
+     "kind": "def",
+     "name": "take",
+     "args": [],
+     "line": 286
+    }
+   ]
+  },
+  "airag/passages.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "stem",
+     "args": [
+      "w"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "tokenize",
+     "args": [
+      "text"
+     ],
+     "line": 29
+    },
+    {
+     "kind": "def",
+     "name": "_chunks",
+     "args": [
+      "text",
+      "size"
+     ],
+     "line": 40
+    },
+    {
+     "kind": "def",
+     "name": "select_passages",
+     "args": [
+      "text",
+      "terms",
+      "max_chars",
+      "window"
+     ],
+     "line": 60
+    }
+   ]
+  },
+  "airag/paths.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "is_portable",
+     "args": [],
+     "line": 33
+    },
+    {
+     "kind": "def",
+     "name": "_dirs",
+     "args": [],
+     "line": 37
+    },
+    {
+     "kind": "def",
+     "name": "ensure_dirs",
+     "args": [],
+     "line": 73
+    },
+    {
+     "kind": "def",
+     "name": "migrate_legacy",
+     "args": [],
+     "line": 78
+    },
+    {
+     "kind": "def",
+     "name": "dir_size",
+     "args": [
+      "path"
+     ],
+     "line": 97
+    },
+    {
+     "kind": "def",
+     "name": "atomic_write_text",
+     "args": [
+      "path",
+      "text",
+      "encoding"
+     ],
+     "line": 111
+    }
+   ]
+  },
+  "airag/pclink.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "new_code",
+     "args": [],
+     "line": 36
+    },
+    {
+     "kind": "def",
+     "name": "lan_ips",
+     "args": [],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "_client_ok",
+     "args": [
+      "host",
+      "allow_internet"
+     ],
+     "line": 59
+    },
+    {
+     "kind": "def",
+     "name": "_locked_out",
+     "args": [
+      "host"
+     ],
+     "line": 69
+    },
+    {
+     "kind": "def",
+     "name": "_fail",
+     "args": [
+      "host"
+     ],
+     "line": 78
+    },
+    {
+     "kind": "def",
+     "name": "_make_app",
+     "args": [
+      "code",
+      "allow_internet",
+      "ollama_url"
+     ],
+     "line": 86
+    },
+    {
+     "kind": "def",
+     "name": "_ollama_url",
+     "args": [
+      "settings"
+     ],
+     "line": 146
+    },
+    {
+     "kind": "def",
+     "name": "_free_port",
+     "args": [
+      "preferred"
+     ],
+     "line": 151
+    },
+    {
+     "kind": "def",
+     "name": "start",
+     "args": [],
+     "line": 164
+    },
+    {
+     "kind": "def",
+     "name": "stop",
+     "args": [
+      "save"
+     ],
+     "line": 196
+    },
+    {
+     "kind": "def",
+     "name": "new_pairing_code",
+     "args": [],
+     "line": 209
+    },
+    {
+     "kind": "def",
+     "name": "running",
+     "args": [],
+     "line": 214
+    },
+    {
+     "kind": "def",
+     "name": "status",
+     "args": [],
+     "line": 218
+    },
+    {
+     "kind": "def",
+     "name": "autostart",
+     "args": [],
+     "line": 226
+    }
+   ]
+  },
+  "airag/pinned.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_id",
+     "args": [
+      "url"
+     ],
+     "line": 25
+    },
+    {
+     "kind": "def",
+     "name": "_load",
+     "args": [],
+     "line": 29
+    },
+    {
+     "kind": "def",
+     "name": "_save",
+     "args": [
+      "items"
+     ],
+     "line": 37
+    },
+    {
+     "kind": "def",
+     "name": "listing",
+     "args": [],
+     "line": 41
+    },
+    {
+     "kind": "def",
+     "name": "is_pinned",
+     "args": [
+      "url"
+     ],
+     "line": 45
+    },
+    {
+     "kind": "def",
+     "name": "add",
+     "args": [
+      "url",
+      "title",
+      "text",
+      "meta"
+     ],
+     "line": 49
+    },
+    {
+     "kind": "def",
+     "name": "remove",
+     "args": [
+      "pid"
+     ],
+     "line": 66
+    },
+    {
+     "kind": "def",
+     "name": "get",
+     "args": [
+      "pid"
+     ],
+     "line": 82
+    },
+    {
+     "kind": "def",
+     "name": "matching",
+     "args": [
+      "terms",
+      "limit"
+     ],
+     "line": 93
+    }
+   ]
+  },
+  "airag/pipeline.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "domain_of",
+     "args": [
+      "url"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "_clamp",
+     "args": [
+      "v",
+      "lo",
+      "hi"
+     ],
+     "line": 47
+    },
+    {
+     "kind": "def",
+     "name": "page_date_span",
+     "args": [
+      "text"
+     ],
+     "line": 59
+    },
+    {
+     "kind": "def",
+     "name": "_slug",
+     "args": [
+      "text"
+     ],
+     "line": 97
+    },
+    {
+     "kind": "def",
+     "name": "short_query",
+     "args": [
+      "q",
+      "words"
+     ],
+     "line": 101
+    },
+    {
+     "kind": "class",
+     "name": "Research",
+     "methods": [
+      "__init__",
+      "step",
+      "next_id",
+      "pub",
+      "emit_source",
+      "assessed",
+      "check_dates",
+      "score",
+      "strong_matches",
+      "useful_sources",
+      "useful_findings",
+      "enough_material",
+      "run",
+      "save_failed",
+      "seed_from_merge",
+      "run_search",
+      "base_record",
+      "finish",
+      "run_from_previous",
+      "run_extend",
+      "reopen",
+      "make_plan",
+      "library_round",
+      "given_round",
+      "pinned_round",
+      "history_round",
+      "wiki_round",
+      "queries_for_round",
+      "refine_queries",
+      "_skipped",
+      "search_round",
+      "read_round",
+      "assess_snippets",
+      "read_one",
+      "_shingles",
+      "search_terms",
+      "skip_without_ai",
+      "excerpt_budget",
+      "search_images",
+      "collect_images",
+      "choose_images",
+      "show_results",
+      "refresh_settings",
+      "write_article",
+      "suggest"
+     ],
+     "line": 107
+    }
+   ]
+  },
+  "airag/prompts.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "use",
+     "args": [
+      "settings"
+     ],
+     "line": 35
+    },
+    {
+     "kind": "def",
+     "name": "_budget",
+     "args": [],
+     "line": 46
+    },
+    {
+     "kind": "def",
+     "name": "_extra",
+     "args": [
+      "*keys"
+     ],
+     "line": 51
+    },
+    {
+     "kind": "def",
+     "name": "_today",
+     "args": [],
+     "line": 77
+    },
+    {
+     "kind": "def",
+     "name": "plan",
+     "args": [
+      "query",
+      "use_web",
+      "use_library"
+     ],
+     "line": 99
+    },
+    {
+     "kind": "def",
+     "name": "assess",
+     "args": [
+      "query",
+      "intent",
+      "title",
+      "url",
+      "prior",
+      "prior_label",
+      "passages",
+      "local",
+      "freshness",
+      "published",
+      "dates",
+      "aspects"
+     ],
+     "line": 154
+    },
+    {
+     "kind": "def",
+     "name": "refine",
+     "args": [
+      "query",
+      "intent",
+      "tried",
+      "findings"
+     ],
+     "line": 203
+    },
+    {
+     "kind": "def",
+     "name": "assess_snippets",
+     "args": [
+      "query",
+      "intent",
+      "aspects",
+      "items_json"
+     ],
+     "line": 223
+    },
+    {
+     "kind": "def",
+     "name": "article_system",
+     "args": [],
+     "line": 283
+    },
+    {
+     "kind": "def",
+     "name": "article",
+     "args": [
+      "query",
+      "intent",
+      "answer_type",
+      "sources",
+      "lang"
+     ],
+     "line": 288
+    },
+    {
+     "kind": "def",
+     "name": "describe_wiki",
+     "args": [
+      "name",
+      "text",
+      "lang"
+     ],
+     "line": 318
+    },
+    {
+     "kind": "def",
+     "name": "addendum",
+     "args": [
+      "query",
+      "article_md",
+      "sources",
+      "lang"
+     ],
+     "line": 336
+    },
+    {
+     "kind": "def",
+     "name": "_quick_blocks",
+     "args": [
+      "sources",
+      "fence"
+     ],
+     "line": 369
+    },
+    {
+     "kind": "def",
+     "name": "quick_retry",
+     "args": [
+      "query",
+      "tried",
+      "context"
+     ],
+     "line": 382
+    },
+    {
+     "kind": "def",
+     "name": "quick_answer",
+     "args": [
+      "query",
+      "sources",
+      "lang",
+      "context"
+     ],
+     "line": 394
+    },
+    {
+     "kind": "def",
+     "name": "quick_section",
+     "args": [
+      "question",
+      "article_md",
+      "sources",
+      "lang"
+     ],
+     "line": 404
+    },
+    {
+     "kind": "def",
+     "name": "suggest",
+     "args": [
+      "query",
+      "intent",
+      "tried",
+      "partial",
+      "lang"
+     ],
+     "line": 415
+    },
+    {
+     "kind": "def",
+     "name": "summary",
+     "args": [
+      "query",
+      "what",
+      "text",
+      "lang"
+     ],
+     "line": 445
+    },
+    {
+     "kind": "def",
+     "name": "interactive_check",
+     "args": [
+      "query",
+      "article_md"
+     ],
+     "line": 456
+    },
+    {
+     "kind": "def",
+     "name": "explainer_level",
+     "args": [
+      "level"
+     ],
+     "line": 504
+    },
+    {
+     "kind": "def",
+     "name": "interactive",
+     "args": [
+      "query",
+      "idea",
+      "article_md",
+      "lang",
+      "level",
+      "examples",
+      "figures"
+     ],
+     "line": 508
+    },
+    {
+     "kind": "def",
+     "name": "translate",
+     "args": [
+      "text",
+      "lang"
+     ],
+     "line": 540
+    },
+    {
+     "kind": "def",
+     "name": "translate_items",
+     "args": [
+      "items",
+      "lang"
+     ],
+     "line": 546
+    },
+    {
+     "kind": "def",
+     "name": "judge_images",
+     "args": [
+      "query",
+      "intent",
+      "images",
+      "with_pixels"
+     ],
+     "line": 555
+    }
+   ]
+  },
+  "airag/quick.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "QuickResearch",
+     "methods": [
+      "__init__",
+      "apply_profile",
+      "refresh_settings",
+      "useful_sources",
+      "context_title",
+      "make_plan",
+      "queries_for_round",
+      "retry_queries",
+      "chosen",
+      "write_article",
+      "run",
+      "run_into"
+     ],
+     "line": 31
+    }
+   ]
+  },
+  "airag/regenerate.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_kept",
+     "args": [
+      "rec"
+     ],
+     "line": 23
+    },
+    {
+     "kind": "async def",
+     "name": "regenerate",
+     "args": [
+      "settings",
+      "rid",
+      "instructions",
+      "keep_edits",
+      "length",
+      "ui_lang"
+     ],
+     "line": 38
+    }
+   ]
+  },
+  "airag/repair.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_app_files",
+     "args": [],
+     "line": 25
+    },
+    {
+     "kind": "def",
+     "name": "_settings",
+     "args": [],
+     "line": 53
+    },
+    {
+     "kind": "def",
+     "name": "_library",
+     "args": [],
+     "line": 63
+    },
+    {
+     "kind": "def",
+     "name": "_history",
+     "args": [],
+     "line": 79
+    },
+    {
+     "kind": "def",
+     "name": "check",
+     "args": [],
+     "line": 89
+    },
+    {
+     "kind": "def",
+     "name": "_move_aside",
+     "args": [
+      "f"
+     ],
+     "line": 97
+    },
+    {
+     "kind": "def",
+     "name": "repair_data",
+     "args": [],
+     "line": 103
+    },
+    {
+     "kind": "async def",
+     "name": "repair",
+     "args": [
+      "job",
+      "quit_app"
+     ],
+     "line": 125
+    }
+   ]
+  },
+  "airag/resources.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "note_tokens",
+     "args": [
+      "n"
+     ],
+     "line": 24
+    },
+    {
+     "kind": "def",
+     "name": "tokens_per_minute",
+     "args": [
+      "minutes"
+     ],
+     "line": 35
+    },
+    {
+     "kind": "def",
+     "name": "_rss_mb",
+     "args": [],
+     "line": 47
+    },
+    {
+     "kind": "def",
+     "name": "snapshot",
+     "args": [],
+     "line": 65
+    }
+   ]
+  },
+  "airag/rewrite.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_words",
+     "args": [
+      "text"
+     ],
+     "line": 20
+    },
+    {
+     "kind": "def",
+     "name": "locate",
+     "args": [
+      "article_md",
+      "selection"
+     ],
+     "line": 26
+    },
+    {
+     "kind": "async def",
+     "name": "rewrite",
+     "args": [
+      "settings",
+      "rid",
+      "selection",
+      "instructions",
+      "ui_lang"
+     ],
+     "line": 55
+    },
+    {
+     "kind": "def",
+     "name": "apply",
+     "args": [
+      "settings",
+      "rid",
+      "old",
+      "new",
+      "instructions"
+     ],
+     "line": 81
+    }
+   ]
+  },
+  "airag/runs.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Run",
+     "methods": [
+      "__init__",
+      "emit",
+      "end",
+      "finished",
+      "public"
+     ],
+     "line": 27
+    },
+    {
+     "kind": "class",
+     "name": "TooManyJobs",
+     "methods": [],
+     "line": 70
+    },
+    {
+     "kind": "def",
+     "name": "on_change",
+     "args": [
+      "fn"
+     ],
+     "line": 80
+    },
+    {
+     "kind": "def",
+     "name": "_changed",
+     "args": [],
+     "line": 85
+    },
+    {
+     "kind": "def",
+     "name": "_cleanup",
+     "args": [],
+     "line": 93
+    },
+    {
+     "kind": "def",
+     "name": "_group",
+     "args": [
+      "kind"
+     ],
+     "line": 105
+    },
+    {
+     "kind": "def",
+     "name": "_limit",
+     "args": [
+      "kind"
+     ],
+     "line": 109
+    },
+    {
+     "kind": "def",
+     "name": "_schedule",
+     "args": [],
+     "line": 113
+    },
+    {
+     "kind": "async def",
+     "name": "_execute",
+     "args": [
+      "run"
+     ],
+     "line": 130
+    },
+    {
+     "kind": "def",
+     "name": "active",
+     "args": [
+      "kinds"
+     ],
+     "line": 156
+    },
+    {
+     "kind": "def",
+     "name": "start",
+     "args": [
+      "rid",
+      "query",
+      "mode",
+      "factory",
+      "kind",
+      "ref"
+     ],
+     "line": 161
+    },
+    {
+     "kind": "def",
+     "name": "cancel",
+     "args": [
+      "rid"
+     ],
+     "line": 185
+    },
+    {
+     "kind": "def",
+     "name": "active",
+     "args": [],
+     "line": 203
+    },
+    {
+     "kind": "def",
+     "name": "recent",
+     "args": [],
+     "line": 217
+    },
+    {
+     "kind": "def",
+     "name": "find",
+     "args": [
+      "kind",
+      "ref"
+     ],
+     "line": 222
+    },
+    {
+     "kind": "def",
+     "name": "cancel_all_threadsafe",
+     "args": [],
+     "line": 228
+    },
+    {
+     "kind": "async def",
+     "name": "follow",
+     "args": [
+      "run"
+     ],
+     "line": 238
+    }
+   ]
+  },
+  "airag/scholarly.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "is_scholarly",
+     "args": [
+      "url"
+     ],
+     "line": 37
+    },
+    {
+     "kind": "def",
+     "name": "_ids",
+     "args": [
+      "url"
+     ],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "_clean_title",
+     "args": [
+      "t"
+     ],
+     "line": 51
+    },
+    {
+     "kind": "def",
+     "name": "_xml_text",
+     "args": [
+      "xml"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "async def",
+     "name": "_get_json",
+     "args": [
+      "c",
+      "query"
+     ],
+     "line": 74
+    },
+    {
+     "kind": "async def",
+     "name": "rescue",
+     "args": [
+      "url",
+      "title_hint",
+      "timeout"
+     ],
+     "line": 82
+    }
+   ]
+  },
+  "airag/search/__init__.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "register",
+     "args": [
+      "cls"
+     ],
+     "line": 15
+    },
+    {
+     "kind": "class",
+     "name": "_OfflineBackend",
+     "methods": [
+      "text",
+      "images"
+     ],
+     "line": 20
+    },
+    {
+     "kind": "def",
+     "name": "_make",
+     "args": [
+      "settings",
+      "name"
+     ],
+     "line": 33
+    },
+    {
+     "kind": "def",
+     "name": "get_search",
+     "args": [
+      "settings"
+     ],
+     "line": 46
+    },
+    {
+     "kind": "def",
+     "name": "get_image_search",
+     "args": [
+      "settings"
+     ],
+     "line": 50
+    }
+   ]
+  },
+  "airag/search/base.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "SearchError",
+     "methods": [],
+     "line": 7
+    },
+    {
+     "kind": "class",
+     "name": "SearchResult",
+     "methods": [],
+     "line": 12
+    },
+    {
+     "kind": "class",
+     "name": "ImageResult",
+     "methods": [],
+     "line": 20
+    },
+    {
+     "kind": "class",
+     "name": "SearchBackend",
+     "methods": [
+      "__init__",
+      "text",
+      "images"
+     ],
+     "line": 30
+    },
+    {
+     "kind": "def",
+     "name": "to_int",
+     "args": [
+      "v"
+     ],
+     "line": 49
+    },
+    {
+     "kind": "def",
+     "name": "date_range",
+     "args": [
+      "recent"
+     ],
+     "line": 56
+    },
+    {
+     "kind": "def",
+     "name": "range_to_period",
+     "args": [
+      "recent"
+     ],
+     "line": 70
+    }
+   ]
+  },
+  "airag/search/brave.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Brave",
+     "methods": [
+      "_get",
+      "text",
+      "images"
+     ],
+     "line": 12
+    }
+   ]
+  },
+  "airag/search/ddg_html.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Blocked",
+     "methods": [],
+     "line": 41
+    },
+    {
+     "kind": "def",
+     "name": "_real_url",
+     "args": [
+      "href"
+     ],
+     "line": 45
+    },
+    {
+     "kind": "def",
+     "name": "_ok_url",
+     "args": [
+      "url"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "parse",
+     "args": [
+      "html",
+      "n"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "parse_lite",
+     "args": [
+      "html",
+      "n"
+     ],
+     "line": 80
+    },
+    {
+     "kind": "def",
+     "name": "parse_mojeek",
+     "args": [
+      "html",
+      "n"
+     ],
+     "line": 101
+    },
+    {
+     "kind": "def",
+     "name": "_no_results_page",
+     "args": [
+      "html"
+     ],
+     "line": 117
+    },
+    {
+     "kind": "async def",
+     "name": "_request",
+     "args": [
+      "c",
+      "method",
+      "url"
+     ],
+     "line": 122
+    },
+    {
+     "kind": "async def",
+     "name": "_ddg",
+     "args": [
+      "c",
+      "query",
+      "n",
+      "region",
+      "safesearch",
+      "recent"
+     ],
+     "line": 137
+    },
+    {
+     "kind": "async def",
+     "name": "_via_webview",
+     "args": [
+      "query",
+      "n",
+      "region",
+      "safesearch",
+      "recent"
+     ],
+     "line": 161
+    },
+    {
+     "kind": "async def",
+     "name": "_mojeek",
+     "args": [
+      "c",
+      "query",
+      "n",
+      "safesearch"
+     ],
+     "line": 183
+    },
+    {
+     "kind": "async def",
+     "name": "search",
+     "args": [
+      "query",
+      "n",
+      "region",
+      "safesearch",
+      "recent"
+     ],
+     "line": 192
+    },
+    {
+     "kind": "def",
+     "name": "blocked_recently",
+     "args": [],
+     "line": 222
+    }
+   ]
+  },
+  "airag/search/duckduckgo.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_have_ddgs",
+     "args": [],
+     "line": 10
+    },
+    {
+     "kind": "def",
+     "name": "_ddgs",
+     "args": [],
+     "line": 18
+    },
+    {
+     "kind": "class",
+     "name": "DuckDuckGo",
+     "methods": [
+      "_kw",
+      "text",
+      "images"
+     ],
+     "line": 30
+    }
+   ]
+  },
+  "airag/search/google_cse.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "GoogleCSE",
+     "methods": [
+      "_get",
+      "text",
+      "images"
+     ],
+     "line": 12
+    }
+   ]
+  },
+  "airag/search/marginalia.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Marginalia",
+     "methods": [
+      "text"
+     ],
+     "line": 13
+    }
+   ]
+  },
+  "airag/search/searxng.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "SearXNG",
+     "methods": [
+      "_get",
+      "text",
+      "images"
+     ],
+     "line": 12
+    }
+   ]
+  },
+  "airag/sitelists.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "parse",
+     "args": [
+      "text"
+     ],
+     "line": 15
+    },
+    {
+     "kind": "def",
+     "name": "matches",
+     "args": [
+      "url",
+      "entries"
+     ],
+     "line": 34
+    },
+    {
+     "kind": "class",
+     "name": "SiteLists",
+     "methods": [
+      "__init__",
+      "blocked_url",
+      "adjust"
+     ],
+     "line": 50
+    }
+   ]
+  },
+  "airag/sounds.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_looks_like",
+     "args": [
+      "ext",
+      "data"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "custom_file",
+     "args": [
+      "name"
+     ],
+     "line": 41
+    },
+    {
+     "kind": "def",
+     "name": "default_file",
+     "args": [
+      "name"
+     ],
+     "line": 50
+    },
+    {
+     "kind": "def",
+     "name": "save",
+     "args": [
+      "name",
+      "data_b64",
+      "ext"
+     ],
+     "line": 55
+    },
+    {
+     "kind": "def",
+     "name": "remove",
+     "args": [
+      "name"
+     ],
+     "line": 79
+    }
+   ]
+  },
+  "airag/sqlsafe.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "quote_ident",
+     "args": [
+      "name"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "like_escape",
+     "args": [
+      "text"
+     ],
+     "line": 29
+    },
+    {
+     "kind": "def",
+     "name": "_authorizer",
+     "args": [
+      "action",
+      "arg1",
+      "arg2",
+      "db_name",
+      "trigger"
+     ],
+     "line": 34
+    },
+    {
+     "kind": "def",
+     "name": "open_readonly",
+     "args": [
+      "path",
+      "timeout"
+     ],
+     "line": 42
+    }
+   ]
+  },
+  "airag/summarize.py": {
+   "items": [
+    {
+     "kind": "async def",
+     "name": "summarize",
+     "args": [
+      "settings",
+      "kind",
+      "query",
+      "payload",
+      "ui_lang"
+     ],
+     "line": 14
+    }
+   ]
+  },
+  "airag/tags.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "clean_one",
+     "args": [
+      "t"
+     ],
+     "line": 18
+    },
+    {
+     "kind": "def",
+     "name": "clean",
+     "args": [
+      "tags"
+     ],
+     "line": 23
+    },
+    {
+     "kind": "def",
+     "name": "yaml_list",
+     "args": [
+      "tags"
+     ],
+     "line": 34
+    },
+    {
+     "kind": "def",
+     "name": "from_front_matter",
+     "args": [
+      "text"
+     ],
+     "line": 40
+    },
+    {
+     "kind": "def",
+     "name": "matches",
+     "args": [
+      "tags",
+      "question"
+     ],
+     "line": 62
+    },
+    {
+     "kind": "async def",
+     "name": "suggest",
+     "args": [
+      "settings",
+      "rec"
+     ],
+     "line": 74
+    }
+   ]
+  },
+  "airag/tools/__init__.py": {
+   "items": [
+    {
+     "kind": "class",
+     "name": "Tool",
+     "methods": [],
+     "line": 23
+    },
+    {
+     "kind": "def",
+     "name": "register",
+     "args": [
+      "tool"
+     ],
+     "line": 40
+    },
+    {
+     "kind": "def",
+     "name": "default_sets",
+     "args": [],
+     "line": 45
+    },
+    {
+     "kind": "def",
+     "name": "enabled",
+     "args": [
+      "settings",
+      "agent"
+     ],
+     "line": 49
+    },
+    {
+     "kind": "def",
+     "name": "describe",
+     "args": [
+      "names"
+     ],
+     "line": 57
+    },
+    {
+     "kind": "def",
+     "name": "parse_call",
+     "args": [
+      "text"
+     ],
+     "line": 67
+    },
+    {
+     "kind": "class",
+     "name": "Session",
+     "methods": [
+      "call"
+     ],
+     "line": 88
+    }
+   ]
+  },
+  "airag/tools/builtin.py": {
+   "items": [
+    {
+     "kind": "async def",
+     "name": "_calculator",
+     "args": [
+      "s",
+      "expression"
+     ],
+     "line": 12
+    },
+    {
+     "kind": "async def",
+     "name": "_datetime",
+     "args": [
+      "s"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "_sources",
+     "args": [
+      "s"
+     ],
+     "line": 27
+    },
+    {
+     "kind": "async def",
+     "name": "_search_sources",
+     "args": [
+      "s",
+      "query"
+     ],
+     "line": 32
+    },
+    {
+     "kind": "async def",
+     "name": "_web_search",
+     "args": [
+      "s",
+      "query"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "async def",
+     "name": "_read_page",
+     "args": [
+      "s",
+      "url",
+      "focus"
+     ],
+     "line": 66
+    },
+    {
+     "kind": "async def",
+     "name": "_client",
+     "args": [
+      "s",
+      "action"
+     ],
+     "line": 80
+    },
+    {
+     "kind": "async def",
+     "name": "_read_aloud",
+     "args": [
+      "s",
+      "text"
+     ],
+     "line": 85
+    },
+    {
+     "kind": "async def",
+     "name": "_more_sources",
+     "args": [
+      "s"
+     ],
+     "line": 89
+    },
+    {
+     "kind": "async def",
+     "name": "_copy",
+     "args": [
+      "s",
+      "text"
+     ],
+     "line": 93
+    },
+    {
+     "kind": "async def",
+     "name": "_pin",
+     "args": [
+      "s"
+     ],
+     "line": 97
+    }
+   ]
+  },
+  "airag/tools/calc.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "check",
+     "args": [
+      "expr"
+     ],
+     "line": 31
+    },
+    {
+     "kind": "def",
+     "name": "_evaluate",
+     "args": [
+      "e"
+     ],
+     "line": 51
+    },
+    {
+     "kind": "async def",
+     "name": "calculate",
+     "args": [
+      "expr",
+      "timeout"
+     ],
+     "line": 95
+    }
+   ]
+  },
+  "airag/translate.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_lang_name",
+     "args": [
+      "code"
+     ],
+     "line": 12
+    },
+    {
+     "kind": "async def",
+     "name": "article",
+     "args": [
+      "settings",
+      "markdown",
+      "lang",
+      "rid"
+     ],
+     "line": 16
+    },
+    {
+     "kind": "async def",
+     "name": "items",
+     "args": [
+      "settings",
+      "entries",
+      "lang"
+     ],
+     "line": 33
+    }
+   ]
+  },
+  "airag/trust.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "domain_prior",
+     "args": [
+      "domain",
+      "scholarly"
+     ],
+     "line": 51
+    }
+   ]
+  },
+  "airag/updater.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "parse_version",
+     "args": [
+      "v"
+     ],
+     "line": 28
+    },
+    {
+     "kind": "def",
+     "name": "can_self_update",
+     "args": [],
+     "line": 33
+    },
+    {
+     "kind": "def",
+     "name": "_wanted",
+     "args": [
+      "name"
+     ],
+     "line": 37
+    },
+    {
+     "kind": "def",
+     "name": "_read_cache",
+     "args": [],
+     "line": 44
+    },
+    {
+     "kind": "async def",
+     "name": "_release",
+     "args": [
+      "tag"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "_assets",
+     "args": [
+      "rel"
+     ],
+     "line": 66
+    },
+    {
+     "kind": "async def",
+     "name": "check",
+     "args": [
+      "force"
+     ],
+     "line": 79
+    },
+    {
+     "kind": "async def",
+     "name": "download_and_install",
+     "args": [
+      "job",
+      "quit_app",
+      "reinstall"
+     ],
+     "line": 111
+    }
+   ]
+  },
+  "airag/usage.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "report",
+     "args": [
+      "input_tokens",
+      "output_tokens"
+     ],
+     "line": 43
+    },
+    {
+     "kind": "def",
+     "name": "estimate",
+     "args": [
+      "text"
+     ],
+     "line": 54
+    },
+    {
+     "kind": "def",
+     "name": "_month",
+     "args": [],
+     "line": 62
+    },
+    {
+     "kind": "def",
+     "name": "_load",
+     "args": [],
+     "line": 66
+    },
+    {
+     "kind": "def",
+     "name": "_save",
+     "args": [
+      "data"
+     ],
+     "line": 73
+    },
+    {
+     "kind": "def",
+     "name": "add",
+     "args": [
+      "provider",
+      "model",
+      "tin",
+      "tout",
+      "estimated"
+     ],
+     "line": 80
+    },
+    {
+     "kind": "def",
+     "name": "_months",
+     "args": [
+      "data"
+     ],
+     "line": 108
+    },
+    {
+     "kind": "def",
+     "name": "reset_month",
+     "args": [],
+     "line": 112
+    },
+    {
+     "kind": "def",
+     "name": "_norm",
+     "args": [
+      "model"
+     ],
+     "line": 125
+    },
+    {
+     "kind": "def",
+     "name": "_load_prices",
+     "args": [],
+     "line": 131
+    },
+    {
+     "kind": "async def",
+     "name": "refresh_prices",
+     "args": [
+      "force"
+     ],
+     "line": 143
+    },
+    {
+     "kind": "def",
+     "name": "per_million",
+     "args": [
+      "provider",
+      "model"
+     ],
+     "line": 181
+    },
+    {
+     "kind": "def",
+     "name": "price_of",
+     "args": [
+      "provider",
+      "model",
+      "tin",
+      "tout"
+     ],
+     "line": 202
+    },
+    {
+     "kind": "def",
+     "name": "summary",
+     "args": [
+      "settings"
+     ],
+     "line": 210
+    },
+    {
+     "kind": "def",
+     "name": "budget_note",
+     "args": [
+      "settings"
+     ],
+     "line": 248
+    },
+    {
+     "kind": "def",
+     "name": "over_budget",
+     "args": [
+      "settings"
+     ],
+     "line": 264
+    },
+    {
+     "kind": "class",
+     "name": "BudgetUsedUp",
+     "methods": [],
+     "line": 276
+    },
+    {
+     "kind": "def",
+     "name": "let_running_work_finish",
+     "args": [],
+     "line": 280
+    },
+    {
+     "kind": "def",
+     "name": "check_budget",
+     "args": [
+      "settings"
+     ],
+     "line": 284
+    },
+    {
+     "kind": "class",
+     "name": "Metered",
+     "methods": [
+      "__init__",
+      "__getattr__",
+      "_record",
+      "complete",
+      "stream"
+     ],
+     "line": 297
+    }
+   ]
+  },
+  "airag/versions.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_path",
+     "args": [
+      "rid"
+     ],
+     "line": 21
+    },
+    {
+     "kind": "def",
+     "name": "_load",
+     "args": [
+      "rid"
+     ],
+     "line": 28
+    },
+    {
+     "kind": "def",
+     "name": "_save",
+     "args": [
+      "rid",
+      "d"
+     ],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "_now",
+     "args": [],
+     "line": 42
+    },
+    {
+     "kind": "def",
+     "name": "note_change",
+     "args": [
+      "rec",
+      "old_article",
+      "kind",
+      "note",
+      "old_sources"
+     ],
+     "line": 46
+    },
+    {
+     "kind": "def",
+     "name": "listing",
+     "args": [
+      "rid"
+     ],
+     "line": 65
+    },
+    {
+     "kind": "def",
+     "name": "get",
+     "args": [
+      "rid",
+      "n"
+     ],
+     "line": 72
+    },
+    {
+     "kind": "def",
+     "name": "_go_to",
+     "args": [
+      "rid",
+      "n"
+     ],
+     "line": 76
+    },
+    {
+     "kind": "def",
+     "name": "restore",
+     "args": [
+      "rid",
+      "n"
+     ],
+     "line": 98
+    },
+    {
+     "kind": "def",
+     "name": "undo",
+     "args": [
+      "rid"
+     ],
+     "line": 102
+    },
+    {
+     "kind": "def",
+     "name": "forget",
+     "args": [
+      "rid"
+     ],
+     "line": 111
+    },
+    {
+     "kind": "def",
+     "name": "forget_all",
+     "args": [],
+     "line": 119
+    }
+   ]
+  },
+  "airag/wikis.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "api_url",
+     "args": [
+      "api",
+      "lang"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "_strip",
+     "args": [
+      "snippet"
+     ],
+     "line": 36
+    },
+    {
+     "kind": "async def",
+     "name": "search",
+     "args": [
+      "wiki",
+      "query",
+      "n",
+      "lang",
+      "timeout"
+     ],
+     "line": 40
+    },
+    {
+     "kind": "async def",
+     "name": "search_all",
+     "args": [
+      "wikis",
+      "query",
+      "n",
+      "lang"
+     ],
+     "line": 69
+    },
+    {
+     "kind": "async def",
+     "name": "site_info",
+     "args": [
+      "api"
+     ],
+     "line": 79
+    }
+   ]
+  },
+  "airag/youtube.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "video_id",
+     "args": [
+      "url"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "_player_response",
+     "args": [
+      "page_html"
+     ],
+     "line": 40
+    },
+    {
+     "kind": "def",
+     "name": "_pick_track",
+     "args": [
+      "tracks",
+      "lang"
+     ],
+     "line": 50
+    },
+    {
+     "kind": "def",
+     "name": "_caption_text",
+     "args": [
+      "data"
+     ],
+     "line": 62
+    },
+    {
+     "kind": "async def",
+     "name": "_read_once",
+     "args": [
+      "vid",
+      "cfg"
+     ],
+     "line": 75
+    },
+    {
+     "kind": "async def",
+     "name": "read",
+     "args": [
+      "url",
+      "cfg",
+      "retries"
+     ],
+     "line": 106
+    }
+   ]
+  }
+ },
+ "routes": [
+  [
+   "GET",
+   "/"
+  ],
+  [
+   "GET",
+   "/api/agent-tools"
+  ],
+  [
+   "POST",
+   "/api/agent-tools"
+  ],
+  [
+   "POST",
+   "/api/analyze-image"
+  ],
+  [
+   "POST",
+   "/api/app/clear-cache"
+  ],
+  [
+   "GET",
+   "/api/app/inbox"
+  ],
+  [
+   "GET",
+   "/api/app/info"
+  ],
+  [
+   "GET",
+   "/api/app/log"
+  ],
+  [
+   "POST",
+   "/api/app/open-folder"
+  ],
+  [
+   "POST",
+   "/api/app/open-path"
+  ],
+  [
+   "GET",
+   "/api/app/ping"
+  ],
+  [
+   "POST",
+   "/api/app/quit"
+  ],
+  [
+   "POST",
+   "/api/app/restart"
+  ],
+  [
+   "POST",
+   "/api/app/show"
+  ],
+  [
+   "GET",
+   "/api/app/storage"
+  ],
+  [
+   "POST",
+   "/api/backup/export"
+  ],
+  [
+   "POST",
+   "/api/backup/import"
+  ],
+  [
+   "POST",
+   "/api/browser/install"
+  ],
+  [
+   "GET",
+   "/api/browser/status"
+  ],
+  [
+   "POST",
+   "/api/browser/uninstall"
+  ],
+  [
+   "POST",
+   "/api/export/html"
+  ],
+  [
+   "POST",
+   "/api/export/open"
+  ],
+  [
+   "POST",
+   "/api/followup"
+  ],
+  [
+   "GET",
+   "/api/followup/{rid}"
+  ],
+  [
+   "POST",
+   "/api/followup/{rid}/add"
+  ],
+  [
+   "DELETE",
+   "/api/history"
+  ],
+  [
+   "GET",
+   "/api/history"
+  ],
+  [
+   "DELETE",
+   "/api/history/{rid}"
+  ],
+  [
+   "GET",
+   "/api/history/{rid}"
+  ],
+  [
+   "POST",
+   "/api/history/{rid}/pin"
+  ],
+  [
+   "POST",
+   "/api/interactive"
+  ],
+  [
+   "POST",
+   "/api/interactive/start"
+  ],
+  [
+   "GET",
+   "/api/jobs"
+  ],
+  [
+   "GET",
+   "/api/jobs/{job_id}"
+  ],
+  [
+   "POST",
+   "/api/jobs/{job_id}/cancel"
+  ],
+  [
+   "POST",
+   "/api/library/clear"
+  ],
+  [
+   "GET",
+   "/api/library/file/{fid}"
+  ],
+  [
+   "POST",
+   "/api/library/folders/add"
+  ],
+  [
+   "POST",
+   "/api/library/folders/remove"
+  ],
+  [
+   "POST",
+   "/api/library/open"
+  ],
+  [
+   "POST",
+   "/api/library/pick-folder"
+  ],
+  [
+   "GET",
+   "/api/library/status"
+  ],
+  [
+   "POST",
+   "/api/library/sync"
+  ],
+  [
+   "POST",
+   "/api/model-prices"
+  ],
+  [
+   "POST",
+   "/api/models"
+  ],
+  [
+   "GET",
+   "/api/mylibrary"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/folder"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/import"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/open"
+  ],
+  [
+   "GET",
+   "/api/mylibrary/removed"
+  ],
+  [
+   "DELETE",
+   "/api/mylibrary/removed/{rid}"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/restore"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/save"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/save-source"
+  ],
+  [
+   "GET",
+   "/api/mylibrary/saved"
+  ],
+  [
+   "GET",
+   "/api/mylibrary/saved/{name}"
+  ],
+  [
+   "POST",
+   "/api/mylibrary/unsave"
+  ],
+  [
+   "GET",
+   "/api/offline"
+  ],
+  [
+   "POST",
+   "/api/offline"
+  ],
+  [
+   "POST",
+   "/api/ollama/delete"
+  ],
+  [
+   "POST",
+   "/api/ollama/pull"
+  ],
+  [
+   "GET",
+   "/api/ollama/recommended"
+  ],
+  [
+   "POST",
+   "/api/ollama/start"
+  ],
+  [
+   "GET",
+   "/api/ollama/status"
+  ],
+  [
+   "POST",
+   "/api/open-file"
+  ],
+  [
+   "GET",
+   "/api/pclink"
+  ],
+  [
+   "POST",
+   "/api/pclink"
+  ],
+  [
+   "POST",
+   "/api/pins/source"
+  ],
+  [
+   "DELETE",
+   "/api/pins/source/{pid}"
+  ],
+  [
+   "GET",
+   "/api/pins/source/{pid}"
+  ],
+  [
+   "GET",
+   "/api/pins/sources"
+  ],
+  [
+   "POST",
+   "/api/quick"
+  ],
+  [
+   "POST",
+   "/api/regenerate"
+  ],
+  [
+   "POST",
+   "/api/repair"
+  ],
+  [
+   "GET",
+   "/api/repair/check"
+  ],
+  [
+   "POST",
+   "/api/repair/reinstall"
+  ],
+  [
+   "POST",
+   "/api/research"
+  ],
+  [
+   "GET",
+   "/api/research/active"
+  ],
+  [
+   "POST",
+   "/api/research/{rid}/cancel"
+  ],
+  [
+   "GET",
+   "/api/research/{rid}/stream"
+  ],
+  [
+   "GET",
+   "/api/resources"
+  ],
+  [
+   "POST",
+   "/api/rewrite"
+  ],
+  [
+   "POST",
+   "/api/rewrite/apply"
+  ],
+  [
+   "GET",
+   "/api/schema"
+  ],
+  [
+   "GET",
+   "/api/settings"
+  ],
+  [
+   "POST",
+   "/api/settings"
+  ],
+  [
+   "DELETE",
+   "/api/sounds/{name}"
+  ],
+  [
+   "GET",
+   "/api/sounds/{name}"
+  ],
+  [
+   "POST",
+   "/api/sounds/{name}"
+  ],
+  [
+   "GET",
+   "/api/status"
+  ],
+  [
+   "POST",
+   "/api/summarize"
+  ],
+  [
+   "POST",
+   "/api/summary-file"
+  ],
+  [
+   "GET",
+   "/api/system"
+  ],
+  [
+   "POST",
+   "/api/tags/{rid}"
+  ],
+  [
+   "POST",
+   "/api/tags/{rid}/suggest"
+  ],
+  [
+   "POST",
+   "/api/test-llm"
+  ],
+  [
+   "POST",
+   "/api/tools/calculate"
+  ],
+  [
+   "POST",
+   "/api/translate/article"
+  ],
+  [
+   "POST",
+   "/api/translate/items"
+  ],
+  [
+   "GET",
+   "/api/update/check"
+  ],
+  [
+   "POST",
+   "/api/update/install"
+  ],
+  [
+   "GET",
+   "/api/usage"
+  ],
+  [
+   "POST",
+   "/api/usage/prices"
+  ],
+  [
+   "POST",
+   "/api/usage/reset"
+  ],
+  [
+   "GET",
+   "/api/versions/{rid}"
+  ],
+  [
+   "POST",
+   "/api/versions/{rid}/restore"
+  ],
+  [
+   "POST",
+   "/api/versions/{rid}/undo"
+  ],
+  [
+   "GET",
+   "/api/versions/{rid}/{n}"
+  ],
+  [
+   "POST",
+   "/api/wikis/check"
+  ],
+  [
+   "POST",
+   "/api/wikis/describe"
+  ]
+ ],
+ "js": {
+  "activity.js": {
+   "exports": [
+    "JOBS",
+    "initActivity",
+    "jobFor",
+    "jobHref",
+    "markSeen",
+    "pokeJobs"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api"
+    ],
+    "i18n.js": [
+     "t"
+    ],
+    "sound.js": [
+     "play"
+    ]
+   }
+  },
+  "banners.js": {
+   "exports": [
+    "checkUpdates",
+    "installUpdate",
+    "showDisclaimer",
+    "showUpdatePopup"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "pollJob",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ],
+    "markdown.js": [
+     "render"
+    ]
+   }
+  },
+  "buttons.js": {
+   "exports": [
+    "applyButtons"
+   ],
+   "imports": {}
+  },
+  "cite.js": {
+   "exports": [
+    "STYLES",
+    "apa",
+    "bibtex",
+    "cite",
+    "mla"
+   ],
+   "imports": {}
+  },
+  "dates.js": {
+   "exports": [
+    "chipHtml",
+    "closeDatePicker",
+    "emptyRange",
+    "fmtRange",
+    "hasRange",
+    "openDatePicker"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
+  "export.js": {
+   "exports": [
+    "exportHtml"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "apiStream",
+     "toast",
+     "stripThink"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "summary.js": [
+     "cachedSummary",
+     "makeSummary",
+     "summaryHtml"
+    ],
+    "activity.js": [
+     "pokeJobs"
+    ]
+   }
+  },
+  "history.js": {
+   "exports": [
+    "closeDrawer",
+    "loadHistory",
+    "loadSaved",
+    "openDrawer",
+    "refreshRecent"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "fmtAgo",
+     "toast"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "activity.js": [
+     "jobHref"
+    ],
+    "pins.js": [
+     "pinnedCards"
+    ],
+    "openfile.js": [
+     "pickFile"
+    ]
+   }
+  },
+  "i18n.js": {
+   "exports": [
+    "applyI18n",
+    "has",
+    "initI18n",
+    "normalize",
+    "systemLanguage",
+    "t",
+    "uiLang",
+    "uiLanguages"
+   ],
+   "imports": {}
+  },
+  "imageask.js": {
+   "exports": [
+    "initImageAsk",
+    "openImageAsk",
+    "pickImage",
+    "updateImageButton"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "apiStream",
+     "toast",
+     "stripThink"
+    ],
+    "markdown.js": [
+     "render"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "speech.js": [
+     "micButton"
+    ]
+   }
+  },
+  "interactive.js": {
+   "exports": [
+    "openInteractive"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "apiStream"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "activity.js": [
+     "pokeJobs"
+    ]
+   }
+  },
+  "main.js": {
+   "exports": [],
+   "imports": {
+    "resources.js": [
+     "applyResourceSettings"
+    ],
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "api",
+     "hydrateIcons",
+     "icon",
+     "toast"
+    ],
+    "i18n.js": [
+     "initI18n",
+     "t",
+     "applyI18n"
+    ],
+    "theme.js": [
+     "loadLocal",
+     "setAppearance",
+     "onAppearanceChange",
+     "effectiveTheme"
+    ],
+    "run.js": [
+     "RUN",
+     "startResearch",
+     "openRecord",
+     "openSaved",
+     "attachRun",
+     "setRunHooks",
+     "toolbarAction",
+     "reloadRecord"
+    ],
+    "settings.js": [
+     "openSettings",
+     "setSettingsHooks"
+    ],
+    "setup.js": [
+     "openSetup",
+     "needsSetup",
+     "setSetupHooks"
+    ],
+    "banners.js": [
+     "showDisclaimer",
+     "checkUpdates"
+    ],
+    "history.js": [
+     "openDrawer",
+     "closeDrawer",
+     "refreshRecent"
+    ],
+    "summary.js": [
+     "closeSummary"
+    ],
+    "dates.js": [
+     "chipHtml",
+     "openDatePicker",
+     "emptyRange",
+     "hasRange"
+    ],
+    "speech.js": [
+     "initSpeech",
+     "setAutoSearch"
+    ],
+    "sound.js": [
+     "setAudio"
+    ],
+    "tts.js": [
+     "setSpeech"
+    ],
+    "buttons.js": [
+     "applyButtons"
+    ],
+    "activity.js": [
+     "initActivity",
+     "markSeen"
+    ],
+    "pins.js": [
+     "loadPins",
+     "openPinned",
+     "setPinHooks"
+    ],
+    "toolbar.js": [
+     "initToolbar"
+    ],
+    "imageask.js": [
+     "initImageAsk",
+     "updateImageButton",
+     "pickImage"
+    ],
+    "openfile.js": [
+     "initOpenFile"
+    ],
+    "sharetext.js": [
+     "initShareText"
+    ],
+    "offline.js": [
+     "initOffline",
+     "onOfflineChange"
+    ]
+   }
+  },
+  "markdown.js": {
+   "exports": [
+    "allowLinks",
+    "inline",
+    "render",
+    "slug"
+   ],
+   "imports": {}
+  },
+  "offline.js": {
+   "exports": [
+    "initOffline",
+    "isOffline",
+    "onOfflineChange",
+    "openOfflineDialog",
+    "refreshOffline"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
+  "openfile.js": {
+   "exports": [
+    "initOpenFile",
+    "pickFile"
+   ],
+   "imports": {
+    "util.js": [
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
+  "pins.js": {
+   "exports": [
+    "PINS",
+    "isPinned",
+    "loadPins",
+    "openPinned",
+    "pinButton",
+    "pinnedCards",
+    "setPinHooks",
+    "togglePinSource"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "apiStream",
+     "toast",
+     "safeUrl",
+     "favicon",
+     "fmtAgo",
+     "stripThink"
+    ],
+    "markdown.js": [
+     "render",
+     "allowLinks"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ]
+   }
+  },
+  "quick.js": {
+   "exports": [
+    "openQuickDialog",
+    "quickBox"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon"
+    ],
+    "i18n.js": [
+     "t"
+    ],
+    "speech.js": [
+     "micButton"
+    ]
+   }
+  },
+  "regenerate.js": {
+   "exports": [
+    "openRegenerate",
+    "setRegenHooks"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "apiStream",
+     "toast",
+     "fmtDate"
+    ],
+    "markdown.js": [
+     "render"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "speech.js": [
+     "micButton"
+    ],
+    "activity.js": [
+     "pokeJobs"
+    ]
+   }
+  },
+  "resources.js": {
+   "exports": [
+    "applyResourceSettings"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
+  "run.js": {
+   "exports": [
+    "RUN",
+    "attachRun",
+    "cancelRun",
+    "openRecord",
+    "openSaved",
+    "reloadRecord",
+    "setRunHooks",
+    "startResearch",
+    "toolbarAction"
+   ],
+   "imports": {
+    "quick.js": [
+     "openQuickDialog",
+     "quickBox"
+    ],
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "safeUrl",
+     "favicon",
+     "shortUrl",
+     "stripThink",
+     "rafThrottle",
+     "icon",
+     "toast",
+     "api",
+     "apiStream",
+     "fmtDate"
+    ],
+    "markdown.js": [
+     "render",
+     "allowLinks"
+    ],
+    "dates.js": [
+     "chipHtml",
+     "openDatePicker",
+     "emptyRange"
+    ],
+    "translate.js": [
+     "openTranslate",
+     "restoreTranslation"
+    ],
+    "i18n.js": [
+     "t",
+     "has",
+     "uiLang"
+    ],
+    "summary.js": [
+     "openSummary"
+    ],
+    "interactive.js": [
+     "openInteractive"
+    ],
+    "activity.js": [
+     "jobFor",
+     "pokeJobs"
+    ],
+    "tts.js": [
+     "ttsAvailable",
+     "speak",
+     "pause",
+     "resume",
+     "stop",
+     "paused"
+    ],
+    "export.js": [
+     "exportHtml"
+    ],
+    "pins.js": [
+     "pinButton",
+     "togglePinSource"
+    ],
+    "toolbar.js": [
+     "showToolbar",
+     "hideToolbar"
+    ],
+    "summaryfile.js": [
+     "downloadSummary"
+    ],
+    "regenerate.js": [
+     "openRegenerate",
+     "setRegenHooks"
+    ],
+    "tagsui.js": [
+     "openSaveDialog",
+     "metaRow"
+    ]
+   }
+  },
+  "savedmgr.js": {
+   "exports": [
+    "openSavedManager",
+    "unsaveArticles"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "toast",
+     "fmtAgo"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ]
+   }
+  },
+  "settings.js": {
+   "exports": [
+    "openSettings",
+    "setSettingsHooks"
+   ],
+   "imports": {
+    "taskmodels.js": [
+     "taskModelsPane",
+     "taskModelsValue",
+     "wireTaskModels",
+     "addLoadedModels"
+    ],
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "toast",
+     "pollJob",
+     "progressBar",
+     "fmtBytes",
+     "fmtAgo"
+    ],
+    "i18n.js": [
+     "t",
+     "has",
+     "uiLang",
+     "uiLanguages"
+    ],
+    "theme.js": [
+     "PALETTES",
+     "ACCENTS",
+     "UI_FONTS",
+     "ARTICLE_FONTS",
+     "TEXT_SIZES",
+     "getAppearance",
+     "setAppearance"
+    ],
+    "banners.js": [
+     "showUpdatePopup"
+    ],
+    "sound.js": [
+     "SOUNDS",
+     "play",
+     "soundUrl",
+     "onPhone",
+     "mediaVolume",
+     "setMediaVolume",
+     "setAudio"
+    ],
+    "tts.js": [
+     "ttsAvailable",
+     "loadVoices",
+     "speak",
+     "stop",
+     "setSpeech"
+    ]
+   }
+  },
+  "setup.js": {
+   "exports": [
+    "needsSetup",
+    "openSetup",
+    "setSetupHooks"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang",
+     "uiLanguages"
+    ]
+   }
+  },
+  "sharetext.js": {
+   "exports": [
+    "clean",
+    "initShareText"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
+  "snap.js": {
+   "exports": [
+    "layout",
+    "registerSnap"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
+  "sound.js": {
+   "exports": [
+    "SOUNDS",
+    "mediaVolume",
+    "onPhone",
+    "play",
+    "setAudio",
+    "setMediaVolume",
+    "soundUrl"
+   ],
+   "imports": {}
+  },
+  "speech.js": {
+   "exports": [
+    "initSpeech",
+    "micButton",
+    "setAutoSearch",
+    "speechAvailable"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "icon",
+     "toast"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "sound.js": [
+     "play"
+    ]
+   }
+  },
+  "summary.js": {
+   "exports": [
+    "cachedSummary",
+    "closeSummary",
+    "makeSummary",
+    "openSummary",
+    "summaryHtml"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "apiStream",
+     "toast",
+     "stripThink"
+    ],
+    "markdown.js": [
+     "render",
+     "allowLinks"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ]
+   }
+  },
+  "summaryfile.js": {
+   "exports": [
+    "downloadSummary"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t"
+    ],
+    "summary.js": [
+     "makeSummary"
+    ]
+   }
+  },
+  "tagsui.js": {
+   "exports": [
+    "metaRow",
+    "openSaveDialog",
+    "openTagEditor"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ]
+   }
+  },
+  "taskmodels.js": {
+   "exports": [
+    "addLoadedModels",
+    "taskModelsPane",
+    "taskModelsValue",
+    "wireTaskModels"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "api"
+    ],
+    "i18n.js": [
+     "t",
+     "has"
+    ]
+   }
+  },
+  "theme.js": {
+   "exports": [
+    "ACCENTS",
+    "ARTICLE_FONTS",
+    "PALETTES",
+    "TEXT_SIZES",
+    "UI_FONTS",
+    "effectiveTheme",
+    "getAppearance",
+    "loadLocal",
+    "onAppearanceChange",
+    "setAppearance"
+   ],
+   "imports": {}
+  },
+  "toolbar.js": {
+   "exports": [
+    "ask",
+    "hideToolbar",
+    "initToolbar",
+    "showToolbar"
+   ],
+   "imports": {
+    "snap.js": [
+     "registerSnap"
+    ],
+    "util.js": [
+     "$",
+     "$$",
+     "h",
+     "icon",
+     "api",
+     "apiStream",
+     "toast",
+     "stripThink"
+    ],
+    "markdown.js": [
+     "render",
+     "allowLinks"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "speech.js": [
+     "micButton"
+    ],
+    "cite.js": [
+     "cite",
+     "STYLES"
+    ],
+    "tts.js": [
+     "speak"
+    ]
+   }
+  },
+  "translate.js": {
+   "exports": [
+    "openTranslate",
+    "restoreTranslation"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "apiStream",
+     "toast"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ]
+   }
+  },
+  "tts.js": {
+   "exports": [
+    "genderOf",
+    "loadVoices",
+    "pause",
+    "paused",
+    "resume",
+    "setSpeech",
+    "speak",
+    "speaking",
+    "stop",
+    "ttsAvailable"
+   ],
+   "imports": {}
+  },
+  "util.js": {
+   "exports": [
+    "$",
+    "$$",
+    "api",
+    "apiStream",
+    "favicon",
+    "fmtAgo",
+    "fmtBytes",
+    "fmtDate",
+    "h",
+    "hydrateIcons",
+    "icon",
+    "pollJob",
+    "progressBar",
+    "rafThrottle",
+    "safeUrl",
+    "shortUrl",
+    "stripThink",
+    "toast"
+   ],
+   "imports": {
+    "i18n.js": [
+     "t"
+    ]
+   }
+  }
+ },
+ "settings": {
+  "app": [
+   "ui_mode",
+   "language",
+   "answer_language",
+   "check_updates",
+   "guarded_execution",
+   "history_limit",
+   "port",
+   "setup_done",
+   "disclaimer_dismissed",
+   "include_library",
+   "resource_graphs",
+   "resource_style",
+   "appearance",
+   "theme_hint",
+   "pclink_enabled",
+   "pclink_port",
+   "pclink_code",
+   "pclink_allow_internet"
+  ],
+  "defaults": [
+   "mode",
+   "library",
+   "extras",
+   "dates",
+   "translate_to",
+   "save_rich",
+   "citation_style",
+   "pinned_view",
+   "speech_autosearch"
+  ],
+  "buttons": [
+   "summarize",
+   "interactive",
+   "results",
+   "more_sources",
+   "save",
+   "copy",
+   "translate",
+   "listen",
+   "pin",
+   "export",
+   "summary_file",
+   "regenerate",
+   "source_summarize",
+   "source_save",
+   "source_pin"
+  ],
+  "audio": [
+   "enabled",
+   "master",
+   "sounds"
+  ],
+  "speech": [
+   "voice",
+   "rate"
+  ],
+  "agent_tools": [
+   "picker",
+   "sets"
+  ],
+  "effort": [
+   "standard",
+   "autonomous",
+   "subagents"
+  ],
+  "agents": [
+   "max_steps",
+   "max_tool_calls",
+   "retries",
+   "tool_timeout",
+   "cost_cap",
+   "token_limit",
+   "subagents",
+   "subagent_token_share"
+  ],
+  "enterprise": [
+   "server_url",
+   "organization"
+  ],
+  "usage": [
+   "monthly_budget",
+   "tell_model",
+   "stop_at_budget"
+  ],
+  "library": [
+   "folders",
+   "personal_folder",
+   "web_too",
+   "offline",
+   "offline_writer",
+   "offline_provider",
+   "offline_model",
+   "reopen_to_history",
+   "extensions",
+   "max_file_mb",
+   "max_results",
+   "min_relevance",
+   "trust"
+  ],
+  "prompts": [
+   "style",
+   "length",
+   "explainer_level",
+   "custom_instructions",
+   "planner_instructions",
+   "article_prompt"
+  ],
+  "llm": [
+   "temperature",
+   "task_models"
+  ],
+  "search": [
+   "use_wikis",
+   "wiki_results",
+   "wikis",
+   "region",
+   "safesearch"
+  ],
+  "fetch": [
+   "fetcher",
+   "timeout",
+   "max_concurrency",
+   "youtube",
+   "youtube_retries",
+   "user_agent"
+  ],
+  "research": [
+   "explainer_local_examples",
+   "explainer_web_examples",
+   "use_pinned",
+   "max_rounds",
+   "results_per_query",
+   "sources_per_round",
+   "max_sources_total",
+   "llm_concurrency",
+   "passage_chars",
+   "direct_relevance",
+   "direct_coverage",
+   "min_findings",
+   "enough_findings",
+   "article_max_tokens",
+   "max_article_sources",
+   "images",
+   "interactive_check",
+   "max_images",
+   "skip_domains",
+   "favourite_sites"
+  ]
+ },
+ "job_limits": {
+  "search": 1,
+  "quick": 1,
+  "explainer": 1,
+  "tool": 2
+ },
+ "tool_kinds": [
+  "followup",
+  "rewrite",
+  "image",
+  "translate",
+  "summary",
+  "calc",
+  "tags"
+ ],
+ "ai_tasks": [
+  "research",
+  "quick",
+  "followup",
+  "rewrite",
+  "summary",
+  "translate",
+  "tags",
+  "explainer",
+  "vision",
+  "misc"
+ ],
+ "i18n_keys": 1121
+}

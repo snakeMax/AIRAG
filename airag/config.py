@@ -103,6 +103,22 @@ GENERAL_SCHEMA: dict = {
         {"key": "subagents", "label": "", "type": "hidden", "default": "medium"},
     ],
     # token and cost tracking (Settings -> Usage)
+    # groundwork for 0.5.0 agents (airag.agents.Limits reads these; not shown in Settings yet)
+    "agents": [
+        {"key": "max_steps", "label": "", "type": "hidden", "default": 30},
+        {"key": "max_tool_calls", "label": "", "type": "hidden", "default": 25},
+        {"key": "retries", "label": "", "type": "hidden", "default": 2},
+        {"key": "tool_timeout", "label": "", "type": "hidden", "default": 30},
+        {"key": "cost_cap", "label": "", "type": "hidden", "default": 1.0},
+        {"key": "token_limit", "label": "", "type": "hidden", "default": 0},
+        {"key": "subagents", "label": "", "type": "hidden", "default": 1},
+        {"key": "subagent_token_share", "label": "", "type": "hidden", "default": 0.7},
+    ],
+    # groundwork for the enterprise edition (airag.editions); unused by the personal editions
+    "enterprise": [
+        {"key": "server_url", "label": "", "type": "hidden", "default": ""},
+        {"key": "organization", "label": "", "type": "hidden", "default": ""},
+    ],
     "usage": [
         {"key": "monthly_budget", "label": "Monthly budget ($)", "type": "number", "default": 5, "min": 0, "max": 10000, "step": 1,
          "help": "Shown as a bar in Settings -> Usage. 0 = no budget."},
@@ -256,6 +272,8 @@ def _base_defaults() -> dict:
         "buttons": field_defaults(GENERAL_SCHEMA["buttons"]),
         "agent_tools": field_defaults(GENERAL_SCHEMA["agent_tools"]),
         "effort": field_defaults(GENERAL_SCHEMA["effort"]),
+        "agents": field_defaults(GENERAL_SCHEMA["agents"]),
+        "enterprise": field_defaults(GENERAL_SCHEMA["enterprise"]),
     }
 
 

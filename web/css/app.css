@@ -393,9 +393,9 @@ details.tried summary { cursor: pointer; }
 .field .help, .help { font-size: 12px; color: var(--text-3); margin-top: 4px; }
 .dlg-body > section > .help, #pcLinkPanel > .help { margin: 8px 0 14px; font-size: 12.5px; }
 .lr-s.mono { font-family: var(--mono); color: var(--text); }
-.field input[type=text], .field input[type=url], .field input[type=password], .field input[type=number], .field select, .input {
+.field input[type=text], .field input[type=url], .field input[type=password], .field input[type=number], .field select, .input, .tm-row select, .tm-all select {
   width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); outline: 0; }
-.field input:focus, .field select:focus, .input:focus { border-color: var(--border-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 30%, transparent); }
+.field input:focus, .field select:focus, .input:focus, .tm-row select:focus, .tm-all select:focus { border-color: var(--border-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 30%, transparent); }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
 @media (max-width: 680px) { .field-grid { grid-template-columns: 1fr; } }
 .switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 600; }
@@ -646,8 +646,13 @@ html, body { overflow-x: hidden; }
 .rt-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 6px 16px; }
 .rt-panel-head h3 { margin: 0; font-size: 15px; }
 .rt-thread { overflow-y: auto; padding: 0 16px 120px; display: flex; flex-direction: column; gap: 18px; }
-@media (min-width: 1300px) { body.rt-panel-open .rt-dock { left: calc((100vw - 424px) / 2); }
-  body.rt-panel-open .run { margin-right: 424px; margin-left: max(0px, calc(100vw - 424px - 1180px)); } }
+/* snapped boxes keep the article clear: the page makes room on the side(s) that hold a box */
+@media (min-width: 1300px) {
+  body.snap-r:not(.snap-l) .rt-dock { left: calc((100vw - 424px) / 2); }
+  body.snap-l:not(.snap-r) .rt-dock { left: calc(424px + (100vw - 424px) / 2); }
+  body.snap-r .run { margin-right: 424px; margin-left: max(0px, calc(100vw - 424px - 1180px)); }
+  body.snap-l .run { margin-left: 424px; margin-right: max(0px, calc(100vw - 424px - 1180px)); }
+  body.snap-l.snap-r .run { margin-left: 424px; margin-right: 424px; } }
 /* computers: the stack doesn't exist for layout; the dock and the panel are placed on their own */
 .rt-stack { display: contents; }
 /* phones: answers and the open menu share one column above the round button, like a flex box -
@@ -985,7 +990,7 @@ body.is-offline .lib-chip { opacity: .55; pointer-events: none; }
 .tm-text { flex: 1; min-width: 0; }
 .tm-text b { display: block; font-size: 14px; font-weight: 600; }
 .tm-text small { display: block; font-size: 12px; color: var(--text-3); }
-.tm-row select { flex: none; max-width: 48%; }
+.tm-row select { flex: none; width: 210px; max-width: 48%; }
 .tm-actions { margin-top: 12px; flex-wrap: wrap; align-items: center; gap: 10px; }
 .tm-all { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (max-width: 520px) { .tm-row { flex-direction: column; align-items: stretch; gap: 6px; } .tm-row select { max-width: none; } }
@@ -1019,3 +1024,36 @@ body.is-offline .lib-chip { opacity: .55; pointer-events: none; }
 .res-v small { font-size: 13px; font-weight: 500; color: var(--text-2); }
 .res-note { font-size: 11.5px; color: var(--text-3); }
 @media (max-width: 640px) { .res-cards { grid-template-columns: 1fr; } .res-card svg { height: 60px; } .res-strip { align-items: stretch; } .res-chip { justify-content: center; } }
+
+/* snap panels (web/js/snap.js) */
+.snap-head { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.snap-grip { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--border-strong); margin-right: 8px; }
+.snap-head .snap-min-btn { margin-left: auto; }
+.snap-head > .snap-min-btn + * { margin-left: 0; }
+.snap-box.snap-placed { position: fixed; animation: none; }
+.snap-box.snap-placed.rt-calc { overflow: auto; }
+.snap-box.snap-minimized { display: none !important; }
+.snap-box.snap-dragging { cursor: grabbing; transform: rotate(-1deg); opacity: .94; box-shadow: 0 20px 50px rgba(0,0,0,.25); transition: none; animation: none; pointer-events: auto; }
+.snap-overlay { position: fixed; inset: 0; z-index: 75; pointer-events: none; }
+.snap-area { position: fixed; box-sizing: border-box; border-radius: 16px; border: 2px dashed color-mix(in srgb, var(--text) 28%, transparent);
+  background: color-mix(in srgb, var(--text) 4%, transparent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--text) 4%, transparent);
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px; transition: background .12s, border-color .12s, box-shadow .12s; }
+.snap-area span { display: none; font-size: 12px; font-weight: 600; color: var(--text); background: var(--surface); border-radius: 999px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.snap-area.on { border: 2px solid var(--accent, var(--text)); background: color-mix(in srgb, var(--accent, var(--text)) 9%, transparent);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent, var(--text)) 10%, transparent), 0 0 30px color-mix(in srgb, var(--accent, var(--text)) 18%, transparent); }
+.snap-area.on span { display: inline-block; }
+.snap-slot-ph { flex: none; box-sizing: border-box; border: 2px dashed var(--accent, var(--text)); border-radius: 14px;
+  background: color-mix(in srgb, var(--accent, var(--text)) 8%, var(--surface)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); pointer-events: none; transition: height .15s; }
+.snap-slot-ph svg { width: 18px; height: 18px; }
+.snap-tray { position: fixed; left: 14px; bottom: 14px; z-index: 44; display: flex; flex-wrap: wrap; gap: 8px; max-width: min(560px, calc(100vw - 100px)); }
+.snap-pill { height: 36px; max-width: 220px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+.rt-calc-head .snap-grip { margin-right: 6px; }
+.rt-calc-head { gap: 4px; }
+@media (max-width: 720px) {
+  .rt-stack > .rt-calc { position: static; width: auto; left: auto !important; top: auto !important; flex: none; animation-name: rt-sheet-in; }
+  .snap-tray { left: 12px; right: 84px; bottom: calc(22px + env(safe-area-inset-bottom)); max-width: none; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .snap-pill { max-width: 170px; flex: none; }
+  .snap-box.snap-dragging { position: fixed; }
+}

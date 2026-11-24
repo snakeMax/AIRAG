@@ -262,7 +262,7 @@ class Library:
             return []
         from .sqlsafe import like_escape
         cond = " OR ".join("lower(text) LIKE ? ESCAPE '\\'" for _ in words)     # fixed text; the words are parameters
-        rows = c.execute(f"SELECT file_id, ord, text, title FROM chunks WHERE {cond} LIMIT 2000",
+        rows = c.execute(f"SELECT file_id, ord, text, title FROM chunks WHERE {cond} LIMIT 2000",  # noqa: sql (fixed text)
                          [f"%{like_escape(w)}%" for w in words]).fetchall()
         scored = []
         for r in rows:

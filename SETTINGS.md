@@ -40,6 +40,12 @@ The controls under the search box. Each can be changed for one search; the defau
 ### Quick (home page) and Quick search… (article → Sources)
 A short cited answer (about 80-200 words) from 2-3 pages, in a few seconds and with far fewer tokens than a full search: no AI planning step, one round of 1-2 searches, a lower relevance bar. **Shift+Enter** in the home search box runs a quick search; on phones the Quick and Search buttons sit under the box. If nothing usable is found, the AI writes **3 simpler searches** close to your question and tries once more under the same quick rules. Under a quick answer, **Add to this** asks a short follow-up (added as a new section) and **Research this properly** starts a full search. In an article, *Sources → Quick search…* asks a short question about it; **Update the article with the results** (on by default) adds the answer as a new section with its sources, and the old text stays in Version history. Untick it to get a separate quick answer in History instead. Quick searches run as their own kind of task, so they don't wait behind a full search.
 
+### Links in your question
+Web addresses you paste into a question are read first (with the usual checks for blocked and bot-check pages), then the search continues as normal.
+
+### Search with AIRAG (share text on Android)
+Share text from another app to AIRAG: short text starts a search straight away; longer text is put in the search box so you can edit it first. Shared pictures open *Analyze image* (describe it or pull out the text).
+
 ### Auto / Article / Results (search mode)
 - **Auto:** writes an article when the answer is spread over several pages. When one page answers the question directly, it shows ranked results instead.
 - **Article:** always writes an article.
@@ -266,6 +272,9 @@ New searches first read pinned pages that match the question, from the saved cop
 ### Model
 Bigger models write better articles and use more tokens; smaller ones are faster and cheaper. *Load models* lists what your key or server offers. *Test* checks that it works.
 
+### Models per task (Settings → AI)
+Shown when Claude (Anthropic API) is your AI service. Each kind of work has its own model picker: Research & writing, Quick search, Follow-ups & toolbar, Rewrite & regenerate, Summaries, Translation, Tags, Explainers, Image analysis and Small helpers. **Every task uses Sonnet 5.5** until you change it ("Main model" = the model chosen above). *Set all to…* changes every task at once; *Reset to Sonnet 5.5* puts them all back. The line under the list shows the price per million tokens (in / out) for Opus, Sonnet and Haiku. Cheaper models such as Haiku work well for tags and small helpers; Image analysis needs a model that can see pictures. A running task keeps the model it started with; the change applies from the next task. Offline mode's local model always wins. Other AI services use their main model for everything (for now).
+
 ### Temperature
 How varied the wording is. The default 0.3 keeps articles factual; higher values are more creative but less precise.
 
@@ -486,6 +495,9 @@ The colour of buttons and highlights; pick one or choose your own. *Reset* goes 
 
 ---
 
+### Text: interface font, article font, text size (Settings → Look & sound)
+**Interface font**: System default (Inter), Serif, Rounded, Monospace, or Easy reading (Atkinson Hyperlegible, bundled with AIRAG so it works offline). **Article font**: Serif (Charter, the default), Same as interface, or Easy reading. **Text size**: five steps from Smaller to Larger (Normal is the middle); it changes articles and most text, and the preview shows the result. Like the colours, these apply at once. On phones, Android's own text size is added on top.
+
 ## Sound effects
 **Settings → Look & sound → Customize audio.** Nothing here takes effect until you press **Save**; Cancel leaves everything as it was, including your phone's volume.
 
@@ -592,6 +604,9 @@ On by default. Protects tasks that are running (searches, explainers, toolbar an
 
 Off: tasks read the settings file directly, as before 0.4.1, and clearing is always allowed (a task that was using cleared pages just reads them again; clearing History cancels running tasks first). Deleting one article from History always cancels its task first.
 
+### Live resource graphs / Graph colours (Settings → System)
+Off by default. When on, a small chip under the top bar shows the processor (phones: battery and temperature), AIRAG's memory and the number of running tasks; tap it for three graphs: processor or battery, memory (AIRAG, and the whole computer as a dashed line), and AI tokens per minute over the last 10 minutes. It only measures, and only while AIRAG is open and visible. **Graph colours**: Accent (your accent colour, the default) or Plain (grey, following light or dark mode).
+
 ### Check for updates when AIRAG starts / Check for updates / Check & repair
 - **Check for updates when AIRAG starts:** shows a popup when a new version is out.
 - **Check & repair** (Settings → System): finds and fixes broken or missing app files.
@@ -608,6 +623,14 @@ The local address AIRAG uses on your computer; a free one is picked if it's busy
 - **Hardware:** shows your device and recommends local models that fit it.
 
 ---
+
+## Floating boxes and snap panels
+
+### Drag, snap, minimize
+The Answers panel and the Calculator card (and later the explainer window) are floating boxes with a grip on their title bar, a **minimize** button and an **X**.
+- **Computer:** drag a box by its title bar and four snap areas light up (left and right column, top and bottom half). The one under the pointer is highlighted and says the box will snap there and resize to fit. One box in a column fills it; two share it. Dropping on a taken area swaps the boxes. The article makes room on that side.
+- **Phone (layout A):** boxes sit in one column above the menu button. While your finger is still down, a dashed "will snap here" slot moves between the other boxes, so you see where the box lands before you let go.
+- **Minimize** turns a box into a pill in the tray (bottom left; on phones beside the menu button) showing its name and the start of its text, like *Answers: "Yes: crossings…"*. Tap the pill to bring the box back with everything in it. Where you put each box is remembered.
 
 ## Background work and notifications
 

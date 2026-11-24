@@ -226,7 +226,7 @@ def _read_sqlite(data: bytes, name: str, path: Optional[Path] = None) -> Doc:
                                               "AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' ORDER BY name LIMIT ?", (MAX_TABLES,))]
             for tname in names:
                 try:
-                    cur = c.execute(f"SELECT * FROM {quote_ident(tname)} LIMIT ?", (MAX_ROWS + 1,))
+                    cur = c.execute(f"SELECT * FROM {quote_ident(tname)} LIMIT ?", (MAX_ROWS + 1,))  # noqa: sql (quoted name)
                     cols = [d[0] for d in cur.description or []]
                     rows = [[(f"<{len(v)} bytes>" if isinstance(v, (bytes, bytearray)) else v) for v in r] for r in cur.fetchall()]
                 except sqlite3.DatabaseError:

@@ -4,6 +4,7 @@
 //  - phone: a round menu button (three lines that turn upright when open) opening a sheet
 //  - selecting text shows a small popup with actions for that text
 //  - answers stream into a thread panel beside the article (a bottom sheet on phones)
+import { registerSnap } from "./snap.js";
 import { $, $$, h, icon, api, apiStream, toast, stripThink } from "./util.js";
 import { render, allowLinks } from "./markdown.js";
 import { t, uiLang } from "./i18n.js";
@@ -42,6 +43,11 @@ export function initToolbar(x) {
     <div class="rt-sel" id="rtSel" hidden role="toolbar" aria-label="${h(t("rt.selLabel"))}"></div>
     <div class="rt-calc" id="rtCalc" hidden role="status"></div>`);
   const dock = $("#rtDock");
+  // snap panels: the answers and the calculator card can be dragged, snapped and minimized
+  registerSnap("answers", $("#rtPanel"), { title: () => t("rt.thread"), head: el => $(".rt-panel-head", el), slot: "right-top",
+    summary: el => [...el.querySelectorAll(".rt-answer")].at(-1)?.textContent || "" });
+  registerSnap("calc", $("#rtCalc"), { title: () => t("snap.calc"), head: el => $(".rt-calc-head", el), slot: null,
+    summary: el => $(".rt-calc-result", el)?.textContent || "" });
   dock.addEventListener("click", onDockClick);
   $("#rtFab").onclick = () => setOpen(!S.open);
   $("#rtPanelX").onclick = () => showPanel(false);
