@@ -39,8 +39,13 @@ GENERAL_SCHEMA: dict = {
         {"key": "setup_done", "label": "", "type": "hidden", "default": False},
         {"key": "disclaimer_dismissed", "label": "", "type": "hidden", "default": False},
         {"key": "include_library", "label": "", "type": "hidden", "default": False},
+        {"key": "resource_graphs", "label": "Live resource graphs", "type": "bool", "default": False,
+         "help": "Shows processor, memory and AI tokens per minute in the activity bar while AIRAG is open. Phones show battery and temperature instead of the processor."},
+        {"key": "resource_style", "label": "Graph colours", "type": "select", "default": "accent",
+         "options": ["accent", "plain"], "help": "Accent: your accent colour. Plain: grey, following light or dark mode."},
         {"key": "appearance", "label": "", "type": "hidden",
-         "default": {"theme": "system", "palette": "zinc", "accent": "graphite"}},
+         "default": {"theme": "system", "palette": "zinc", "accent": "graphite",
+                     "uiFont": "system", "articleFont": "serif", "textSize": 2}},
         {"key": "theme_hint", "label": "", "type": "hidden", "default": "light"},
         {"key": "pclink_enabled", "label": "", "type": "hidden", "default": False},
         {"key": "pclink_port", "label": "", "type": "hidden", "default": 0},
@@ -360,7 +365,7 @@ LIVE_KEYS = (
 )
 # settings that only change what you see or hear, never how a running task works
 UI_ONLY = {"audio", "speech", "buttons", "defaults"}
-UI_ONLY_KEYS = {("app", "appearance"), ("app", "theme_hint"), ("app", "language"), ("app", "disclaimer_dismissed"),
+UI_ONLY_KEYS = {("app", "appearance"), ("app", "resource_graphs"), ("app", "resource_style"), ("app", "theme_hint"), ("app", "language"), ("app", "disclaimer_dismissed"),
                 ("app", "setup_done"), ("app", "check_updates"), ("app", "guarded_execution"), ("app", "ui_mode")}
 
 

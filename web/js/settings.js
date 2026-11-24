@@ -1,9 +1,10 @@
 // Settings dialog. Generic fields are rendered from the server's schema, so new
 // providers/backends/options show up automatically; a few tabs have custom panels
 // (Ollama models, library folders, headless browser, appearance, updates).
+import { taskModelsPane, taskModelsValue, wireTaskModels, addLoadedModels } from "./taskmodels.js";
 import { $, $$, h, icon, api, toast, pollJob, progressBar, fmtBytes, fmtAgo } from "./util.js";
 import { t, has, uiLang, uiLanguages } from "./i18n.js";
-import { PALETTES, ACCENTS, getAppearance, setAppearance } from "./theme.js";
+import { PALETTES, ACCENTS, UI_FONTS, ARTICLE_FONTS, TEXT_SIZES, getAppearance, setAppearance } from "./theme.js";
 import { showUpdatePopup } from "./banners.js";
 import { SOUNDS, play, soundUrl, onPhone, mediaVolume, setMediaVolume, setAudio } from "./sound.js";
 import { ttsAvailable, loadVoices, speak as ttsSpeak, stop as ttsStop, setSpeech } from "./tts.js";
@@ -62,7 +63,7 @@ const fields = (list, sec, base, values) => list.map(f => field(f, sec, `${base}
 const TABS = [
   ["general", "home", ["general", "defaults", "about"]],
   ["look", "palette", ["appearance"]],
-  ["ai", "cpu", ["model", "usage", "prompts"]],
+  ["ai", "cpu", ["model", "taskmodels", "usage", "prompts"]],
   ["searching", "globe", ["search", "research"]],
   ["storage", "folder", ["library"]],
   ["tools", "tool", ["tools"]],
@@ -82,8 +83,9 @@ const SUBPANE = {
   general: (sc, st) => generalPane(sc, st),
   defaults: (sc, st) => defaultsPane(sc, st),
   about: () => aboutPane(),
-  appearance: () => appearancePane() + audioPane(S.settings.audio) + readAloudPane(S.settings.speech),
+  appearance: () => appearancePane() + textPane() + audioPane(S.settings.audio) + readAloudPane(S.settings.speech),
   model: (sc, st) => modelPane(sc, st),
+  taskmodels: (sc, st) => taskModelsPane(sc, st),
   usage: (sc, st) => usagePane(sc, st),
   prompts: (sc, st) => `<h3>${h(t("tab.prompts"))}</h3><p>${h(t("set.promptsIntro"))}</p>${fields(sc.prompts, "prompts", "prompts", st.prompts)}`,
   search: (sc, st) => searchPane(sc, st),
@@ -187,6 +189,7 @@ export async function openSettings(tab = "general") {
   $$("[data-jump]", dlg).forEach(b => (b.onclick = () => showTab(b.dataset.jump, b.dataset.jump)));
   wireSettingsSearch(dlg, showTab);
   wireGeneral(dlg);
+  wireTaskModels(dlg);
   wireAppearance(dlg);
   wireAudio(dlg);
   wireAgentTools(dlg);
@@ -222,6 +225,7 @@ async function save() {
     const out = collect();
     await saveAudio(out);
     if (S.wikis) out.search.wikis = S.wikis;
+    if (taskModelsValue()) out.llm.task_models = taskModelsValue();
     S.settings = await api("/api/settings", { method: "POST", body: out });
     const later = S.settings._applies_later;
     delete S.settings._applies_later;
@@ -278,6 +282,9 @@ function systemPane(sc, st) {
     <div id="repairBox" style="margin-bottom:14px"></div>
     <h4>${h(t("gen.storage"))}</h4>
     <div class="list-box" id="storageBox"><div class="list-empty">${h(t("common.loading"))}</div></div>
+    <h4>${h(t("res.title"))}</h4>
+    ${field(sc.app.find(f => f.key === "resource_graphs"), "app", "app.resource_graphs", st.app.resource_graphs)}
+    ${field(sc.app.find(f => f.key === "resource_style"), "app", "app.resource_style", st.app.resource_style)}
     <h4>${h(t("sys.maintenance"))}</h4>
     ${field(sc.app.find(f => f.key === "guarded_execution"), "app", "app.guarded_execution", st.app.guarded_execution)}
     <div class="list-box">
@@ -445,6 +452,30 @@ function appearancePane() {
       ${Object.entries(ACCENTS).map(([k, c]) => `<button type="button" class="swatch ${a.accent === k ? "on" : ""}" data-acc="${k}" title="${h(t("acc." + k))}" style="background:${c || "linear-gradient(135deg,#27272a 50%,#e4e4e7 50%)"}"></button>`).join("")}
       <label class="swatch swatch-custom ${custom ? "on" : ""}" title="${h(t("app.accentCustom"))}"><input type="color" id="accCustom" value="${custom ? a.accent : "#2563eb"}"></label>
       <button type="button" class="btn sm ghost" id="appReset">${h(t("app.reset"))}</button></div></div>`;
+}
+
+// Text: interface font, article font, text size. Like the colours, it applies at once (and is saved with them).
+function textPane() {
+  const a = getAppearance();
+  const sel = (id, opts, cur) => `<select id="${id}">${opts.map(k => `<option value="${k}" ${k === cur ? "selected" : ""}>${h(t(`txt.${id}.${k}`))}</option>`).join("")}</select>`;
+  return `<h3 style="margin-top:22px" id="txtHead">${h(t("txt.title"))}</h3>
+    <div class="field"><label for="uiFont">${h(t("txt.uiFont"))}</label>${sel("uiFont", Object.keys(UI_FONTS), a.uiFont || "system")}</div>
+    <div class="field"><label for="articleFont">${h(t("txt.articleFont"))}</label>${sel("articleFont", Object.keys(ARTICLE_FONTS), a.articleFont || "serif")}</div>
+    <div class="field"><label>${h(t("txt.size"))} <b id="txtSizeV">${h(t("txt.size." + (a.textSize ?? 2)))}</b></label>
+      <div class="txt-sizes" role="radiogroup" aria-label="${h(t("txt.size"))}">${TEXT_SIZES.map((_, i) => `<button type="button" role="radio" data-tsize="${i}" aria-checked="${i === (a.textSize ?? 2)}" class="${i === (a.textSize ?? 2) ? "on" : ""}" aria-label="${h(t("txt.size." + i))}">${["A−−", "A−", "A", "A+", "A++"][i]}</button>`).join("")}</div>
+      <div class="help">${h(t(android() ? "txt.sizeHelpPhone" : "txt.sizeHelp"))}</div>
+      <div class="txt-preview" aria-hidden="true"><div class="t-h">${h(t("txt.previewHead"))}</div><div class="t-b">${h(t("txt.previewBody"))}</div></div></div>`;
+}
+
+function wireText(dlg) {
+  $("#uiFont", dlg).onchange = e => setAppearance({ uiFont: e.target.value });
+  $("#articleFont", dlg).onchange = e => setAppearance({ articleFont: e.target.value });
+  $$("[data-tsize]", dlg).forEach(b => (b.onclick = () => {
+    const i = +b.dataset.tsize;
+    setAppearance({ textSize: i });
+    $$("[data-tsize]", dlg).forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", String(x === b)); });
+    $("#txtSizeV", dlg).textContent = t("txt.size." + i);
+  }));
 }
 
 // customize audio: one row per sound (volume + own clip), master volume, reset.
@@ -670,6 +701,7 @@ function wireAppearance(dlg) {
   $$("[data-acc]", dlg).forEach(b => (b.onclick = () => { setAppearance({ accent: b.dataset.acc }); refresh(); }));
   $("#accCustom", dlg).oninput = e => { setAppearance({ accent: e.target.value }); refresh(); };
   $("#appReset", dlg).onclick = () => { setAppearance({ theme: "system", palette: "zinc", accent: "graphite" }); refresh(); };
+  wireText(dlg);
 }
 
 // AI model
@@ -708,6 +740,7 @@ function wireModel(dlg) {
       const { models } = await api("/api/models", { method: "POST", body: provPayload() });
       const p = $("#provSel").value, dl = $(`[data-prov-box="${p}"] datalist`, dlg);
       if (dl) dl.innerHTML = models.map(m => `<option value="${h(m)}">`).join("");
+      if (p === "anthropic") addLoadedModels(models, dlg);
       status(models.length ? t("model.loaded", { n: models.length }) : t("model.none"), models.length ? "ok" : "err");
     } catch (e) { status(e.message, "err"); }
   };

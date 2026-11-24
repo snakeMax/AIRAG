@@ -238,6 +238,36 @@ def _open_path(p: Path, reveal: bool = False) -> None:
 
 
 # settings
+from .llm import tasks as llm_tasks
+
+
+class PricesReq(BaseModel):
+    provider: str
+    models: List[str]
+
+
+@app.post("/api/model-prices")
+def model_prices(req: PricesReq):
+    """$ per million tokens (in, out) for the models shown in Settings -> AI -> Models per task."""
+    from . import usage
+    out = {}
+    for m in req.models[:40]:
+        m = str(m)[:200]
+        try:
+            p = usage.per_million(req.provider[:40], m)
+        except Exception:
+            p = None
+        out[m] = list(p) if p else None
+    return {"prices": out}
+
+
+@app.get("/api/resources")
+def live_resources():
+    """Live resource graphs: processor, memory, AI tokens per minute, running tasks."""
+    from . import resources
+    return resources.snapshot()
+
+
 @app.get("/api/schema")
 def schema():
     return {
@@ -254,6 +284,8 @@ def schema():
         "defaults": config.GENERAL_SCHEMA["defaults"],
         "usage": config.GENERAL_SCHEMA["usage"],
         "buttons": config.GENERAL_SCHEMA["buttons"],
+        "tasks": [{"id": k, "label": v["label"], "hint": v["hint"]} for k, v in llm_tasks.TASKS.items()],
+        "task_providers": list(llm_tasks.UI_PROVIDERS),
         "default_article_prompt": prompts_mod.ARTICLE_RULES,
         "languages": languages.public_list(),
         "version": __version__,

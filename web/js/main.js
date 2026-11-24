@@ -1,4 +1,5 @@
 // Entry point: start-up, routing and the search box.
+import { applyResourceSettings } from "./resources.js";
 import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
 import { initI18n, t, applyI18n } from "./i18n.js";
 import { loadLocal, setAppearance, onAppearanceChange, effectiveTheme } from "./theme.js";
@@ -211,6 +212,7 @@ async function boot() {
   });
   applyDefaults(state.settings?.defaults);
   applyAudio(state.settings);
+  applyResourceSettings(state.settings);
   hydrateIcons();
   wire();
   initSpeech(info?.mode === "desktop");
@@ -232,6 +234,7 @@ async function boot() {
     if (langChanged) { location.reload(); return; }
     applyDefaults(s.defaults);
     applyAudio(s);
+    applyResourceSettings(s);
     renderModes();
     renderHomeDates();
     refreshStatus();

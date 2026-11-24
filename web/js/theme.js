@@ -18,9 +18,20 @@ export const ACCENTS = {
   violet: "#7c3aed",
 };
 
+// Text (Look & sound -> Text): interface font, article font, text size
+export const UI_FONTS = {
+  system: null,       // the built-in stack (Inter / system UI)
+  serif: '"Charter", "Iowan Old Style", "Source Serif Pro", Georgia, Cambria, serif',
+  rounded: 'ui-rounded, "SF Pro Rounded", "Nunito", "Varela Round", "Segoe UI", system-ui, sans-serif',
+  mono: 'ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace',
+  easy: '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif',
+};
+export const ARTICLE_FONTS = { serif: null, same: "same", easy: UI_FONTS.easy };
+export const TEXT_SIZES = [0.88, 0.94, 1, 1.12, 1.25];
+
 const KEY = "airag.appearance";
 const media = matchMedia("(prefers-color-scheme: dark)");
-let current = { theme: "system", palette: "zinc", accent: "graphite" };
+let current = { theme: "system", palette: "zinc", accent: "graphite", uiFont: "system", articleFont: "serif", textSize: 2 };
 let onChange = null;
 
 export function loadLocal() {
@@ -63,6 +74,14 @@ function apply() {
   root.style.setProperty("--rec", hex && /^#[0-9a-f]{6}$/i.test(hex) && saturation(hex) > 0.25 ? hex : "#ef4444");
   // the mark that keeps selected text visible after the phone drops its own selection
   root.style.setProperty("--mark", hex && /^#[0-9a-f]{6}$/i.test(hex) && saturation(hex) > 0.25 ? hex : "#3b82f6");
+  const ui = UI_FONTS[current.uiFont];
+  if (ui) root.style.setProperty("--ui", ui); else root.style.removeProperty("--ui");
+  const art = ARTICLE_FONTS[current.articleFont];
+  if (art === "same") root.style.setProperty("--article-font", "var(--ui)");
+  else if (art) root.style.setProperty("--article-font", art);
+  else root.style.removeProperty("--article-font");
+  const size = TEXT_SIZES[current.textSize] ?? 1;
+  if (size === 1) root.style.removeProperty("--text-scale"); else root.style.setProperty("--text-scale", String(size));
   if (hex && /^#[0-9a-f]{6}$/i.test(hex)) {
     root.style.setProperty("--accent", hex);
     root.style.setProperty("--accent-text", contrastText(hex));

@@ -78,6 +78,8 @@ def _save(data: dict) -> None:
 
 
 def add(provider: str, model: str, tin: int, tout: int, estimated: bool) -> None:
+    from . import resources
+    resources.note_tokens(tin + tout)      # live "AI tokens per minute" graph (memory only)
     cost = price_of(provider, model, tin, tout)
     with _lock:
         data = _load()

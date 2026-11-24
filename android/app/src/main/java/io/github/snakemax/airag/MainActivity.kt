@@ -150,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         speech = Speech(this, web).also { web.addJavascriptInterface(it, "AIRAGNative") }
         audioBridge = AudioBridge(this, web).also { web.addJavascriptInterface(it, "AIRAGAudio") }
         share = ShareBridge(this, web).also { web.addJavascriptInterface(it, "AIRAGShare") }
+        web.addJavascriptInterface(DeviceBridge(applicationContext), "AIRAGDevice")   // read-only battery status
         val bar = ProgressBar(this).apply { isIndeterminate = true }
         splashText = TextView(this).apply {
             text = getString(R.string.starting)
