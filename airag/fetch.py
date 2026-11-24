@@ -92,6 +92,10 @@ async def fetch_page(url: str, cfg: dict, title: str = "") -> Page:
     from . import offline
     if offline.blocked():
         return Page(url=url, error=offline.MESSAGE)
+    from . import netguard
+    problem = await netguard.check(url, netguard.allowed_local(cfg))
+    if problem:                                   # this computer / the local network: never read by default
+        return Page(url=url, error=problem)
     if url in _cache:
         _cache.move_to_end(url)
         return _cache[url]
@@ -152,8 +156,15 @@ async def _fetch_http(url: str, cfg: dict) -> Page:
     }
     t = float(cfg.get("timeout") or 15)
     try:
+        from . import netguard
+        allow_local = netguard.allowed_local(cfg)
+
+        async def guard(request):                 # every redirect must stay on public addresses too
+            problem = await netguard.check(str(request.url), allow_local)
+            if problem:
+                raise httpx.RequestError(problem, request=request)
         async with httpx.AsyncClient(follow_redirects=True, timeout=httpx.Timeout(t, connect=10),
-                                     headers=headers, max_redirects=8) as c:
+                                     headers=headers, max_redirects=8, event_hooks={"request": [guard]}) as c:
             async with c.stream("GET", url) as r:
                 if r.status_code >= 400:
                     return Page(url, error=f"HTTP {r.status_code}", blocked=r.status_code in (401, 403, 429, 503))
@@ -169,6 +180,10 @@ async def _fetch_http(url: str, cfg: dict) -> Page:
                 encoding = r.charset_encoding or "utf-8"
     except httpx.TimeoutException:
         return Page(url, error="Timed out")
+    except httpx.RequestError as e:
+        from . import netguard
+        msg = str(e)
+        return Page(url, error=msg if msg.startswith("Not read:") else type(e).__name__)
     except httpx.HTTPError as e:
         return Page(url, error=type(e).__name__)
     data = bytes(buf)
@@ -323,8 +338,13 @@ async def _fetch_browser(url: str, cfg: dict) -> Page:
         try:
             pg = await ctx.new_page()
 
+            from . import netguard
+            allow_local = netguard.allowed_local(cfg)
+
             async def block(route):
                 if route.request.resource_type in ("media", "font"):
+                    await route.abort()
+                elif await netguard.check(route.request.url, allow_local):   # page scripts can't reach the local network either
                     await route.abort()
                 else:
                     await route.continue_()

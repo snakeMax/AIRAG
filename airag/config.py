@@ -182,6 +182,8 @@ GENERAL_SCHEMA: dict = {
          "options": ["off", "moderate", "strict"]},
     ],
     "fetch": [
+        {"key": "allow_local_network", "label": "Read pages on my local network", "type": "bool", "default": False,
+         "help": "Off: links to this computer (127.0.0.1, localhost) or your local network (router, NAS, 192.168.x.x) are never read, so their contents can't reach the AI. Turn on only if you search your own intranet pages."},
         {"key": "fetcher", "label": "Page reader", "type": "select", "default": "auto",
          "options": ["auto", "http", "browser"],
          "help": "auto = fast HTTP first, headless browser for pages that need JavaScript "

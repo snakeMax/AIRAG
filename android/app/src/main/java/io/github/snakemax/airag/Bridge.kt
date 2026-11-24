@@ -168,9 +168,17 @@ object Bridge {
             w.settings.loadsImagesAutomatically = false
             w.settings.blockNetworkImage = true
             w.settings.mediaPlaybackRequiresUserGesture = true
+            w.settings.allowFileAccess = false              // pages being read can't open files or app content
+            w.settings.allowContentAccess = false
+            w.settings.setGeolocationEnabled(false)
             w.webViewClient = object : WebViewClient() {
                 private var done = false
-                override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest) = false
+                // redirects may not lead to this phone, the local network or other apps
+                override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest) =
+                    !NetGuard.isWeb(r.url) || NetGuard.isLocal(r.url)
+                override fun shouldInterceptRequest(v: WebView, r: WebResourceRequest): android.webkit.WebResourceResponse? =
+                    if (NetGuard.isWeb(r.url) && !NetGuard.isLocal(r.url)) null
+                    else android.webkit.WebResourceResponse("text/plain", "utf-8", 403, "Blocked", emptyMap(), java.io.ByteArrayInputStream(ByteArray(0)))
                 override fun onPageFinished(v: WebView, u: String) {
                     if (done) return
                     // give scripts a moment to fill in the content

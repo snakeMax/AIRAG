@@ -421,6 +421,9 @@ A YouTube video's title, channel, description and, when YouTube allows it, its c
 - **Other blocked pages:** their search-result descriptions are judged together in one small AI call. Useful ones are used as low-trust sources marked "search snippet only".
 - **Searches** are kept short (long ones are cut to their first words and retried), a few run at a time, and when DuckDuckGo throttles AIRAG (it answers "No results found" even for ordinary searches) the plain DuckDuckGo page and then Mojeek are used instead.
 
+### Read pages on my local network (off)
+Links to this computer (127.0.0.1, localhost) or to your local network (router, NAS, printers, 192.168.x.x and similar) are never read, so nothing on them can reach the AI, whether the link is in a search result, typed in your question or shared from another app. Redirects to such addresses are stopped too, and only http and https links are read. Turn this on only if you want AIRAG to read your own intranet pages.
+
 ### User agent
 How AIRAG identifies itself to websites. Only change this if a site you need refuses to load.
 

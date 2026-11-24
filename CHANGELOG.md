@@ -11,6 +11,7 @@
 - **Live resource graphs** (Settings → System, off by default): a chip under the top bar and three graphs - processor (phones: battery and temperature), memory, AI tokens per minute - in your accent colour or plain grey
 - **Snap panels**: the Answers panel and the Calculator card can be dragged by their title bar. On computers four snap areas light up and the one under the pointer shows where the box lands and that it resizes to fit; on phones (layout A, one column) a dashed slot shows the landing place while your finger is still down. Minimize turns a box into a pill in a tray; tap to bring it back. Positions are remembered
 - Groundwork (nothing changes yet): agent types and limits for 0.5.0 "The Agentic Utilities Update" (`airag/agents`), editions for the later enterprise build (`airag/editions.py`), and settings sections for both
+- Security: AIRAG never reads pages on this computer or your local network (router, NAS, 192.168.x.x...) unless you allow it in Settings → Searching, also after redirects and in the headless browser; other websites can't call any of AIRAG's local functions or show AIRAG inside a frame; on Android, links in articles only open web and mail links (no app or intent links), and AIRAG's WebViews have file access off
 - For development: `tools/codemap.py` (CODEMAP.md) and `tools/review.py` (checks imports, routes, text keys and safety rules; part of the tests)
 
 ## [0.4.1] - 2026-11-19

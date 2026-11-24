@@ -321,19 +321,19 @@
      "args": [
       "fields"
      ],
-     "line": 237
+     "line": 239
     },
     {
      "kind": "def",
      "name": "defaults",
      "args": [],
-     "line": 241
+     "line": 243
     },
     {
      "kind": "def",
      "name": "_base_defaults",
      "args": [],
-     "line": 254
+     "line": 256
     },
     {
      "kind": "def",
@@ -342,13 +342,13 @@
       "base",
       "over"
      ],
-     "line": 280
+     "line": 282
     },
     {
      "kind": "def",
      "name": "_secret_fields",
      "args": [],
-     "line": 290
+     "line": 292
     },
     {
      "kind": "def",
@@ -357,7 +357,7 @@
       "d",
       "path"
      ],
-     "line": 303
+     "line": 305
     },
     {
      "kind": "def",
@@ -367,7 +367,7 @@
       "path",
       "v"
      ],
-     "line": 311
+     "line": 313
     },
     {
      "kind": "def",
@@ -375,31 +375,31 @@
      "args": [
       "s"
      ],
-     "line": 317
+     "line": 319
     },
     {
      "kind": "def",
      "name": "_backup_path",
      "args": [],
-     "line": 332
+     "line": 334
     },
     {
      "kind": "def",
      "name": "load_raw",
      "args": [],
-     "line": 336
+     "line": 338
     },
     {
      "kind": "def",
      "name": "guarded",
      "args": [],
-     "line": 390
+     "line": 392
     },
     {
      "kind": "def",
      "name": "begin_job",
      "args": [],
-     "line": 397
+     "line": 399
     },
     {
      "kind": "def",
@@ -407,13 +407,13 @@
      "args": [
       "token"
      ],
-     "line": 405
+     "line": 407
     },
     {
      "kind": "def",
      "name": "in_job",
      "args": [],
-     "line": 410
+     "line": 412
     },
     {
      "kind": "def",
@@ -421,7 +421,7 @@
      "args": [
       "current"
      ],
-     "line": 414
+     "line": 416
     },
     {
      "kind": "def",
@@ -430,7 +430,7 @@
       "before",
       "after"
      ],
-     "line": 436
+     "line": 438
     },
     {
      "kind": "def",
@@ -438,7 +438,7 @@
      "args": [
       "with_env"
      ],
-     "line": 455
+     "line": 457
     },
     {
      "kind": "def",
@@ -446,7 +446,7 @@
      "args": [
       "s"
      ],
-     "line": 483
+     "line": 485
     },
     {
      "kind": "def",
@@ -455,7 +455,7 @@
       "new",
       "current"
      ],
-     "line": 492
+     "line": 494
     },
     {
      "kind": "def",
@@ -463,7 +463,7 @@
      "args": [
       "incoming"
      ],
-     "line": 500
+     "line": 502
     },
     {
      "kind": "def",
@@ -473,7 +473,7 @@
       "llm_provider",
       "provider_cfg"
      ],
-     "line": 519
+     "line": 521
     }
    ]
   },
@@ -794,7 +794,7 @@
      "kind": "def",
      "name": "browser_available",
      "args": [],
-     "line": 141
+     "line": 145
     },
     {
      "kind": "async def",
@@ -803,7 +803,7 @@
       "url",
       "cfg"
      ],
-     "line": 147
+     "line": 151
     },
     {
      "kind": "def",
@@ -813,7 +813,7 @@
       "final",
       "data"
      ],
-     "line": 183
+     "line": 198
     },
     {
      "kind": "def",
@@ -821,7 +821,7 @@
      "args": [
       "v"
      ],
-     "line": 201
+     "line": 216
     },
     {
      "kind": "def",
@@ -832,13 +832,13 @@
       "html",
       "via"
      ],
-     "line": 208
+     "line": 223
     },
     {
      "kind": "async def",
      "name": "_get_browser",
      "args": [],
-     "line": 290
+     "line": 305
     },
     {
      "kind": "async def",
@@ -847,7 +847,7 @@
       "url",
       "cfg"
      ],
-     "line": 303
+     "line": 318
     },
     {
      "kind": "async def",
@@ -856,13 +856,13 @@
       "url",
       "cfg"
      ],
-     "line": 316
+     "line": 331
     },
     {
      "kind": "async def",
      "name": "shutdown",
      "args": [],
-     "line": 345
+     "line": 365
     }
    ]
   },
@@ -1989,19 +1989,19 @@
      "kind": "async def",
      "name": "_startup",
      "args": [],
-     "line": 74
+     "line": 81
     },
     {
      "kind": "async def",
      "name": "_shutdown",
      "args": [],
-     "line": 88
+     "line": 95
     },
     {
      "kind": "def",
      "name": "index",
      "args": [],
-     "line": 96
+     "line": 103
     },
     {
      "kind": "def",
@@ -2010,31 +2010,31 @@
       "e",
       "code"
      ],
-     "line": 102
+     "line": 109
     },
     {
      "kind": "def",
      "name": "ping",
      "args": [],
-     "line": 108
+     "line": 115
     },
     {
      "kind": "def",
      "name": "app_info",
      "args": [],
-     "line": 113
+     "line": 120
     },
     {
      "kind": "def",
      "name": "app_show",
      "args": [],
-     "line": 122
+     "line": 129
     },
     {
      "kind": "class",
      "name": "OpenPathReq",
      "methods": [],
-     "line": 127
+     "line": 134
     },
     {
      "kind": "def",
@@ -2043,19 +2043,19 @@
       "req",
       "request"
      ],
-     "line": 132
+     "line": 139
     },
     {
      "kind": "def",
      "name": "app_inbox",
      "args": [],
-     "line": 151
+     "line": 158
     },
     {
      "kind": "class",
      "name": "OpenFileBody",
      "methods": [],
-     "line": 157
+     "line": 164
     },
     {
      "kind": "async def",
@@ -2063,13 +2063,13 @@
      "args": [
       "req"
      ],
-     "line": 164
+     "line": 171
     },
     {
      "kind": "class",
      "name": "RestartReq",
      "methods": [],
-     "line": 183
+     "line": 190
     },
     {
      "kind": "def",
@@ -2077,25 +2077,25 @@
      "args": [
       "req"
      ],
-     "line": 188
+     "line": 195
     },
     {
      "kind": "def",
      "name": "app_quit",
      "args": [],
-     "line": 198
+     "line": 205
     },
     {
      "kind": "def",
      "name": "storage",
      "args": [],
-     "line": 204
+     "line": 211
     },
     {
      "kind": "class",
      "name": "OpenReq",
      "methods": [],
-     "line": 211
+     "line": 218
     },
     {
      "kind": "def",
@@ -2103,7 +2103,7 @@
      "args": [
       "req"
      ],
-     "line": 216
+     "line": 223
     },
     {
      "kind": "def",
@@ -2112,13 +2112,13 @@
       "p",
       "reveal"
      ],
-     "line": 225
+     "line": 232
     },
     {
      "kind": "class",
      "name": "PricesReq",
      "methods": [],
-     "line": 244
+     "line": 251
     },
     {
      "kind": "def",
@@ -2126,25 +2126,25 @@
      "args": [
       "req"
      ],
-     "line": 250
+     "line": 257
     },
     {
      "kind": "def",
      "name": "live_resources",
      "args": [],
-     "line": 265
+     "line": 272
     },
     {
      "kind": "def",
      "name": "schema",
      "args": [],
-     "line": 272
+     "line": 279
     },
     {
      "kind": "def",
      "name": "get_settings",
      "args": [],
-     "line": 296
+     "line": 303
     },
     {
      "kind": "def",
@@ -2152,7 +2152,7 @@
      "args": [
       "what"
      ],
-     "line": 300
+     "line": 307
     },
     {
      "kind": "def",
@@ -2160,7 +2160,7 @@
      "args": [
       "body"
      ],
-     "line": 309
+     "line": 316
     },
     {
      "kind": "def",
@@ -2168,19 +2168,19 @@
      "args": [
       "s"
      ],
-     "line": 319
+     "line": 326
     },
     {
      "kind": "async def",
      "name": "status",
      "args": [],
-     "line": 330
+     "line": 337
     },
     {
      "kind": "class",
      "name": "ProviderReq",
      "methods": [],
-     "line": 355
+     "line": 362
     },
     {
      "kind": "async def",
@@ -2188,7 +2188,7 @@
      "args": [
       "req"
      ],
-     "line": 362
+     "line": 369
     },
     {
      "kind": "async def",
@@ -2196,7 +2196,7 @@
      "args": [
       "req"
      ],
-     "line": 373
+     "line": 380
     },
     {
      "kind": "def",
@@ -2204,7 +2204,7 @@
      "args": [
       "job_id"
      ],
-     "line": 389
+     "line": 396
     },
     {
      "kind": "def",
@@ -2212,7 +2212,7 @@
      "args": [
       "key"
      ],
-     "line": 397
+     "line": 404
     },
     {
      "kind": "def",
@@ -2220,7 +2220,7 @@
      "args": [
       "job_id"
      ],
-     "line": 402
+     "line": 409
     },
     {
      "kind": "def",
@@ -2228,13 +2228,13 @@
      "args": [
       "refresh"
      ],
-     "line": 407
+     "line": 414
     },
     {
      "kind": "class",
      "name": "ExportReq",
      "methods": [],
-     "line": 413
+     "line": 420
     },
     {
      "kind": "def",
@@ -2242,19 +2242,19 @@
      "args": [
       "req"
      ],
-     "line": 418
+     "line": 425
     },
     {
      "kind": "async def",
      "name": "backup_import",
      "args": [],
-     "line": 428
+     "line": 435
     },
     {
      "kind": "def",
      "name": "clear_cache",
      "args": [],
-     "line": 452
+     "line": 459
     },
     {
      "kind": "def",
@@ -2263,13 +2263,13 @@
       "lines",
       "level"
      ],
-     "line": 467
+     "line": 474
     },
     {
      "kind": "def",
      "name": "_secret_values",
      "args": [],
-     "line": 494
+     "line": 501
     },
     {
      "kind": "def",
@@ -2278,7 +2278,7 @@
       "d",
       "prefix"
      ],
-     "line": 504
+     "line": 511
     },
     {
      "kind": "def",
@@ -2286,7 +2286,7 @@
      "args": [
       "override"
      ],
-     "line": 513
+     "line": 520
     },
     {
      "kind": "async def",
@@ -2294,7 +2294,7 @@
      "args": [
       "url"
      ],
-     "line": 518
+     "line": 525
     },
     {
      "kind": "async def",
@@ -2302,19 +2302,19 @@
      "args": [
       "url"
      ],
-     "line": 523
+     "line": 530
     },
     {
      "kind": "class",
      "name": "PcLinkReq",
      "methods": [],
-     "line": 532
+     "line": 539
     },
     {
      "kind": "def",
      "name": "pclink_status",
      "args": [],
-     "line": 539
+     "line": 546
     },
     {
      "kind": "def",
@@ -2322,19 +2322,19 @@
      "args": [
       "req"
      ],
-     "line": 545
+     "line": 552
     },
     {
      "kind": "def",
      "name": "ollama_recommended",
      "args": [],
-     "line": 562
+     "line": 569
     },
     {
      "kind": "class",
      "name": "ModelReq",
      "methods": [],
-     "line": 566
+     "line": 573
     },
     {
      "kind": "async def",
@@ -2342,7 +2342,7 @@
      "args": [
       "req"
      ],
-     "line": 572
+     "line": 579
     },
     {
      "kind": "async def",
@@ -2350,25 +2350,25 @@
      "args": [
       "req"
      ],
-     "line": 581
+     "line": 588
     },
     {
      "kind": "def",
      "name": "browser_status",
      "args": [],
-     "line": 591
+     "line": 598
     },
     {
      "kind": "async def",
      "name": "browser_install_start",
      "args": [],
-     "line": 596
+     "line": 603
     },
     {
      "kind": "async def",
      "name": "browser_uninstall",
      "args": [],
-     "line": 601
+     "line": 608
     },
     {
      "kind": "async def",
@@ -2376,49 +2376,49 @@
      "args": [
       "force"
      ],
-     "line": 608
+     "line": 615
     },
     {
      "kind": "async def",
      "name": "update_install",
      "args": [],
-     "line": 613
+     "line": 620
     },
     {
      "kind": "async def",
      "name": "repair_check",
      "args": [],
-     "line": 619
+     "line": 626
     },
     {
      "kind": "async def",
      "name": "repair_run",
      "args": [],
-     "line": 627
+     "line": 634
     },
     {
      "kind": "async def",
      "name": "repair_reinstall",
      "args": [],
-     "line": 633
+     "line": 640
     },
     {
      "kind": "def",
      "name": "_reindex_soon",
      "args": [],
-     "line": 637
+     "line": 644
     },
     {
      "kind": "def",
      "name": "mylibrary_status",
      "args": [],
-     "line": 651
+     "line": 658
     },
     {
      "kind": "class",
      "name": "MyFolderReq",
      "methods": [],
-     "line": 656
+     "line": 663
     },
     {
      "kind": "async def",
@@ -2426,13 +2426,13 @@
      "args": [
       "req"
      ],
-     "line": 661
+     "line": 668
     },
     {
      "kind": "class",
      "name": "SaveReq",
      "methods": [],
-     "line": 682
+     "line": 689
     },
     {
      "kind": "async def",
@@ -2440,19 +2440,19 @@
      "args": [
       "req"
      ],
-     "line": 690
+     "line": 697
     },
     {
      "kind": "async def",
      "name": "offline_state",
      "args": [],
-     "line": 709
+     "line": 716
     },
     {
      "kind": "class",
      "name": "OfflineReq",
      "methods": [],
-     "line": 734
+     "line": 741
     },
     {
      "kind": "async def",
@@ -2460,13 +2460,13 @@
      "args": [
       "req"
      ],
-     "line": 742
+     "line": 749
     },
     {
      "kind": "class",
      "name": "TagsReq",
      "methods": [],
-     "line": 762
+     "line": 769
     },
     {
      "kind": "async def",
@@ -2475,7 +2475,7 @@
       "rid",
       "req"
      ],
-     "line": 767
+     "line": 774
     },
     {
      "kind": "async def",
@@ -2483,7 +2483,7 @@
      "args": [
       "rid"
      ],
-     "line": 784
+     "line": 791
     },
     {
      "kind": "async def",
@@ -2492,13 +2492,13 @@
       "s",
       "rec"
      ],
-     "line": 794
+     "line": 801
     },
     {
      "kind": "def",
      "name": "mylibrary_saved",
      "args": [],
-     "line": 800
+     "line": 807
     },
     {
      "kind": "def",
@@ -2506,13 +2506,13 @@
      "args": [
       "name"
      ],
-     "line": 806
+     "line": 813
     },
     {
      "kind": "class",
      "name": "UnsaveReq",
      "methods": [],
-     "line": 814
+     "line": 821
     },
     {
      "kind": "def",
@@ -2520,19 +2520,19 @@
      "args": [
       "req"
      ],
-     "line": 821
+     "line": 828
     },
     {
      "kind": "def",
      "name": "mylibrary_removed",
      "args": [],
-     "line": 842
+     "line": 849
     },
     {
      "kind": "class",
      "name": "RestoreReq",
      "methods": [],
-     "line": 848
+     "line": 855
     },
     {
      "kind": "def",
@@ -2540,7 +2540,7 @@
      "args": [
       "req"
      ],
-     "line": 853
+     "line": 860
     },
     {
      "kind": "def",
@@ -2548,13 +2548,13 @@
      "args": [
       "rid"
      ],
-     "line": 866
+     "line": 873
     },
     {
      "kind": "class",
      "name": "SaveSourceReq",
      "methods": [],
-     "line": 871
+     "line": 878
     },
     {
      "kind": "async def",
@@ -2562,13 +2562,13 @@
      "args": [
       "req"
      ],
-     "line": 877
+     "line": 884
     },
     {
      "kind": "class",
      "name": "ImportReq",
      "methods": [],
-     "line": 894
+     "line": 901
     },
     {
      "kind": "async def",
@@ -2576,31 +2576,31 @@
      "args": [
       "req"
      ],
-     "line": 899
+     "line": 906
     },
     {
      "kind": "def",
      "name": "mylibrary_open",
      "args": [],
-     "line": 918
+     "line": 925
     },
     {
      "kind": "def",
      "name": "library_status",
      "args": [],
-     "line": 926
+     "line": 933
     },
     {
      "kind": "async def",
      "name": "library_pick",
      "args": [],
-     "line": 936
+     "line": 943
     },
     {
      "kind": "class",
      "name": "FolderReq",
      "methods": [],
-     "line": 944
+     "line": 951
     },
     {
      "kind": "def",
@@ -2608,7 +2608,7 @@
      "args": [
       "req"
      ],
-     "line": 949
+     "line": 956
     },
     {
      "kind": "def",
@@ -2616,7 +2616,7 @@
      "args": [
       "req"
      ],
-     "line": 962
+     "line": 969
     },
     {
      "kind": "def",
@@ -2624,19 +2624,19 @@
      "args": [
       "job"
      ],
-     "line": 969
+     "line": 976
     },
     {
      "kind": "async def",
      "name": "library_sync",
      "args": [],
-     "line": 981
+     "line": 988
     },
     {
      "kind": "def",
      "name": "library_clear",
      "args": [],
-     "line": 986
+     "line": 993
     },
     {
      "kind": "def",
@@ -2644,7 +2644,7 @@
      "args": [
       "fid"
      ],
-     "line": 992
+     "line": 999
     },
     {
      "kind": "def",
@@ -2652,13 +2652,13 @@
      "args": [
       "fid"
      ],
-     "line": 1003
+     "line": 1010
     },
     {
      "kind": "class",
      "name": "OpenFileReq",
      "methods": [],
-     "line": 1011
+     "line": 1018
     },
     {
      "kind": "def",
@@ -2666,7 +2666,7 @@
      "args": [
       "req"
      ],
-     "line": 1017
+     "line": 1024
     },
     {
      "kind": "def",
@@ -2674,13 +2674,13 @@
      "args": [
       "gen_factory"
      ],
-     "line": 1023
+     "line": 1030
     },
     {
      "kind": "class",
      "name": "ResearchReq",
      "methods": [],
-     "line": 1057
+     "line": 1064
     },
     {
      "kind": "async def",
@@ -2688,13 +2688,13 @@
      "args": [
       "req"
      ],
-     "line": 1071
+     "line": 1078
     },
     {
      "kind": "class",
      "name": "QuickReq",
      "methods": [],
-     "line": 1106
+     "line": 1113
     },
     {
      "kind": "async def",
@@ -2702,13 +2702,13 @@
      "args": [
       "req"
      ],
-     "line": 1115
+     "line": 1122
     },
     {
      "kind": "class",
      "name": "SoundReq",
      "methods": [],
-     "line": 1147
+     "line": 1154
     },
     {
      "kind": "def",
@@ -2717,7 +2717,7 @@
       "name",
       "builtin"
      ],
-     "line": 1153
+     "line": 1160
     },
     {
      "kind": "def",
@@ -2726,7 +2726,7 @@
       "name",
       "req"
      ],
-     "line": 1163
+     "line": 1170
     },
     {
      "kind": "def",
@@ -2734,25 +2734,25 @@
      "args": [
       "name"
      ],
-     "line": 1172
+     "line": 1179
     },
     {
      "kind": "async def",
      "name": "usage_summary",
      "args": [],
-     "line": 1179
+     "line": 1186
     },
     {
      "kind": "def",
      "name": "usage_reset",
      "args": [],
-     "line": 1186
+     "line": 1193
     },
     {
      "kind": "async def",
      "name": "usage_prices",
      "args": [],
-     "line": 1193
+     "line": 1200
     },
     {
      "kind": "def",
@@ -2763,7 +2763,7 @@
       "title",
       "ref"
      ],
-     "line": 1198
+     "line": 1205
     },
     {
      "kind": "async def",
@@ -2774,7 +2774,7 @@
       "title",
       "ref"
      ],
-     "line": 1211
+     "line": 1218
     },
     {
      "kind": "def",
@@ -2782,13 +2782,13 @@
      "args": [
       "run"
      ],
-     "line": 1232
+     "line": 1239
     },
     {
      "kind": "def",
      "name": "research_active",
      "args": [],
-     "line": 1243
+     "line": 1250
     },
     {
      "kind": "def",
@@ -2796,7 +2796,7 @@
      "args": [
       "rid"
      ],
-     "line": 1249
+     "line": 1256
     },
     {
      "kind": "def",
@@ -2804,19 +2804,19 @@
      "args": [
       "rid"
      ],
-     "line": 1258
+     "line": 1265
     },
     {
      "kind": "class",
      "name": "TranslateReq",
      "methods": [],
-     "line": 1263
+     "line": 1270
     },
     {
      "kind": "class",
      "name": "FollowupReq",
      "methods": [],
-     "line": 1271
+     "line": 1278
     },
     {
      "kind": "async def",
@@ -2824,7 +2824,7 @@
      "args": [
       "req"
      ],
-     "line": 1281
+     "line": 1288
     },
     {
      "kind": "def",
@@ -2832,13 +2832,13 @@
      "args": [
       "rid"
      ],
-     "line": 1294
+     "line": 1301
     },
     {
      "kind": "class",
      "name": "AddAnswerReq",
      "methods": [],
-     "line": 1299
+     "line": 1306
     },
     {
      "kind": "def",
@@ -2847,13 +2847,13 @@
       "rid",
       "req"
      ],
-     "line": 1304
+     "line": 1311
     },
     {
      "kind": "class",
      "name": "CalcReq",
      "methods": [],
-     "line": 1312
+     "line": 1319
     },
     {
      "kind": "async def",
@@ -2861,13 +2861,13 @@
      "args": [
       "req"
      ],
-     "line": 1317
+     "line": 1324
     },
     {
      "kind": "class",
      "name": "RewriteReq",
      "methods": [],
-     "line": 1329
+     "line": 1336
     },
     {
      "kind": "async def",
@@ -2875,13 +2875,13 @@
      "args": [
       "req"
      ],
-     "line": 1337
+     "line": 1344
     },
     {
      "kind": "class",
      "name": "RegenerateReq",
      "methods": [],
-     "line": 1347
+     "line": 1354
     },
     {
      "kind": "async def",
@@ -2889,7 +2889,7 @@
      "args": [
       "req"
      ],
-     "line": 1356
+     "line": 1363
     },
     {
      "kind": "def",
@@ -2897,7 +2897,7 @@
      "args": [
       "rid"
      ],
-     "line": 1372
+     "line": 1379
     },
     {
      "kind": "def",
@@ -2906,13 +2906,13 @@
       "rid",
       "n"
      ],
-     "line": 1378
+     "line": 1385
     },
     {
      "kind": "class",
      "name": "VersionReq",
      "methods": [],
-     "line": 1386
+     "line": 1393
     },
     {
      "kind": "def",
@@ -2921,7 +2921,7 @@
       "rid",
       "req"
      ],
-     "line": 1391
+     "line": 1398
     },
     {
      "kind": "def",
@@ -2929,13 +2929,13 @@
      "args": [
       "rid"
      ],
-     "line": 1399
+     "line": 1406
     },
     {
      "kind": "class",
      "name": "RewriteApplyReq",
      "methods": [],
-     "line": 1406
+     "line": 1413
     },
     {
      "kind": "def",
@@ -2943,13 +2943,13 @@
      "args": [
       "req"
      ],
-     "line": 1414
+     "line": 1421
     },
     {
      "kind": "class",
      "name": "ImageReq",
      "methods": [],
-     "line": 1422
+     "line": 1429
     },
     {
      "kind": "async def",
@@ -2957,19 +2957,19 @@
      "args": [
       "req"
      ],
-     "line": 1430
+     "line": 1437
     },
     {
      "kind": "class",
      "name": "AgentToolsReq",
      "methods": [],
-     "line": 1469
+     "line": 1476
     },
     {
      "kind": "def",
      "name": "agent_tools",
      "args": [],
-     "line": 1477
+     "line": 1484
     },
     {
      "kind": "def",
@@ -2977,7 +2977,7 @@
      "args": [
       "req"
      ],
-     "line": 1490
+     "line": 1497
     },
     {
      "kind": "async def",
@@ -2985,7 +2985,7 @@
      "args": [
       "req"
      ],
-     "line": 1514
+     "line": 1521
     },
     {
      "kind": "async def",
@@ -2993,13 +2993,13 @@
      "args": [
       "req"
      ],
-     "line": 1526
+     "line": 1533
     },
     {
      "kind": "class",
      "name": "SummaryReq",
      "methods": [],
-     "line": 1534
+     "line": 1541
     },
     {
      "kind": "async def",
@@ -3007,13 +3007,13 @@
      "args": [
       "req"
      ],
-     "line": 1542
+     "line": 1549
     },
     {
      "kind": "class",
      "name": "InteractiveReq",
      "methods": [],
-     "line": 1553
+     "line": 1560
     },
     {
      "kind": "async def",
@@ -3021,7 +3021,7 @@
      "args": [
       "req"
      ],
-     "line": 1560
+     "line": 1567
     },
     {
      "kind": "async def",
@@ -3029,19 +3029,19 @@
      "args": [
       "req"
      ],
-     "line": 1593
+     "line": 1600
     },
     {
      "kind": "def",
      "name": "history_list",
      "args": [],
-     "line": 1604
+     "line": 1611
     },
     {
      "kind": "class",
      "name": "ExportReq",
      "methods": [],
-     "line": 1608
+     "line": 1615
     },
     {
      "kind": "async def",
@@ -3049,19 +3049,19 @@
      "args": [
       "req"
      ],
-     "line": 1620
+     "line": 1627
     },
     {
      "kind": "class",
      "name": "ExportOpenReq",
      "methods": [],
-     "line": 1633
+     "line": 1640
     },
     {
      "kind": "class",
      "name": "SummaryFileReq",
      "methods": [],
-     "line": 1639
+     "line": 1646
     },
     {
      "kind": "def",
@@ -3069,7 +3069,7 @@
      "args": [
       "req"
      ],
-     "line": 1648
+     "line": 1655
     },
     {
      "kind": "def",
@@ -3077,13 +3077,13 @@
      "args": [
       "req"
      ],
-     "line": 1659
+     "line": 1666
     },
     {
      "kind": "class",
      "name": "WikiReq",
      "methods": [],
-     "line": 1669
+     "line": 1676
     },
     {
      "kind": "async def",
@@ -3091,7 +3091,7 @@
      "args": [
       "req"
      ],
-     "line": 1676
+     "line": 1683
     },
     {
      "kind": "async def",
@@ -3099,19 +3099,19 @@
      "args": [
       "req"
      ],
-     "line": 1686
+     "line": 1693
     },
     {
      "kind": "class",
      "name": "PinSourceReq",
      "methods": [],
-     "line": 1705
+     "line": 1712
     },
     {
      "kind": "def",
      "name": "pinned_sources",
      "args": [],
-     "line": 1717
+     "line": 1724
     },
     {
      "kind": "async def",
@@ -3119,7 +3119,7 @@
      "args": [
       "req"
      ],
-     "line": 1723
+     "line": 1730
     },
     {
      "kind": "def",
@@ -3127,7 +3127,7 @@
      "args": [
       "pid"
      ],
-     "line": 1741
+     "line": 1748
     },
     {
      "kind": "def",
@@ -3135,13 +3135,13 @@
      "args": [
       "pid"
      ],
-     "line": 1747
+     "line": 1754
     },
     {
      "kind": "class",
      "name": "PinReq",
      "methods": [],
-     "line": 1755
+     "line": 1762
     },
     {
      "kind": "def",
@@ -3150,7 +3150,7 @@
       "rid",
       "req"
      ],
-     "line": 1760
+     "line": 1767
     },
     {
      "kind": "def",
@@ -3158,7 +3158,7 @@
      "args": [
       "rid"
      ],
-     "line": 1768
+     "line": 1775
     },
     {
      "kind": "def",
@@ -3166,13 +3166,13 @@
      "args": [
       "rid"
      ],
-     "line": 1776
+     "line": 1783
     },
     {
      "kind": "def",
      "name": "history_clear",
      "args": [],
-     "line": 1782
+     "line": 1789
     }
    ]
   },
@@ -3444,6 +3444,52 @@
      "name": "purge_removed",
      "args": [],
      "line": 524
+    }
+   ]
+  },
+  "airag/netguard.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_bad_ip",
+     "args": [
+      "ip"
+     ],
+     "line": 22
+    },
+    {
+     "kind": "def",
+     "name": "_literal_problem",
+     "args": [
+      "url"
+     ],
+     "line": 28
+    },
+    {
+     "kind": "def",
+     "name": "allowed_local",
+     "args": [
+      "settings_fetch"
+     ],
+     "line": 55
+    },
+    {
+     "kind": "def",
+     "name": "check_sync",
+     "args": [
+      "url",
+      "allow_local"
+     ],
+     "line": 59
+    },
+    {
+     "kind": "async def",
+     "name": "check",
+     "args": [
+      "url",
+      "allow_local"
+     ],
+     "line": 79
     }
    ]
   },
@@ -7408,6 +7454,7 @@
    "safesearch"
   ],
   "fetch": [
+   "allow_local_network",
    "fetcher",
    "timeout",
    "max_concurrency",
@@ -7465,5 +7512,5 @@
   "vision",
   "misc"
  ],
- "i18n_keys": 1121
+ "i18n_keys": 1123
 }

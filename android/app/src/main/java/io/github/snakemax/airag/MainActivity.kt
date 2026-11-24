@@ -102,6 +102,9 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false   // sound effects when a search finishes
+            settings.allowFileAccess = false                     // AIRAG's page is served over http; no file:// or content://
+            settings.allowContentAccess = false
+            settings.setGeolocationEnabled(false)
             settings.setSupportMultipleWindows(false)
             settings.useWideViewPort = true          // honour the page's viewport tag (no zoomed-out desktop layout)
             settings.loadWithOverviewMode = false
@@ -230,6 +233,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun openExternal(uri: Uri) {
+        if (!NetGuard.externalOk(uri)) return          // no intent:, file:, app or settings links from page content
         try {
             startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (_: Exception) { }

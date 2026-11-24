@@ -61,13 +61,20 @@ async def only_local(request: Request, call_next):
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-cache"
         return response
+    if path.startswith("/api/") and request.headers.get("sec-fetch-site") == "cross-site":
+        # other websites may not call any API, the open ones (show window, ping) included
+        return JSONResponse({"detail": "Cross-site request blocked"}, status_code=403)
     if path.startswith("/api/") and path not in OPEN_PATHS:
-        if request.headers.get("sec-fetch-site") == "cross-site":
-            return JSONResponse({"detail": "Cross-site request blocked"}, status_code=403)
         given = request.cookies.get(SESSION_COOKIE) or request.headers.get("x-airag-token") or ""
         if not secrets.compare_digest(given.encode(), SESSION_TOKEN.encode()):
             return JSONResponse({"detail": "Reload AIRAG to continue (session expired)."}, status_code=401)
-    return await call_next(request)
+    response = await call_next(request)
+    # no other website may show AIRAG inside a frame (clickjacking); AIRAG's own explainers use srcdoc frames
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    return response
 
 
 @app.on_event("startup")

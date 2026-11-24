@@ -518,6 +518,11 @@ or removing them.
 - def `forget_removed(rid)`
 - def `purge_removed()`
 
+### airag/netguard.py
+- def `allowed_local(settings_fetch)`
+- def `check_sync(url, allow_local)`
+- async def `check(url, allow_local)`
+
 ### airag/offline.py
 - class `Offline` ()
 - def `on(settings)`
@@ -832,10 +837,10 @@ or removing them.
 - `prompts`: style, length, explainer_level, custom_instructions, planner_instructions, article_prompt
 - `llm`: temperature, task_models
 - `search`: use_wikis, wiki_results, wikis, region, safesearch
-- `fetch`: fetcher, timeout, max_concurrency, youtube, youtube_retries, user_agent
+- `fetch`: allow_local_network, fetcher, timeout, max_concurrency, youtube, youtube_retries, user_agent
 - `research`: explainer_local_examples, explainer_web_examples, use_pinned, max_rounds, results_per_query, sources_per_round, max_sources_total, llm_concurrency, passage_chars, direct_relevance, direct_coverage, min_findings, enough_findings, article_max_tokens, max_article_sources, images, interactive_check, max_images, skip_domains, favourite_sites
 
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, misc  
-i18n keys (en): 1121
+i18n keys (en): 1123
