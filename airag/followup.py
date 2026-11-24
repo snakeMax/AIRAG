@@ -77,7 +77,7 @@ async def answer(settings: dict, rid: str, question: str, mode: str = "ask", sel
         raise ValueError("Search not found")
     mode = mode if mode in MODES else "ask"
     prompts.use(settings)
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="followup")
     lang = languages.answer_language(settings, ui_lang, question or rec.get("query", ""))
     allowed = enabled(settings, "standard")
     from .effort import params
@@ -146,7 +146,7 @@ gives them. Reply with the expression only - no words, no code fences."""
 async def calculate(settings: dict, text: str) -> dict:
     """The toolbar's Calculate button: AI turns the selection into an expression, the calculator solves it."""
     from .tools.calc import calculate as calc
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="followup")
     fence = Fence()
     expr = (await llm.complete(CALC_SYSTEM + "\n" + fence.rule(), fence.wrap(text[:2000]), max_tokens=200)).strip()
     expr = expr.strip("`").splitlines()[0].strip() if expr else ""

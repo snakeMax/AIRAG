@@ -1399,7 +1399,7 @@ async def analyze_image(req: ImageReq):
     """'Analyze image': the selected model looks at a picture (an equation, a chart...) and answers."""
     from .llm import get_llm
     s = config.load()
-    llm = get_llm(s)
+    llm = get_llm(s, task="vision")
     if not getattr(llm, "supports_vision", False):
         raise HTTPException(400, "The selected AI model can't look at images. Pick a model that can (Claude, GPT-4o/5, "
                                  "or a vision model through OpenRouter), or copy the equation as text with an "
@@ -1665,7 +1665,7 @@ async def wiki_describe(req: WikiReq):
     lang = languages.answer_language(s, req.ui_lang, info["name"])
 
     async def go() -> dict:
-        about = await get_llm(s).complete(*prompts_mod.describe_wiki(info["name"], text, lang), max_tokens=120)
+        about = await get_llm(s, task="misc").complete(*prompts_mod.describe_wiki(info["name"], text, lang), max_tokens=120)
         return {"about": " ".join(about.split())[:240]}
     return await _job_result(go, "summary", info["name"])
 

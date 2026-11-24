@@ -78,7 +78,7 @@ async def suggest(settings: dict, rec: dict) -> List[str]:
     fence = Fence()
     text = (rec.get("article") or "")[:6000]
     title = rec.get("title") or rec.get("query") or ""
-    out = await get_llm(settings).complete(PROMPT + "\n" + prompts.UNTRUSTED + "\n" + fence.rule(),
+    out = await get_llm(settings, task="tags").complete(PROMPT + "\n" + prompts.UNTRUSTED + "\n" + fence.rule(),
                                            f"Title: {title}\n\nARTICLE:\n" + fence.wrap(text), max_tokens=120)
     m = re.search(r"\[.*?\]", out or "", re.S)
     try:

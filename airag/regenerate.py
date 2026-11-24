@@ -66,7 +66,7 @@ Use the same source numbers. Never add facts the sources don't support.{keep_txt
 Current version:
 {fence.wrap((rec.get("article") or "")[:14000])}"""
     system = system + "\n" + fence.rule()
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="rewrite")
     yield {"type": "article_start", "sources": sources}
     md = ""
     async for piece in llm.stream(system, user, max_tokens=int(settings["research"].get("article_max_tokens", 8192))):

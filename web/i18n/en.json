@@ -950,5 +950,6 @@
  "set.searchOne": "1 setting matches \"{q}\"",
  "set.searchMany": "{n} settings match \"{q}\"",
  "quick.kicker": "Quick answer",
- "home.searchBtn": "Search"
+ "home.searchBtn": "Search",
+ "share.long": "The shared text is long. Shorten it to a question if you like, then press Search."
 }

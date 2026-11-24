@@ -145,6 +145,8 @@ GENERAL_SCHEMA: dict = {
     "llm": [
         {"key": "temperature", "label": "Temperature", "type": "number", "default": 0.3,
          "min": 0, "max": 1.5, "step": 0.05, "help": "Lower is more factual and consistent."},
+        # {provider: {task: model}}; empty = every task uses the provider's main model (Sonnet 5.5 for Claude).
+        {"key": "task_models", "label": "", "type": "hidden", "default": {}},
     ],
     "search": [
         {"key": "use_wikis", "label": "Also search wikis", "type": "bool", "default": True,
@@ -476,6 +478,10 @@ def save(incoming: dict) -> dict:
     with _lock:
         current = deep_merge(defaults(), load_raw())
         new = unmask_into(deep_merge(current, incoming), current)
+        tm = (incoming.get("llm") or {}).get("task_models") if isinstance(incoming.get("llm"), dict) else None
+        if tm is not None:         # replaced, not merged, so "use the main model" can remove an entry
+            from .llm.tasks import clean_table
+            new["llm"]["task_models"] = clean_table(tm)
         paths.ensure_dirs()
         try:                       # keep the previous good copy, in case something goes wrong later
             if SETTINGS_PATH.exists():

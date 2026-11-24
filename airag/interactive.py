@@ -161,7 +161,7 @@ async def generate(settings: dict, rid: str, ui_lang: Optional[str], force: bool
         raise ValueError("Article not found")
     if rec.get("interactive_html") and not force:
         return {"html": safe(rec["interactive_html"]), "cached": True}
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="explainer")
     info = rec.get("interactive")
     if info is None:
         # the search ran without the explainer check (to save tokens): check now, when the reader asks

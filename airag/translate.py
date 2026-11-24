@@ -19,7 +19,7 @@ async def article(settings: dict, markdown: str, lang: str, rid: Optional[str] =
     if cached:
         yield cached
         return
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="translate")
     out = ""
     async for piece in llm.stream(*prompts.translate(markdown[:40000], _lang_name(lang)), max_tokens=8000):
         out += piece
@@ -35,7 +35,7 @@ async def items(settings: dict, entries: List[dict], lang: str) -> List[dict]:
     small = [{"id": e.get("id"), "title": e.get("title", ""), "summary": e.get("summary", ""),
               "findings": [str(f.get("claim", "")) if isinstance(f, dict) else str(f)
                            for f in (e.get("findings") or [])][:8]} for e in entries[:30]]
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="translate")
     data = await complete_json(llm, *prompts.translate_items(small, _lang_name(lang)), max_tokens=6000)
     if isinstance(data, dict):
         data = data.get("items") or next((v for v in data.values() if isinstance(v, list)), [])

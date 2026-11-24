@@ -30,6 +30,17 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
         return p
     }
 
+    /** Text or a link shared to AIRAG ("Search with AIRAG"): the page starts a search with it. */
+    @Volatile private var pendingText: String? = null
+
+    @JavascriptInterface
+    fun takeText(key: String): String {
+        if (!NativeKey.ok(key)) return ""
+        val p = pendingText ?: ""
+        pendingText = null
+        return p
+    }
+
     /** A file opened with (or shared to) AIRAG: {"name": ..., "data": base64} as JSON. */
     @JavascriptInterface
     fun takeFile(key: String): String {
@@ -43,6 +54,16 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
         if (intent == null) return
         if (intent.action == Intent.ACTION_VIEW && intent.data != null) return openDocument(intent.data!!)
         if (intent.action != Intent.ACTION_SEND) return
+        if (intent.type == "text/plain" && streamOf(intent) == null) {
+            val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()?.trim().orEmpty()
+            if (text.isEmpty()) return
+            val subject = intent.getStringExtra(Intent.EXTRA_SUBJECT)?.trim().orEmpty()
+            // many apps share "Title https://link": keep both, capped so a huge paste can't flood the page
+            val joined = if (subject.isNotEmpty() && !text.contains(subject)) "$subject $text" else text
+            pendingText = joined.take(MAX_TEXT)
+            activity.runOnUiThread { web.evaluateJavascript("window.dispatchEvent(new Event('airag-share'))", null) }
+            return
+        }
         if (intent.type?.startsWith("image/") != true) {
             streamOf(intent)?.let { openDocument(it) }
             return
@@ -87,7 +108,10 @@ class ShareBridge(private val activity: MainActivity, private val web: WebView) 
         }
     }
 
-    private companion object { const val MAX_FILE = 20L * 1024 * 1024 }
+    private companion object {
+        const val MAX_FILE = 20L * 1024 * 1024
+        const val MAX_TEXT = 4000
+    }
 
     @Suppress("DEPRECATION")
     private fun streamOf(intent: Intent): Uri? =

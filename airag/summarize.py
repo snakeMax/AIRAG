@@ -12,7 +12,7 @@ from .passages import select_passages, tokenize
 
 
 async def summarize(settings: dict, kind: str, query: str, payload: dict, ui_lang: Optional[str]) -> AsyncIterator[str]:
-    llm = get_llm(settings)
+    llm = get_llm(settings, task="summary")
     lang = languages.answer_language(settings, ui_lang, query)
     terms = tokenize(query)
     if kind == "article":

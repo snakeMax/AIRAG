@@ -105,10 +105,11 @@ def short_query(q: str, words: int = 9) -> str:
 
 
 class Research:
+    LLM_TASK = "research"   # which "Models per task" entry this run uses
     def __init__(self, query: str, mode: str, settings: dict, emit: Emit,
                  include_library: bool = False, ui_lang: Optional[str] = None, from_id: Optional[str] = None,
                  date_from: str = "", date_to: str = "", merge_id: Optional[str] = None, extras: bool = True,
-                 extend_id: Optional[str] = None):
+                 extend_id: Optional[str] = None, given_urls: Optional[List[str]] = None):
         self.extend = history.get(extend_id) if extend_id else None   # "Locate more sources" for this article
         if self.extend and not self.extend.get("plan"):
             raise ValueError("More sources can only be looked for after a finished search.")
@@ -142,7 +143,7 @@ class Research:
         self.use_library = (bool(include_library) or self.offline) and bool(library_args(settings)["folders"])
         self.use_web = not self.offline and ((not self.use_library) or bool(settings["library"].get("web_too", True)))
         self.emit = emit
-        self.llm = get_llm(settings)
+        self.llm = get_llm(settings, task=self.LLM_TASK)
         self.search = get_search(settings)
         self.img_search = get_image_search(settings)
         self.sources: Dict[str, dict] = {}
@@ -159,7 +160,9 @@ class Research:
         self.run_id = self.id      # the background job's id (differs when extending an article)
         self.created = now.astimezone().isoformat(timespec="seconds")
         from .sitelists import SiteLists
-        self.sites = SiteLists(self.r)   # blocked and favourite sites (domains or directories)
+        self.sites = SiteLists(self.r)
+        from .givenurls import urls_in
+        self.given_urls: List[str] = urls_in(" ".join(given_urls or []), limit=5)   # "Add source" (web tabs, later)   # blocked and favourite sites (domains or directories)
         self._sem_llm = asyncio.Semaphore(max(1, int(self.r["llm_concurrency"])))
         self._sem_fetch = asyncio.Semaphore(max(1, int(settings["fetch"]["max_concurrency"])))
         self._sem_search = asyncio.Semaphore(2)    # a few searches at a time: search engines limit bursts
@@ -268,6 +271,8 @@ class Research:
                 await self.emit({"type": "sources", "items": [self.pub(self.sources[u]) for u in self.order]})
                 await self.step("reuse", f"Using {n} sources from the previous search", "done",
                                 "New sources found now are compared with these")
+        if self.use_web:
+            await self.given_round()
         if self.use_library:
             await self.library_round()
         if self.r.get("use_pinned", True) or self.offline:
@@ -575,6 +580,28 @@ class Research:
         useful = len(useful)
         await self.step("library", "Searched your library", "done",
                         f"{len(fresh)} matching files checked · {useful} relevant" if fresh else "No matching files")
+
+    async def given_round(self) -> None:
+        """Links in the question itself (typed or shared to AIRAG) are read first, as normal pages."""
+        from .givenurls import urls_in
+        fresh = []
+        for url in urls_in(self.query) + [u for u in self.given_urls if u not in self.query]:
+            url = urldefrag(url)[0]
+            if url in self.sources or self.sites.blocked_url(url):
+                continue
+            src = {"id": self.next_id(), "url": url, "domain": domain_of(url), "title": url, "snippet": "",
+                   "query": "your link", "round": 0, "rank": len(fresh), "status": "found",
+                   "prior": 7, "prior_label": "Link you gave"}
+            self.sources[url] = src
+            self.order.append(url)
+            fresh.append(src)
+        if not fresh:
+            return
+        await self.step("given", "Reading the links you gave", "running", f"{len(fresh)} page(s)")
+        await self.emit({"type": "sources", "items": [self.pub(x) for x in fresh]})
+        await asyncio.gather(*(self.read_one(x) for x in fresh))
+        useful = sum(1 for x in fresh if (x.get("relevance") or 0) >= 4)
+        await self.step("given", "Read the links you gave", "done", f"{len(fresh)} read · {useful} relevant")
 
     async def pinned_round(self) -> None:
         """Pinned sources that match the question are read from their saved copy first."""

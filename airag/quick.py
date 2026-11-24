@@ -29,6 +29,7 @@ SECTION_TOKENS = 800
 
 
 class QuickResearch(Research):
+    LLM_TASK = "quick"
     def __init__(self, query: str, settings: dict, emit, ui_lang: Optional[str] = None,
                  context_id: Optional[str] = None, update: bool = True, include_library: bool = False):
         ctx = history.get(context_id) if context_id else None

@@ -139,3 +139,20 @@ def test_copies_skip_the_ai_but_off_topic_pages_get_a_short_read():
     assert asyncio.run(r.skip_without_ai(c, other)) is False          # same topic, different wording
     assert r.excerpt_budget("Cooking pasta at home. " * 40) == 900    # off topic: short read, not skipped
     assert r.excerpt_budget("Om kolibri og vingeslag. " * 40) > 900   # matches a word from the AI's searches
+
+
+def test_links_in_the_question_are_read_first():
+    rec, events = run("hummingbird wing beats https://example.org/birds/hummingbirds.")
+    urls = [s["url"] for s in rec.get("sources", [])]
+    assert "https://example.org/birds/hummingbirds" in urls
+    src = next(s for s in rec["sources"] if s["url"] == "https://example.org/birds/hummingbirds")
+    assert src["prior_label"] == "Link you gave"
+
+
+def test_given_urls_are_cleaned():
+    from airag.givenurls import clean, urls_in, only_links
+    assert clean("javascript:alert(1)") == ""
+    assert clean("https://user:pw@example.org/") == ""
+    assert clean("file:///etc/passwd") == ""
+    assert urls_in("see https://a.org/x, and http://b.org/y)") == ["https://a.org/x", "http://b.org/y"]
+    assert only_links(" https://a.org/x ") and not only_links("what is https://a.org/x about?")

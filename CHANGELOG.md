@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **Search with AIRAG** (Android): share text or a link from any app to AIRAG and it starts a search with it. Long text is put in the search box first so you can shorten it
+- **Links in your question are read first**: put a web address in a search (typed or shared) and that page is read as a source before the search engine's results, with the usual checks (offline mode, blocked sites)
 - **Quick search**: a short cited answer from 2-3 pages in seconds, with far fewer tokens than a full search. *Quick* next to the home search box (Shift+Enter; on phones a Quick and a Search button under the box). If nothing usable is found, the AI tries 3 simpler searches close to the question. Under a quick answer: *Add to this* (another quick question, added as a section) and *Research this properly* (a full search). In an article: *Sources → Quick search…*, which by default adds the answer to the article as a new section (the old text stays in Version history). Runs as its own task, so it doesn't wait behind a full search
 - **Settings in 7 tabs**: General · Look & sound · AI · Searching · Library & storage · Tools & agents · System, each with titled sections and a jump list. *Search settings…* finds any setting by name or help text and jumps to it (the tab opens and the setting is highlighted)
 

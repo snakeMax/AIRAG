@@ -71,7 +71,7 @@ async def rewrite(settings: dict, rid: str, selection: str, instructions: str,
             f"Passage to rewrite (Markdown):\n{fence.wrap(old)}")
     yield {"type": "target", "old": old}
     out = ""
-    async for piece in get_llm(settings).stream(system, user, max_tokens=2000):
+    async for piece in get_llm(settings, task="rewrite").stream(system, user, max_tokens=2000):
         out += piece
         yield {"type": "token", "text": piece}
     out = re.sub(r"<think>.*?</think>", "", out, flags=re.S).strip().strip("`")

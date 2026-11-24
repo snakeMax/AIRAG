@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">AIRAG</string>
     <string name="share_analyze">Analyze with AIRAG</string>
+    <string name="share_search">Search with AIRAG</string>
     <string name="open_with">Open in AIRAG</string>
     <string name="starting">Starting AIRAG…</string>
     <string name="start_failed">AIRAG couldn\'t start:\n%1$s</string>
