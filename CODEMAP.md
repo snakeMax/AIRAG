@@ -72,6 +72,7 @@ or removing them.
 - `POST /api/notes/{vid}/new`
 - `GET /api/notes/{vid}/note`
 - `PUT /api/notes/{vid}/note`
+- `POST /api/notes/{vid}/organize`
 - `POST /api/notes/{vid}/reindex`
 - `GET /api/notes/{vid}/search`
 - `GET /api/notes/{vid}/stats`
@@ -559,6 +560,8 @@ or removing them.
 - def `links(vid, path)`
 - def `vault_tags(vid)`
 - def `vault_stats(vid)`
+- class `OrganizeReq` ()
+- async def `organize_note(vid, req)`
 
 ### airag/notes/index.py
 - def `connect(settings, v)`
@@ -572,6 +575,12 @@ or removing them.
 - def `outgoing(settings, v, rel)`
 - def `stats(settings, v)`
 - def `all_tags(settings, v)`
+
+### airag/notes/organize.py
+- def `candidates(settings, v, text, limit)`
+- def `context(settings, v, text)`
+- def `check(raw, ctx, text)`
+- async def `organize(settings, v, text, ui_lang)`
 
 ### airag/notes/parser.py
 - class `Link` ()
@@ -939,6 +948,6 @@ or removing them.
 - `research`: explainer_local_examples, explainer_web_examples, use_pinned, max_rounds, results_per_query, sources_per_round, max_sources_total, llm_concurrency, passage_chars, direct_relevance, direct_coverage, min_findings, enough_findings, article_max_tokens, max_article_sources, images, interactive_check, max_images, skip_domains, favourite_sites
 
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
-Tool job kinds: followup, rewrite, image, translate, summary, calc, tags  
-AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, misc  
-i18n keys (en): 1269
+Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize  
+AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
+i18n keys (en): 1292

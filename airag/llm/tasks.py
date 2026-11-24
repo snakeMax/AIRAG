@@ -23,6 +23,7 @@ TASKS: Dict[str, Dict[str, str]] = {
     "tags": {"label": "Tags", "hint": "Suggest tags (cheap models work well)"},
     "explainer": {"label": "Explainers", "hint": "Interactive explainers and charts"},
     "vision": {"label": "Image analysis", "hint": "Needs a model that can see pictures"},
+    "notes": {"label": "Notes", "hint": "Organizing voice notes, and later smart search and Ask your notes"},
     "misc": {"label": "Small helpers", "hint": "Describing wikis and other short one-off jobs"},
 }
 

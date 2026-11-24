@@ -19,7 +19,7 @@ MAX_PARALLEL = 1          # default jobs at a time per kind: keeps the AI provid
 LIMITS = {"search": 1, "quick": 1, "explainer": 1, "tool": 2}
 # AI tools on an article (follow-ups, rewrites, summaries, translations, image analysis, calculations):
 # queued in their own group, two at a time; they show in the activity bar like searches
-TOOL_KINDS = ("followup", "rewrite", "image", "translate", "summary", "calc", "tags")
+TOOL_KINDS = ("followup", "rewrite", "image", "translate", "summary", "calc", "tags", "notes-organize")
 MAX_WAITING = 30          # running + waiting jobs at most, so a stuck button can't queue up paid work
 KEEP_FINISHED = 600       # seconds a finished search stays here (after that it's only in history)
 

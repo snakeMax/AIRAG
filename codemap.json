@@ -1952,7 +1952,7 @@
      "kind": "def",
      "name": "task_ids",
      "args": [],
-     "line": 34
+     "line": 35
     },
     {
      "kind": "def",
@@ -1962,7 +1962,7 @@
       "provider",
       "task"
      ],
-     "line": 38
+     "line": 39
     },
     {
      "kind": "def",
@@ -1970,7 +1970,7 @@
      "args": [
       "raw"
      ],
-     "line": 49
+     "line": 50
     }
    ]
   },
@@ -3504,7 +3504,7 @@
      "args": [
       "vid"
      ],
-     "line": 17
+     "line": 18
     },
     {
      "kind": "def",
@@ -3513,19 +3513,19 @@
       "e",
       "code"
      ],
-     "line": 28
+     "line": 29
     },
     {
      "kind": "def",
      "name": "notes_folder",
      "args": [],
-     "line": 33
+     "line": 34
     },
     {
      "kind": "class",
      "name": "FolderReq",
      "methods": [],
-     "line": 37
+     "line": 38
     },
     {
      "kind": "async def",
@@ -3533,19 +3533,19 @@
      "args": [
       "req"
      ],
-     "line": 42
+     "line": 43
     },
     {
      "kind": "def",
      "name": "list_vaults",
      "args": [],
-     "line": 68
+     "line": 69
     },
     {
      "kind": "class",
      "name": "NewVault",
      "methods": [],
-     "line": 74
+     "line": 75
     },
     {
      "kind": "def",
@@ -3553,13 +3553,13 @@
      "args": [
       "req"
      ],
-     "line": 81
+     "line": 82
     },
     {
      "kind": "class",
      "name": "LinkVault",
      "methods": [],
-     "line": 88
+     "line": 89
     },
     {
      "kind": "def",
@@ -3567,7 +3567,7 @@
      "args": [
       "req"
      ],
-     "line": 94
+     "line": 95
     },
     {
      "kind": "def",
@@ -3575,7 +3575,7 @@
      "args": [
       "vid"
      ],
-     "line": 102
+     "line": 103
     },
     {
      "kind": "def",
@@ -3583,7 +3583,7 @@
      "args": [
       "vid"
      ],
-     "line": 108
+     "line": 109
     },
     {
      "kind": "async def",
@@ -3591,7 +3591,7 @@
      "args": [
       "vid"
      ],
-     "line": 114
+     "line": 115
     },
     {
      "kind": "def",
@@ -3600,13 +3600,13 @@
       "vid",
       "path"
      ],
-     "line": 123
+     "line": 124
     },
     {
      "kind": "class",
      "name": "SaveNote",
      "methods": [],
-     "line": 138
+     "line": 139
     },
     {
      "kind": "async def",
@@ -3615,13 +3615,13 @@
       "vid",
       "req"
      ],
-     "line": 146
+     "line": 147
     },
     {
      "kind": "class",
      "name": "NewNote",
      "methods": [],
-     "line": 158
+     "line": 159
     },
     {
      "kind": "async def",
@@ -3630,7 +3630,7 @@
       "vid",
       "req"
      ],
-     "line": 166
+     "line": 167
     },
     {
      "kind": "async def",
@@ -3640,7 +3640,7 @@
       "q",
       "sort"
      ],
-     "line": 177
+     "line": 178
     },
     {
      "kind": "def",
@@ -3649,7 +3649,7 @@
       "vid",
       "path"
      ],
-     "line": 186
+     "line": 187
     },
     {
      "kind": "def",
@@ -3657,7 +3657,7 @@
      "args": [
       "vid"
      ],
-     "line": 196
+     "line": 197
     },
     {
      "kind": "def",
@@ -3665,7 +3665,22 @@
      "args": [
       "vid"
      ],
-     "line": 202
+     "line": 203
+    },
+    {
+     "kind": "class",
+     "name": "OrganizeReq",
+     "methods": [],
+     "line": 208
+    },
+    {
+     "kind": "async def",
+     "name": "organize_note",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 214
     }
    ]
   },
@@ -3808,6 +3823,68 @@
       "v"
      ],
      "line": 259
+    }
+   ]
+  },
+  "airag/notes/organize.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_words",
+     "args": [
+      "text"
+     ],
+     "line": 50
+    },
+    {
+     "kind": "def",
+     "name": "candidates",
+     "args": [
+      "settings",
+      "v",
+      "text",
+      "limit"
+     ],
+     "line": 58
+    },
+    {
+     "kind": "def",
+     "name": "context",
+     "args": [
+      "settings",
+      "v",
+      "text"
+     ],
+     "line": 88
+    },
+    {
+     "kind": "def",
+     "name": "_clean_tag",
+     "args": [
+      "t"
+     ],
+     "line": 95
+    },
+    {
+     "kind": "def",
+     "name": "check",
+     "args": [
+      "raw",
+      "ctx",
+      "text"
+     ],
+     "line": 101
+    },
+    {
+     "kind": "async def",
+     "name": "organize",
+     "args": [
+      "settings",
+      "v",
+      "text",
+      "ui_lang"
+     ],
+     "line": 136
     }
    ]
   },
@@ -7008,6 +7085,10 @@
   ],
   [
    "POST",
+   "/api/notes/{vid}/organize"
+  ],
+  [
+   "POST",
    "/api/notes/{vid}/reindex"
   ],
   [
@@ -7602,7 +7683,11 @@
      "toast"
     ],
     "i18n.js": [
-     "t"
+     "t",
+     "uiLang"
+    ],
+    "activity.js": [
+     "pokeJobs"
     ],
     "markdown.js": [
      "render",
@@ -8412,7 +8497,8 @@
   "translate",
   "summary",
   "calc",
-  "tags"
+  "tags",
+  "notes-organize"
  ],
  "ai_tasks": [
   "research",
@@ -8424,7 +8510,8 @@
   "tags",
   "explainer",
   "vision",
+  "notes",
   "misc"
  ],
- "i18n_keys": 1269
+ "i18n_keys": 1292
 }

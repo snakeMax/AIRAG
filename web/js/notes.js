@@ -2,7 +2,8 @@
 // Computers: vault sidebar | note | links panel. Phones: one screen at a time with a bottom bar
 // (Notes / Search / Voice note / Graph / Ask). Everything here works without the AI.
 import { $, $$, h, icon, api, toast } from "./util.js";
-import { t } from "./i18n.js";
+import { t, uiLang } from "./i18n.js";
+import { pokeJobs } from "./activity.js";
 import { render as renderMd, allowLinks } from "./markdown.js";
 import { micButton } from "./speech.js";
 
@@ -98,6 +99,7 @@ async function loadVaults() {
   if (!r) return;
   N.vaults = r.vaults.filter(v => v.exists);
   N.templates = r.templates;
+  N.types = r.types || {};
   const sel = $("#ntVault");
   sel.innerHTML = N.vaults.map(v => `<option value="${h(v.id)}">${h(v.name)}${v.linked ? " · " + h(t("nt.linked")) : ""}</option>`).join("");
   if (!N.vaults.length) { emptyState(r); return; }
@@ -409,14 +411,14 @@ async function linkMention(otherPath) {
   } catch (e) { toast(e.message, 6000); }
 }
 
-async function newNote(title = "", body = "", folder = null) {
+async function newNote(title = "", body = "", folder = null, props = {}) {
   if (!N.vault) return vaultDialog();
   if (N.vault.linked) return toast(t("nt.linkedNoWrite"), 6000);
   title = title || prompt(t("nt.newTitle"), "")?.trim();
   if (!title) return;
   const inbox = N.tree.some(x => x.kind === "folder" && x.path === "Inbox") ? "Inbox" : "";
   const f = folder ?? (N.note ? folderOf(N.note.path) : inbox);
-  const r = await api(`/api/notes/${N.vault.id}/new`, { method: "POST", body: { folder: f, title, body } }).catch(e => { toast(e.message, 5000); return null; });
+  const r = await api(`/api/notes/${N.vault.id}/new`, { method: "POST", body: { folder: f, title, body, props } }).catch(e => { toast(e.message, 5000); return null; });
   if (!r) return;
   N.mode = "edit";
   await loadTree();
@@ -424,36 +426,104 @@ async function newNote(title = "", body = "", folder = null) {
   setTimeout(() => { const ed = $("#ntEditor"); if (ed) { ed.focus(); ed.setSelectionRange(ed.value.length, ed.value.length); } }, 30);
 }
 
-// ---------------------------------------------------------------- voice note (manual: your words into the Inbox)
-function voiceNote() {
+// ---------------------------------------------------------------- voice note
+// Step 1: speak or type. "Save to Inbox" keeps your words as they are (no AI).
+// "Organize" asks the AI (a background job) for a title, folder, type, tags, links and tidier text;
+// step 2 shows that as an editable preview, and nothing is written until you press Save note.
+const inboxOf = () => N.tree.some(x => x.kind === "folder" && x.path === "Inbox") ? "Inbox" : "";
+
+function voiceNote(text = "") {
   if (!N.vault) return vaultDialog();
   if (N.vault.linked) return toast(t("nt.linkedNoWrite"), 6000);
+  if (!text && N.pending?.vid === N.vault.id) { const p = N.pending; N.pending = null; return organizedPreview(p.prop, p.said); }
   const d = dialog("ntVoiceDlg", "nt-dlg");
   d.innerHTML = `<form method="dialog">
     <div class="dlg-head"><h2>${h(t("nt.voice"))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
     <div class="dlg-body plain">
-      <p class="muted" style="font-size:13px">${h(t("nt.voiceIntro"))}</p>
+      <p class="muted" style="font-size:13px">${h(t("nt.voiceIntro2"))}</p>
       <div class="nt-voice"><textarea id="nvText" class="input" rows="6" placeholder="${h(t("nt.voicePh"))}"></textarea><span id="nvMic"></span></div>
+      <p class="nt-org-busy" id="nvBusy" hidden><span class="spinner sm"></span>${h(t("nt.organizing"))}</p>
     </div>
-    <div class="dlg-foot"><span class="grow muted" style="font-size:12.5px">${h(t("nt.voiceWhere"))}</span>
-      <button class="btn ghost" value="close">${h(t("common.cancel"))}</button>
-      <button type="submit" class="btn primary" value="save">${h(t("nt.toInbox"))}</button></div></form>`;
+    <div class="dlg-foot"><button class="btn ghost" value="close">${h(t("common.cancel"))}</button><span class="grow"></span>
+      <button type="submit" class="btn" value="inbox" title="${h(t("nt.voiceWhere"))}">${h(t("nt.toInbox"))}</button>
+      <button type="submit" class="btn primary" value="organize" title="${h(t("nt.organizeTip"))}">${icon("bolt")}${h(t("nt.organize"))}</button></div></form>`;
   const ta = $("#nvText");
+  ta.value = text;
   const mic = micButton(ta);
-  if (mic) { $("#nvMic").appendChild(mic); setTimeout(() => mic.click(), 60); }
+  if (mic) { $("#nvMic").appendChild(mic); if (!text) setTimeout(() => mic.click(), 60); }
   d.querySelector("form").onsubmit = async e => {
-    if (e.submitter?.value !== "save") return;
+    const how = e.submitter?.value;
+    if (how !== "inbox" && how !== "organize") return;
     e.preventDefault();
-    const text = ta.value.trim();
-    if (!text) return ta.focus();
-    d.close();
-    const now = new Date();
-    const title = `${t("nt.voiceNoteTitle")} ${now.toISOString().slice(0, 10)} ${String(now.getHours()).padStart(2, "0")}.${String(now.getMinutes()).padStart(2, "0")}`;
-    const inbox = N.tree.some(x => x.kind === "folder" && x.path === "Inbox") ? "Inbox" : "";
-    await newNote(title, text + "\n", inbox);
+    const said = ta.value.trim();
+    if (!said) return ta.focus();
+    if (how === "inbox") {
+      d.close();
+      const now = new Date();
+      const title = `${t("nt.voiceNoteTitle")} ${now.toISOString().slice(0, 10)} ${String(now.getHours()).padStart(2, "0")}.${String(now.getMinutes()).padStart(2, "0")}`;
+      return newNote(title, said + "\n", inboxOf(), { source: "voice" });
+    }
+    if (mic?.classList.contains("listening")) mic.click();          // stop listening before sending
+    d.querySelectorAll("button[type=submit]").forEach(b => b.disabled = true);
+    $("#nvBusy").hidden = false;
+    const vault = N.vault;
+    const job = api(`/api/notes/${vault.id}/organize`, { method: "POST", body: { text: said, ui_lang: uiLang() } });
+    pokeJobs();
+    let prop;
+    try { prop = await job; }
+    catch (err) {
+      if (d.open) { d.querySelectorAll("button[type=submit]").forEach(b => b.disabled = false); $("#nvBusy").hidden = true; }
+      return toast(t("nt.organizeFailed", { msg: err.message }), 8000);
+    }
+    // the job finishes even if the dialog was closed: show the preview when you're still in this vault
+    if (N.vault?.id !== vault.id || !document.body.classList.contains("notes-mode")) {
+      N.pending = { vid: vault.id, prop, said };
+      return toast(t("nt.organizedLater"), 8000);
+    }
+    organizedPreview(prop, said);
   };
   d.showModal();
-  if (!mic) setTimeout(() => ta.focus(), 30);
+  if (!mic || text) setTimeout(() => ta.focus(), 30);
+}
+
+function organizedPreview(p, said) {
+  const d = dialog("ntVoiceDlg", "nt-dlg nt-org-dlg");
+  const folders = N.tree.filter(x => x.kind === "folder").map(x => x.path);
+  const types = (N.types || {})[N.vault.template || "empty"] || [];
+  const opt = (v, label, sel) => `<option value="${h(v)}"${v === sel ? " selected" : ""}>${h(label)}</option>`;
+  d.innerHTML = `<form method="dialog">
+    <div class="dlg-head"><h2>${h(t("nt.orgTitle"))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
+    <div class="dlg-body plain nt-org">
+      ${p.why ? `<p class="muted nt-org-why">${h(p.why)}</p>` : ""}
+      <label class="nt-org-f"><span>${h(t("nt.orgName"))}</span><input id="noTitle" class="input" maxlength="120" value="${h(p.title)}"></label>
+      <div class="nt-org-row">
+        <label class="nt-org-f"><span>${h(t("nt.orgFolder"))}</span><select id="noFolder" class="input">${opt("", t("nt.orgTop"), p.folder)}${folders.map(f => opt(f, f, p.folder)).join("")}</select></label>
+        <label class="nt-org-f"><span>${h(t("nt.orgType"))}</span><select id="noType" class="input">${opt("", t("nt.orgNoType"), p.type)}${types.map(x => opt(x, x, p.type)).join("")}</select></label>
+      </div>
+      <label class="nt-org-f"><span>${h(t("nt.orgTags"))}</span><input id="noTags" class="input" value="${h((p.tags || []).join(", "))}" placeholder="${h(t("nt.orgTagsPh"))}"></label>
+      <label class="nt-org-f"><span>${h(t("nt.orgText"))}</span><textarea id="noBody" class="input" rows="9">${h(p.body)}</textarea></label>
+      ${p.links?.length ? `<p class="muted nt-org-links">${h(t("nt.orgLinks"))} ${p.links.map(x => `<span class="nt-tag">${h(x)}</span>`).join(" ")}</p>` : ""}
+      <label class="nt-org-keep"><input type="checkbox" id="noKeep" checked> ${h(t("nt.orgKeep"))}</label>
+    </div>
+    <div class="dlg-foot"><button type="submit" class="btn ghost" value="back">${icon("chevLeft")}${h(t("nt.orgBack"))}</button><span class="grow"></span>
+      <button type="submit" class="btn primary" value="save">${h(t("nt.orgSave"))}</button></div></form>`;
+  d.querySelector("form").onsubmit = async e => {
+    const how = e.submitter?.value;
+    if (how === "back") { e.preventDefault(); d.close(); return voiceNote(said); }
+    if (how !== "save") return;
+    e.preventDefault();
+    const title = $("#noTitle").value.trim();
+    if (!title) return $("#noTitle").focus();
+    let body = $("#noBody").value.trim() + "\n";
+    if ($("#noKeep").checked) body += `\n## ${t("nt.orgSaid")}\n\n` + said.split(/\r?\n/).map(l => "> " + l).join("\n") + "\n";
+    const tags = [...new Set($("#noTags").value.split(/[,\s]+/).map(x => x.trim().replace(/^#/, "")).filter(Boolean))].slice(0, 12);
+    const props = { source: "voice" };
+    if ($("#noType").value) props.type = $("#noType").value;
+    if (tags.length) props.tags = tags;
+    d.close();
+    await newNote(title, body, $("#noFolder").value, props);
+  };
+  d.showModal();
 }
 
 // ---------------------------------------------------------------- search (every match)

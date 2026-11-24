@@ -1,4 +1,5 @@
-"""HTTP routes for Notes (mounted under /api/notes by airag.main). No AI here."""
+"""HTTP routes for Notes (mounted under /api/notes by airag.main). The only AI route is /organize, which runs
+as a normal background job through the run manager and only returns a proposal (nothing is written)."""
 from __future__ import annotations
 
 import asyncio
@@ -202,3 +203,20 @@ def vault_tags(vid: str):
 def vault_stats(vid: str):
     s, v = _vault(vid)
     return index.stats(s, v)
+
+
+class OrganizeReq(BaseModel):
+    text: str
+    ui_lang: Optional[str] = None
+
+
+@router.post("/{vid}/organize")
+async def organize_note(vid: str, req: OrganizeReq):
+    """AI proposal for a voice note: title, folder, type, tags, links and tidied text. Saving is a separate step."""
+    from ..main import _job_result          # the shared AI job helper (queued, shown in the activity bar)
+    from . import organize
+    s, v = _vault(vid)
+    if not req.text.strip():
+        raise HTTPException(400, "Say or type something first")
+    return await _job_result(lambda: organize.organize(s, v, req.text, req.ui_lang), "notes-organize",
+                             req.text.strip()[:80])

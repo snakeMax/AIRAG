@@ -94,6 +94,10 @@ class MockLLM(LLMProvider):
             return '{"suitable": true, "idea": "A slider that shows how body size changes wingbeat rate.", "reason": "quantitative"}'
         if "interactive explainers" in system:
             return HTML
+        if "note someone dictated" in system:
+            return json.dumps({"title": "Moose by the river fence", "folder": "Notes", "type": "claim", "tags": ["moose", "roads"],
+                               "body": "Saw a moose by the road fence near the river today.\n\nMaybe [[Moose and roads]] needs a second look.",
+                               "why": "It's an observation that could become a claim."})
         if "Turn the reader's formula" in system:
             return "x**2 - 5*x + 6 = 0"
         if "expert translator" in system:   # results page: tag every text so tests can see it was translated

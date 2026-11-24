@@ -5,7 +5,8 @@
 - **Notes Mode**: a Research | Notes switch in the top bar. Obsidian-compatible vaults (create from Research, Writing, Worldbuilding, Personal or Empty, or link an existing Obsidian vault read-only), a folder tree with recent notes, a Markdown editor with Edit / Read, properties, [[links]] (missing notes can be created from the link) and #tags, saving by itself with the last 20 versions kept and no overwriting of notes changed elsewhere
 - **Search notes**: every match, grouped by note with highlighted sections, with search words (tag:, type:, path:, prop:, linksto:, linkedfrom:, has:, modified:, created:, regex:, "exact", -word, OR) and a microphone; no AI
 - **Linked from / Mentioned but not linked / Outline** beside each note, with one-tap *Link*
-- **Voice note**: speak a note into the Inbox
+- **Voice note**: speak a note, then Save to Inbox as it is, or **Organize**: the AI tidies it and suggests a title, folder, type, tags and links, shown as an editable preview before anything is saved
+- **Notes** in Models per task (Settings → AI)
 - **Search words and tags**: a screen listing every search word with an example (tap to use it) and every tag in the vault with its count (tap to see its notes)
 - **Help (?)** in the top bar: a short guide to Research or Notes, depending on where you are
 - **Notes folder**: Documents\AIRAG Notes by default (system drive), changeable in Settings → Library & storage and in the first-start setup
