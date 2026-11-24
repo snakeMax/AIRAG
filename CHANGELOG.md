@@ -6,6 +6,8 @@
 - **Search notes**: every match, grouped by note with highlighted sections, with search words (tag:, type:, path:, prop:, linksto:, linkedfrom:, has:, modified:, created:, regex:, "exact", -word, OR) and a microphone; no AI
 - **Linked from / Mentioned but not linked / Outline** beside each note, with one-tap *Link*
 - **Voice note**: speak a note into the Inbox
+- **Search words and tags**: a screen listing every search word with an example (tap to use it) and every tag in the vault with its count (tap to see its notes)
+- **Help (?)** in the top bar: a short guide to Research or Notes, depending on where you are
 - **Notes folder**: Documents\AIRAG Notes by default (system drive), changeable in Settings → Library & storage and in the first-start setup
 - Phone: one screen at a time with a bottom bar (Notes, Search, Voice note, Graph and Ask coming next)
 

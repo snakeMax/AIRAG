@@ -254,3 +254,26 @@ def stats(settings: dict, v: dict) -> dict:
         return {"notes": notes, "links": links, "broken": broken, "orphans": orphans, "fts": has_fts(c)}
     finally:
         c.close()
+
+
+def all_tags(settings: dict, v: dict) -> List[dict]:
+    """Every tag in the vault with how many notes use it (nested tags also count for their parents)."""
+    c = connect(settings, v)
+    try:
+        counts: Dict[str, int] = {}
+        shown: Dict[str, str] = {}
+        for r in c.execute("SELECT tags FROM notes"):
+            seen = set()
+            for t in json.loads(r["tags"] or "[]"):
+                parts = str(t).split("/")
+                for i in range(1, len(parts) + 1):
+                    key = "/".join(parts[:i])
+                    low = key.lower()
+                    if low in seen:
+                        continue
+                    seen.add(low)
+                    counts[low] = counts.get(low, 0) + 1
+                    shown.setdefault(low, key)
+        return sorted(({"tag": shown[k], "count": n} for k, n in counts.items()), key=lambda x: (-x["count"], x["tag"].lower()))
+    finally:
+        c.close()

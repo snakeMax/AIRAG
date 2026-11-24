@@ -135,3 +135,13 @@ def test_notes_folder_defaults_to_documents_and_can_change(tmp_path, monkeypatch
     assert store.status({})["custom"] is False
     s = {"notes": {"root": str(tmp_path / "Elsewhere")}}
     assert store.root(s) == tmp_path / "Elsewhere" and store.status(s)["custom"] is True
+
+
+def test_tag_list_counts_nested_tags(S):
+    from airag.notes import store, index
+    v = store.create_vault(S, "T", "empty")
+    store.create_note(S, v, "", "A", "#status/draft and #moose", {"tags": ["roads"]})
+    store.create_note(S, v, "", "B", "#status/done #moose")
+    index.update(S, v)
+    tags = {x["tag"]: x["count"] for x in index.all_tags(S, v)}
+    assert tags == {"moose": 2, "status": 2, "status/draft": 1, "status/done": 1, "roads": 1}

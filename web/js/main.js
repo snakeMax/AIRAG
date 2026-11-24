@@ -1,4 +1,5 @@
 // Entry point: start-up, routing and the search box.
+import { initHelp } from "./help.js";
 import { showNotes, notesDirty, saveNotes } from "./notes.js";
 import { applyResourceSettings } from "./resources.js";
 import { $, $$, h, api, hydrateIcons, icon, toast } from "./util.js";
@@ -230,6 +231,7 @@ async function boot() {
   wire();
   initSpeech(info?.mode === "desktop");
   initActivity();
+  initHelp();
   setPinHooks({ showView, defaultView: () => state.settings?.defaults?.pinned_view });
   initImageAsk({ vision: () => !!state.status?.vision });
   initOpenFile();

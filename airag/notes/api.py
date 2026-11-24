@@ -192,6 +192,12 @@ def links(vid: str, path: str):
     return {"backlinks": index.backlinks(s, v, path), "outgoing": index.outgoing(s, v, path)}
 
 
+@router.get("/{vid}/tags")
+def vault_tags(vid: str):
+    s, v = _vault(vid)
+    return {"tags": index.all_tags(s, v)}
+
+
 @router.get("/{vid}/stats")
 def vault_stats(vid: str):
     s, v = _vault(vid)

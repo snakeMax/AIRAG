@@ -1149,3 +1149,29 @@ body.notes-mode main { max-width: none; padding: 0; }
   .nt-bottom button:disabled { opacity: .45; }
   .nt-bottom .nt-bottom-voice { justify-self: center; width: 56px; height: 56px; border-radius: 18px; background: var(--accent, var(--text)); color: var(--accent-text, var(--bg)); margin-top: -18px; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
 }
+
+.nt-tag { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 30px; padding: 2px 8px 2px calc(8px + var(--d, 0) * 14px); border: 0; border-radius: 8px;
+  background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.nt-tag:hover { background: var(--surface-2); }
+.nt-tag small { margin-left: auto; color: var(--text-3); }
+@media (max-width: 720px) { .nt-tag { min-height: 40px; font-size: 14.5px; } .nt-top .nt-words-btn { display: inline-grid; } }
+.nt-words-dlg { width: min(620px, calc(100vw - 24px)); }
+.dlg-tabs-row { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--border); }
+.dlg-tabs-row button { height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text-2); font: inherit; font-size: 14px; cursor: pointer; }
+.dlg-tabs-row button.on { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+.nt-words-intro { font-size: 13px; margin: 0 0 10px; }
+.nt-words { display: flex; flex-direction: column; }
+.nt-word { display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 12px; align-items: baseline; padding: 8px 6px; border: 0; border-bottom: 1px solid var(--border);
+  background: transparent; color: var(--text); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
+.nt-word:hover { background: var(--surface-2); }
+.nt-word code { overflow-wrap: anywhere; }
+.nt-word span { color: var(--text-2); }
+@media (max-width: 520px) { .nt-word { grid-template-columns: 1fr; gap: 2px; } }
+
+/* "?" help (web/js/help.js) */
+.help-dlg { width: min(600px, calc(100vw - 24px)); }
+.help-list { margin: 0; display: grid; gap: 4px 0; }
+.help-list dt { font-weight: 600; font-size: 14px; margin-top: 10px; }
+.help-list dt:first-child { margin-top: 0; }
+.help-list dd { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
+.help-more { font-size: 12.5px; margin: 14px 0 0; }

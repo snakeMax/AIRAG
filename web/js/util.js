@@ -88,6 +88,7 @@ const ICONS = {
   quote: '<path d="M7 7h10M7 12h10M7 17h6"/><rect x="3" y="3" width="18" height="18" rx="3"/>',
   chevDown: '<path d="M6 9l6 6 6-6"/>',
   chevRight: '<path d="M9 6l6 6-6 6"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/>',
   chevLeft: '<path d="M15 6l-6 6 6 6"/>',
   graph: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="9" cy="18" r="2.5"/><path d="M8.2 7.3l7.6 1M7 8.3l1.5 7.3M16.5 10l-6 6.3"/>',
   file: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/>',

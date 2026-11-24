@@ -562,11 +562,19 @@ Notes that link to this one; notes that mention its name without a link (*Link* 
 ### Search notes (with microphone)
 Lists **every** match, grouped by note, with every matching section and the words highlighted. No AI. Search words: `"exact phrase"`, `-leave out`, `OR`, `tag:status/draft`, `type:claim`, `path:Notes/`, `prop:year>1800` (or `prop:status=done`), `linksto:"Note"`, `linkedfrom:"Note"`, `has:image`, `modified:>2026-11-01`, `created:<2026-01-01`, `regex:pattern`, `case:yes`. The microphone fills the box and searches when you stop speaking.
 
+### Search words and tags (tag button next to the Notes search box)
+Two screens. **Search words** lists every search word with an example and what it does; tap one to put it in the search box, then change the example. **Your tags** lists every tag in the vault (nested tags indented) with how many notes use it; tap one to see those notes.
+
 ### Voice note
 Speak (or type) a note; it's saved as a new note in the vault's Inbox (or its top folder) named "Voice note" with the date and time, then opened so you can edit or move it. Letting the AI title, sort and link a voice note comes in a later test, with a preview before anything is saved.
 
 ### Notes folder (Settings → Library & storage, and the first-start setup)
 Where your notes vaults are kept. Default: **Documents\AIRAG Notes** on your system drive (C: on Windows; Documents/AIRAG Notes on Android). *Change…* picks another folder (for example on another drive); *Use the default* goes back. Changing it doesn't move vaults you already have, and switching back finds them again. The first-start setup shows the same choice.
+
+## Help
+
+### ? (top bar)
+A short guide to the things that aren't obvious. In Research it covers search modes, Quick, the chips under the search box, selecting text, the toolbar, the Sources menu, floating panels, saving and pins, pictures and sharing from other apps. In Notes it covers vaults, links, properties, tags, search words, linked from and mentions, saving and voice notes.
 
 ## Saving and exporting
 

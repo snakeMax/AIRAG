@@ -3653,11 +3653,19 @@
     },
     {
      "kind": "def",
-     "name": "vault_stats",
+     "name": "vault_tags",
      "args": [
       "vid"
      ],
      "line": 196
+    },
+    {
+     "kind": "def",
+     "name": "vault_stats",
+     "args": [
+      "vid"
+     ],
+     "line": 202
     }
    ]
   },
@@ -3791,6 +3799,15 @@
       "v"
      ],
      "line": 238
+    },
+    {
+     "kind": "def",
+     "name": "all_tags",
+     "args": [
+      "settings",
+      "v"
+     ],
+     "line": 259
     }
    ]
   },
@@ -7003,6 +7020,10 @@
   ],
   [
    "GET",
+   "/api/notes/{vid}/tags"
+  ],
+  [
+   "GET",
    "/api/notes/{vid}/tree"
   ],
   [
@@ -7331,6 +7352,22 @@
     ]
    }
   },
+  "help.js": {
+   "exports": [
+    "initHelp",
+    "openHelp"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon"
+    ],
+    "i18n.js": [
+     "t"
+    ]
+   }
+  },
   "history.js": {
    "exports": [
     "closeDrawer",
@@ -7429,6 +7466,9 @@
   "main.js": {
    "exports": [],
    "imports": {
+    "help.js": [
+     "initHelp"
+    ],
     "notes.js": [
      "showNotes",
      "notesDirty",
@@ -8386,5 +8426,5 @@
   "vision",
   "misc"
  ],
- "i18n_keys": 1207
+ "i18n_keys": 1269
 }

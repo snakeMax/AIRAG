@@ -39,6 +39,7 @@ function shell() {
         <span class="sb-icon">${icon("search")}</span>
         <input type="search" name="q" placeholder="${h(t("nt.searchPh"))}" aria-label="${h(t("nt.search"))}">
       </form>
+      <button type="button" class="icon-btn nt-words-btn" data-nt="words" title="${h(t("nt.wordsTitle"))}" aria-label="${h(t("nt.wordsTitle"))}">${icon("tag")}</button>
       <button type="button" class="btn sm nt-voice-btn" data-nt="voice">${icon("mic")}<span>${h(t("nt.voice"))}</span></button>
       <button type="button" class="btn sm primary" data-nt="new">${icon("plus")}<span>${h(t("nt.new"))}</span></button>
     </div>
@@ -76,6 +77,7 @@ function wire(root) {
       if (a === "new") newNote();
       else if (a === "voice") voiceNote();
       else if (a === "vaults") vaultDialog();
+      else if (a === "words") wordsDialog();
       else if (a === "back") setScreen("list");
       return;
     }
@@ -136,6 +138,51 @@ async function loadTree() {
   const r = await api(`/api/notes/${N.vault.id}/tree`).catch(() => ({ items: [] }));
   N.tree = r.items;
   drawTree();
+}
+
+// "Search words and tags": two screens. Search words = every search operator with an example (tap to add it to
+// the search box); Your tags = every tag in the vault with its count (tap to list its notes).
+const WORDS = [
+  ["exact", '"fell by half"'], ["exclude", "-deer"], ["or", "moose OR elk"], ["tag", "tag:status/draft"], ["type", "type:claim"],
+  ["path", "path:Sources/"], ["prop", "prop:year>1800"], ["propeq", "prop:status=done"], ["linksto", 'linksto:"Moose and roads"'],
+  ["linkedfrom", 'linkedfrom:"Moose and roads"'], ["has", "has:image"], ["modified", "modified:>2026-11-01"],
+  ["created", "created:<2026-01-01"], ["regex", "regex:NOK \\d+"], ["case", "case:yes"],
+];
+
+function useWord(q, run = false) {
+  const input = $("#ntSearch input");
+  input.value = run ? q : (input.value.trim() ? input.value.trim() + " " : "") + q;
+  $("#ntWordsDlg")?.close();
+  if (run) runSearch(q);
+  else { setScreen("search"); input.focus(); }
+}
+
+async function wordsDialog(tab = "words") {
+  const d = dialog("ntWordsDlg", "nt-dlg nt-words-dlg");
+  const draw = async () => {
+    d.innerHTML = `<form method="dialog">
+      <div class="dlg-head"><h2>${h(t("nt.wordsTitle"))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
+      <div class="dlg-tabs-row" role="tablist">
+        <button type="button" role="tab" data-wtab="words" aria-selected="${tab === "words"}" class="${tab === "words" ? "on" : ""}">${h(t("nt.wordsTab"))}</button>
+        <button type="button" role="tab" data-wtab="tags" aria-selected="${tab === "tags"}" class="${tab === "tags" ? "on" : ""}">${h(t("nt.tagsTab"))}</button></div>
+      <div class="dlg-body plain" id="ntWordsBody"><div class="status-line"><span class="spinner sm"></span></div></div></form>`;
+    $$("[data-wtab]", d).forEach(b => (b.onclick = () => { tab = b.dataset.wtab; draw(); }));
+    const body = $("#ntWordsBody");
+    if (tab === "words") {
+      body.innerHTML = `<p class="muted nt-words-intro">${h(t("nt.wordsIntro"))}</p><div class="nt-words">${WORDS.map(([k, ex]) =>
+        `<button type="button" class="nt-word" data-word="${h(ex)}"><code>${h(ex)}</code><span>${h(t("nt.op." + k))}</span></button>`).join("")}</div>`;
+      $$("[data-word]", body).forEach(b => (b.onclick = () => useWord(b.dataset.word)));
+    } else {
+      const r = N.vault ? await api(`/api/notes/${N.vault.id}/tags`).catch(() => ({ tags: [] })) : { tags: [] };
+      body.innerHTML = r.tags.length
+        ? `<p class="muted nt-words-intro">${h(t("nt.tagsIntro", { n: r.tags.length }))}</p><div class="nt-taglist">${r.tags.sort((a, b) => a.tag.localeCompare(b.tag)).map(x =>
+            `<button type="button" class="nt-tag" data-tag="${h(x.tag)}" style="--d:${x.tag.split("/").length - 1}">#${h(x.tag.split("/").pop())}<small>${x.count}</small></button>`).join("")}</div>`
+        : `<p class="muted">${h(t("nt.noTags"))}</p>`;
+      $$("[data-tag]", body).forEach(b => (b.onclick = () => useWord(/\s/.test(b.dataset.tag) ? `tag:"${b.dataset.tag}"` : `tag:${b.dataset.tag}`, true)));
+    }
+  };
+  await draw();
+  if (!d.open) d.showModal();
 }
 
 function drawTree() {
@@ -438,7 +485,7 @@ async function runSearch(q) {
         <span class="muted"> · ${h(folderOf(g.path) || N.vault.name)}${g.type ? " · " + h(g.type) : ""}</span>
         ${g.sections.map(s => `<p class="nt-snip">${s.heading ? `<b>${h(s.heading)}</b> ` : ""}${marked(s.text, s.marks)}</p>`).join("")}</article>`).join("")
       || `<p class="muted">${h(t("nt.noMatches"))}</p>`}
-    <p class="muted nt-ops">${h(t("nt.operators"))}</p></section>`;
+    <p class="muted nt-ops">${h(t("nt.operators"))} <a href="#" data-nt="words">${h(t("nt.wordsAll"))}</a></p></section>`;
   $$(".nt-hit-t", main).forEach(a => (a.onclick = e => { e.preventDefault(); openNote(a.dataset.path); }));
 }
 

@@ -75,6 +75,7 @@ or removing them.
 - `POST /api/notes/{vid}/reindex`
 - `GET /api/notes/{vid}/search`
 - `GET /api/notes/{vid}/stats`
+- `GET /api/notes/{vid}/tags`
 - `GET /api/notes/{vid}/tree`
 - `GET /api/offline`
 - `POST /api/offline`
@@ -556,6 +557,7 @@ or removing them.
 - async def `new_note(vid, req)`
 - async def `search_notes(vid, q, sort)`
 - def `links(vid, path)`
+- def `vault_tags(vid)`
 - def `vault_stats(vid)`
 
 ### airag/notes/index.py
@@ -569,6 +571,7 @@ or removing them.
 - def `backlinks(settings, v, rel)`
 - def `outgoing(settings, v, rel)`
 - def `stats(settings, v)`
+- def `all_tags(settings, v)`
 
 ### airag/notes/parser.py
 - class `Link` ()
@@ -882,6 +885,7 @@ or removing them.
 - `cite.js`: STYLES, apa, bibtex, cite, mla
 - `dates.js`: chipHtml, closeDatePicker, emptyRange, fmtRange, hasRange, openDatePicker
 - `export.js`: exportHtml
+- `help.js`: initHelp, openHelp
 - `history.js`: closeDrawer, loadHistory, loadSaved, openDrawer, refreshRecent
 - `i18n.js`: applyI18n, has, initI18n, normalize, systemLanguage, t, uiLang, uiLanguages
 - `imageask.js`: initImageAsk, openImageAsk, pickImage, updateImageButton
@@ -937,4 +941,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, misc  
-i18n keys (en): 1207
+i18n keys (en): 1269
