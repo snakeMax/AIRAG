@@ -207,33 +207,198 @@ function drawTree() {
   const box = $("#ntTree");
   const folders = N.tree.filter(x => x.kind === "folder").map(x => x.path);
   const notes = N.tree.filter(x => x.kind === "note");
+  const ro = N.vault?.read_only;
   const kids = dir => ({
     dirs: folders.filter(f => f.includes("/") ? f.slice(0, f.lastIndexOf("/")) === dir : dir === ""),
     files: notes.filter(n => (n.path.includes("/") ? n.path.slice(0, n.path.lastIndexOf("/")) : "") === dir),
   });
+  // every row: the item itself and a ⋯ button (Move to…, Delete). Rows can be dragged onto folders.
+  const more = (path, kind, name) => ro ? "" :
+    `<button type="button" class="icon-btn sm nt-more" data-more="${h(path)}" data-kind="${kind}" title="${h(t("nt.itemMenu"))}" aria-label="${h(t("nt.itemMenu"))}: ${h(name)}">${icon("more")}</button>`;
   const draw = (dir, depth) => {
     const k = kids(dir);
     return k.dirs.map(d => {
       const open = N.open.has(d);
       const name = d.split("/").pop();
-      return `<div class="nt-dir-row"><button type="button" class="nt-dir" data-dir="${h(d)}" style="--d:${depth}" aria-expanded="${open}">${icon(open ? "chevDown" : "chevRight")}<span>${h(name)}</span></button>
-        ${N.vault?.read_only ? "" : `<button type="button" class="icon-btn sm nt-dir-del" data-deldir="${h(d)}" title="${h(t("nt.deleteFolder"))}" aria-label="${h(t("nt.deleteFolder"))}: ${h(name)}">${icon("trash")}</button>`}</div>
+      return `<div class="nt-row" data-kind="dir" data-path="${h(d)}" ${ro ? "" : 'draggable="true"'}><button type="button" class="nt-dir" data-dir="${h(d)}" style="--d:${depth}" aria-expanded="${open}">${icon(open ? "chevDown" : "chevRight")}<span>${h(name)}</span></button>${more(d, "dir", name)}</div>
         ${open ? draw(d, depth + 1) : ""}`;
-    }).join("") + k.files.sort((a, b) => a.path.localeCompare(b.path)).map(n =>
-      `<a href="#" class="nt-file ${N.note?.path === n.path ? "on" : ""}" data-path="${h(n.path)}" style="--d:${depth}">${h(n.path.split("/").pop().replace(/\.md$/i, ""))}</a>`).join("");
+    }).join("") + k.files.sort((a, b) => a.path.localeCompare(b.path)).map(n => {
+      const name = n.path.split("/").pop().replace(/\.md$/i, "");
+      return `<div class="nt-row" data-kind="note" data-path="${h(n.path)}" ${ro ? "" : 'draggable="true"'}><a href="#" class="nt-file ${N.note?.path === n.path ? "on" : ""}" data-path="${h(n.path)}" style="--d:${depth}" draggable="false">${h(name)}</a>${more(n.path, "note", name)}</div>`;
+    }).join("");
   };
   const recent = [...notes].sort((a, b) => b.mtime - a.mtime).slice(0, 5);
   box.innerHTML = (recent.length ? `<div class="nt-recent"><div class="nt-label">${h(t("nt.recent"))}</div>${recent.map(n =>
-      `<a href="#" class="nt-file" data-path="${h(n.path)}">${h(n.path.split("/").pop().replace(/\.md$/i, ""))}<small>${h(n.path.includes("/") ? n.path.slice(0, n.path.lastIndexOf("/")) : "")}</small></a>`).join("")}</div>` : "")
-    + `<div class="nt-label">${h(t("nt.folders"))}</div>` + (draw("", 0) || `<p class="muted">${h(t("nt.noNotes"))}</p>`);
-  $$(".nt-dir", box).forEach(b => (b.onclick = () => { const d = b.dataset.dir; N.open.has(d) ? N.open.delete(d) : N.open.add(d); drawTree(); }));
-  $$(".nt-file", box).forEach(a => (a.onclick = e => { e.preventDefault(); openNote(a.dataset.path); }));
-  $$("[data-deldir]", box).forEach(b => (b.onclick = () => removeItem(b.dataset.deldir, true)));
-  // long-press (phones) or right-click: delete
-  if (!N.vault?.read_only) {
-    $$(".nt-dir", box).forEach(b => b.addEventListener("contextmenu", e => { e.preventDefault(); removeItem(b.dataset.dir, true); }));
-    $$(".nt-file", box).forEach(a => a.addEventListener("contextmenu", e => { e.preventDefault(); removeItem(a.dataset.path, false); }));
+      `<a href="#" class="nt-file" data-path="${h(n.path)}" draggable="false">${h(n.path.split("/").pop().replace(/\.md$/i, ""))}<small>${h(n.path.includes("/") ? n.path.slice(0, n.path.lastIndexOf("/")) : "")}</small></a>`).join("")}</div>` : "")
+    + `<div class="nt-label nt-drop-top" data-drop="">${h(t("nt.folders"))}</div>` + (draw("", 0) || `<p class="muted">${h(t("nt.noNotes"))}</p>`)
+    + (ro || !N.tree.length ? "" : `<p class="muted nt-drag-hint">${h(t(touch() ? "nt.dragHintTouch" : "nt.dragHint"))}</p>`);
+  $$(".nt-dir", box).forEach(b => (b.onclick = () => { if (dragJustEnded()) return; const d = b.dataset.dir; N.open.has(d) ? N.open.delete(d) : N.open.add(d); drawTree(); }));
+  $$(".nt-file", box).forEach(a => (a.onclick = e => { e.preventDefault(); if (!dragJustEnded()) openNote(a.dataset.path); }));
+  $$("[data-more]", box).forEach(b => (b.onclick = e => { e.stopPropagation(); itemMenu(b.dataset.more, b.dataset.kind === "dir", b); }));
+  if (!ro) wireDrag(box);
+}
+
+const touch = () => matchMedia("(hover: none)").matches;
+
+// ---------------------------------------------------------------- item menu, Move to…, drag and drop
+function itemMenu(path, folder, anchor) {
+  const d = dialog("ntItemDlg", "nt-dlg nt-item-dlg");
+  const name = folder ? path.split("/").pop() : nameOf(path);
+  d.innerHTML = `<form method="dialog">
+    <div class="dlg-head"><h2>${h(name)}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
+    <div class="dlg-body plain nt-item-acts">
+      ${folder ? "" : `<button type="button" class="a-item" data-ia="open">${icon("file")}<span class="a-item-t">${h(t("nt.open"))}</span></button>`}
+      <button type="button" class="a-item" data-ia="move">${icon("folder")}<span class="a-item-t">${h(t("nt.moveTo"))}<small>${h(t("nt.moveToDesc"))}</small></span></button>
+      ${folder ? "" : `<button type="button" class="a-item" data-ia="obsidian">${icon("ext")}<span class="a-item-t">${h(t("nt.openObsidian"))}</span></button>`}
+      <button type="button" class="a-item nt-danger" data-ia="delete">${icon("trash")}<span class="a-item-t">${h(t(folder ? "nt.deleteFolder" : "nt.delete"))}</span></button>
+    </div></form>`;
+  d.querySelectorAll("[data-ia]").forEach(b => (b.onclick = () => {
+    d.close();
+    const a = b.dataset.ia;
+    if (a === "open") openNote(path);
+    else if (a === "move") moveDialog(path, folder);
+    else if (a === "obsidian") openInObsidian(N.vault, path);
+    else if (a === "delete") removeItem(path, folder);
+  }));
+  d.showModal();
+}
+
+const parentOf = p => (p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "");
+
+function moveDialog(path, folder) {
+  const d = dialog("ntMoveDlg", "nt-dlg nt-move-dlg");
+  const name = folder ? path.split("/").pop() : nameOf(path);
+  const here = parentOf(path);
+  const ok = f => f !== here && !(folder && (f === path || f.startsWith(path + "/")));
+  const targets = ["", ...N.tree.filter(x => x.kind === "folder").map(x => x.path).sort()].filter(ok);
+  d.innerHTML = `<form method="dialog">
+    <div class="dlg-head"><h2>${h(t("nt.moveQ", { n: name }))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
+    <div class="dlg-body plain"><div class="nt-move-list">${targets.map(f =>
+      `<button type="button" class="nt-move-to" data-to="${h(f)}" style="--d:${f ? f.split("/").length - 1 : 0}">${icon("folder")}<span>${h(f ? f.split("/").pop() : t("nt.orgTop"))}</span>${f.includes("/") ? `<small>${h(parentOf(f))}</small>` : ""}</button>`).join("")
+      || `<p class="muted">${h(t("nt.noOtherFolders"))}</p>`}</div></div></form>`;
+  d.querySelectorAll("[data-to]").forEach(b => (b.onclick = () => { d.close(); doMove(path, b.dataset.to, folder); }));
+  d.showModal();
+}
+
+async function doMove(path, to, folder, undo = false) {
+  if (to === parentOf(path)) return;
+  if (folder && (to === path || to.startsWith(path + "/"))) return toast(t("nt.intoItself"), 5000);
+  if (N.dirty) await saveNow();
+  const vid = N.vault.id;
+  let r;
+  try { r = await api(`/api/notes/${vid}/move`, { method: "POST", body: { path, to, folder } }); }
+  catch (err) { return toast(err.message, 7000); }
+  if (folder) {
+    const nd = r.path;
+    N.open = new Set([...N.open].map(o => (o === path || o.startsWith(path + "/")) ? nd + o.slice(path.length) : o));
   }
+  if (to) for (let f = to; f; f = parentOf(f)) N.open.add(f);
+  const open = N.note?.path;
+  const moved = open && (folder ? open.startsWith(path + "/") : open === path);
+  await loadTree();
+  if (moved) openNote(folder ? r.path + open.slice(path.length) : r.path);
+  else if (open) {                                  // links in the open note may have been updated
+    const fresh = await api(`/api/notes/${vid}/note?path=${encodeURIComponent(open)}`).catch(() => null);
+    if (fresh && fresh.hash !== N.note.hash && !N.dirty) { N.note = fresh; drawNote(); }
+  }
+  if (undo) return;
+  const label = to ? to.split("/").pop() : t("nt.orgTop");
+  toast(t("nt.moved", { n: folder ? path.split("/").pop() : nameOf(path), f: label }) + (r.links ? " " + t("nt.linksUpdated", { n: r.links }) : ""), 8000,
+    { label: t("nt.undo"), run: () => doMove(r.path, parentOf(path), folder, true) });
+}
+
+// Drag and drop: mouse (HTML drag events) and touch (hold a row for a moment, then drag; the list stays
+// scrollable because the drag only starts after the hold). Drop on a folder, or on "Folders and notes" for the top.
+let dragEndAt = 0;
+const dragJustEnded = () => Date.now() - dragEndAt < 400;
+
+function dropTarget(el) {
+  const row = el?.closest?.('.nt-row[data-kind="dir"], .nt-drop-top');
+  if (!row || !N.drag) return null;
+  const to = row.classList.contains("nt-drop-top") ? "" : row.dataset.path;
+  const { path, folder } = N.drag;
+  if (to === parentOf(path) || (folder && (to === path || to.startsWith(path + "/")))) return null;
+  return { row, to };
+}
+
+function wireDrag(box) {
+  const clear = () => $$(".nt-drop-on", box).forEach(x => x.classList.remove("nt-drop-on"));
+  // mouse
+  $$(".nt-row[draggable]", box).forEach(row => {
+    row.addEventListener("dragstart", e => {
+      N.drag = { path: row.dataset.path, folder: row.dataset.kind === "dir" };
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", row.dataset.path);
+      row.classList.add("nt-dragging");
+    });
+    row.addEventListener("dragend", () => { row.classList.remove("nt-dragging"); clear(); N.drag = null; dragEndAt = Date.now(); });
+  });
+  box.addEventListener("dragover", e => {
+    const tg = dropTarget(e.target);
+    clear();
+    if (!tg) return;
+    e.preventDefault();
+    tg.row.classList.add("nt-drop-on");
+  });
+  box.addEventListener("dragleave", e => { if (!box.contains(e.relatedTarget)) clear(); });
+  box.addEventListener("drop", e => {
+    const tg = dropTarget(e.target);
+    clear();
+    if (!tg) return;
+    e.preventDefault();
+    const { path, folder } = N.drag;
+    N.drag = null;
+    doMove(path, tg.to, folder);
+  });
+  // right-click on a computer opens the same menu as ⋯; on touch screens the long press is for dragging
+  box.addEventListener("contextmenu", e => {
+    const row = e.target.closest(".nt-row");
+    if (!row) return;
+    e.preventDefault();
+    if (!touch()) itemMenu(row.dataset.path, row.dataset.kind === "dir");
+  });
+  // touch
+  let hold = null, start = null, ghost = null, src = null;
+  const end = () => { clearTimeout(hold); hold = null; ghost?.remove(); ghost = null; src?.classList.remove("nt-dragging"); src = null; clear(); };
+  box.addEventListener("touchstart", e => {
+    const row = e.target.closest(".nt-row");
+    if (!row || e.target.closest(".nt-more") || e.touches.length > 1) return;
+    start = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    hold = setTimeout(() => {
+      hold = null;
+      src = row;
+      N.drag = { path: row.dataset.path, folder: row.dataset.kind === "dir" };
+      row.classList.add("nt-dragging");
+      ghost = Object.assign(document.createElement("div"), { className: "nt-ghost", textContent: row.textContent.trim() });
+      document.body.appendChild(ghost);
+      ghost.style.transform = `translate(${start.x + 12}px, ${start.y - 20}px)`;
+      navigator.vibrate?.(15);
+    }, 380);
+  }, { passive: true });
+  box.addEventListener("touchmove", e => {
+    const p = e.touches[0];
+    if (hold && Math.hypot(p.clientX - start.x, p.clientY - start.y) > 10) { clearTimeout(hold); hold = null; return; }
+    if (!N.drag || !ghost) return;
+    e.preventDefault();                                   // dragging, not scrolling
+    ghost.style.transform = `translate(${p.clientX + 12}px, ${p.clientY - 20}px)`;
+    clear();
+    const tg = dropTarget(document.elementFromPoint(p.clientX, p.clientY));
+    if (tg) tg.row.classList.add("nt-drop-on");
+    const r = box.getBoundingClientRect();              // scroll the list near its edges
+    if (p.clientY < r.top + 40) box.scrollTop -= 12; else if (p.clientY > r.bottom - 40) box.scrollTop += 12;
+  }, { passive: false });
+  box.addEventListener("touchend", e => {
+    if (!N.drag || !ghost) { end(); return; }
+    const p = e.changedTouches[0];
+    const tg = dropTarget(document.elementFromPoint(p.clientX, p.clientY));
+    const { path, folder } = N.drag;
+    N.drag = null;
+    end();
+    dragEndAt = Date.now();
+    e.preventDefault();
+    if (tg) doMove(path, tg.to, folder);
+  });
+  box.addEventListener("touchcancel", () => { N.drag = null; end(); });
 }
 
 // Delete = move into the vault's .trash folder (Obsidian's trash), after a confirmation; Undo puts it back.

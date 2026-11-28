@@ -73,6 +73,7 @@ or removing them.
 - `POST /api/notes/{vid}/ask`
 - `POST /api/notes/{vid}/categorize`
 - `GET /api/notes/{vid}/links`
+- `POST /api/notes/{vid}/move`
 - `POST /api/notes/{vid}/new`
 - `GET /api/notes/{vid}/note`
 - `PUT /api/notes/{vid}/note`
@@ -584,6 +585,8 @@ or removing them.
 - async def `trash_item(vid, req)`
 - class `RestoreReq` ()
 - async def `restore_item(vid, req)`
+- class `MoveReq` ()
+- async def `move_item(vid, req)`
 
 ### airag/notes/index.py
 - def `connect(settings, v)`
@@ -597,6 +600,10 @@ or removing them.
 - def `outgoing(settings, v, rel)`
 - def `stats(settings, v)`
 - def `all_tags(settings, v)`
+
+### airag/notes/move.py
+- def `rewrite_links(text, old, new, folder)`
+- def `move(settings, v, rel, dest_folder, folder)`
 
 ### airag/notes/obsidian.py
 - def `uri_for(p)`
@@ -988,4 +995,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize, notes-ask  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
-i18n keys (en): 1373
+i18n keys (en): 1384

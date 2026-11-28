@@ -1281,6 +1281,17 @@
  "nt.noteDeleted": "\"{n}\" moved to the trash",
  "nt.folderDeleted": "Folder \"{n}\" moved to the trash",
  "nt.undo": "Undo",
- "help.n.delete.t": "The bin next to a note deletes it; for a folder, point at it in the list (or long-press it on a phone). Deleted notes go to the vault's .trash folder, which Obsidian uses too, and Undo brings them back.",
- "help.n.delete": "Deleting"
+ "help.n.delete.t": "Drag a note or folder onto a folder to move it (on a phone: hold it first). \u22ef on each row has Move to\u2026 and Delete. Deleted notes go to the vault's .trash folder, which Obsidian uses too, and Undo brings them back.",
+ "help.n.delete": "Moving and deleting",
+ "nt.itemMenu": "More",
+ "nt.open": "Open",
+ "nt.moveTo": "Move to\u2026",
+ "nt.moveToDesc": "Pick a folder (or drag it onto one in the list)",
+ "nt.moveQ": "Move \"{n}\" to\u2026",
+ "nt.noOtherFolders": "There's no other folder to move it to.",
+ "nt.intoItself": "A folder can't go inside itself.",
+ "nt.moved": "Moved \"{n}\" to {f}.",
+ "nt.linksUpdated": "Links updated in {n} notes.",
+ "nt.dragHint": "Drag notes and folders onto a folder (or onto Folders and notes for the top) to move them. \u22ef has Move to\u2026 and Delete.",
+ "nt.dragHintTouch": "Hold a note or folder, then drag it onto a folder to move it. \u22ef has Move to\u2026 and Delete."
 }

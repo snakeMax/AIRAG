@@ -359,3 +359,22 @@ async def restore_item(vid: str, req: RestoreReq):
         raise _fail(e)
     await asyncio.to_thread(index.update, s, v)
     return r
+
+
+class MoveReq(BaseModel):
+    path: str
+    to: str = ""            # destination folder; "" = top of the vault
+    folder: bool = False
+
+
+@router.post("/{vid}/move")
+async def move_item(vid: str, req: MoveReq):
+    """Move a note or folder (drag and drop / Move to…). Path-style links to it are updated in every note."""
+    from . import move
+    s, v = _vault(vid)
+    try:
+        r = await asyncio.to_thread(move.move, s, v, req.path, req.to, req.folder)
+    except (store.NotesError, pathguard.PathError, OSError) as e:
+        raise _fail(e)
+    await asyncio.to_thread(index.update, s, v)
+    return r

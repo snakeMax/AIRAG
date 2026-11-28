@@ -107,3 +107,30 @@ def test_restore_tidies_empty_trash_folders(S):
     r = store.trash(S, v, "A/B/N.md")
     store.restore(S, v, r["trashed"], r["path"])
     assert not (base / ".trash" / "A").exists()
+
+
+def test_move_notes_and_folders_updates_path_links(S):
+    from airag.notes import store, move, pathguard
+    v = store.create_vault(S, "M", "empty")
+    store.create_note(S, v, "Topics", "Moose", "x")
+    store.create_note(S, v, "Topics/Deep", "Deer", "y")
+    store.create_note(S, v, "Archive", "Keep", "z")
+    store.write_note(S, v, "Index.md", "[[Moose]] [[Topics/Moose#Facts|m]] ![[Topics/Moose]] [a](Topics/Moose.md) "
+                     "[d](Topics/Deep/Deer.md) [[Topics/Deep/Deer]] [w](https://x.org/Topics/Moose.md)")
+    base = store.vault_dir(S, v)
+    r = move.move(S, v, "Topics/Moose.md", "Archive")
+    assert r["path"] == "Archive/Moose.md" and (base / "Archive/Moose.md").exists() and r["links"] == 1
+    t = store.read_note(S, v, "Index.md")
+    assert "[[Moose]]" in t and "[[Archive/Moose#Facts|m]]" in t and "![[Archive/Moose]]" in t and "](Archive/Moose.md)" in t
+    assert "https://x.org/Topics/Moose.md" in t                              # web links untouched
+    r = move.move(S, v, "Topics/Deep", "Archive", folder=True)
+    t = store.read_note(S, v, "Index.md")
+    assert (base / "Archive/Deep/Deer.md").exists() and "[[Archive/Deep/Deer]]" in t and "](Archive/Deep/Deer.md)" in t
+    with pytest.raises(store.NotesError):
+        move.move(S, v, "Archive", "Archive/Deep", folder=True)            # into itself
+    store.create_note(S, v, "", "Keep", "top")
+    with pytest.raises(store.NotesError):
+        move.move(S, v, "Archive/Keep.md", "")                             # name taken at the top
+    with pytest.raises((store.NotesError, pathguard.PathError)):
+        move.move(S, v, "Archive/Keep.md", "../outside")
+    assert move.move(S, v, "Archive/Moose.md", "")["path"] == "Moose.md"

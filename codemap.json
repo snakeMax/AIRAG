@@ -3801,6 +3801,21 @@
       "req"
      ],
      "line": 354
+    },
+    {
+     "kind": "class",
+     "name": "MoveReq",
+     "methods": [],
+     "line": 364
+    },
+    {
+     "kind": "async def",
+     "name": "move_item",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 371
     }
    ]
   },
@@ -3943,6 +3958,44 @@
       "v"
      ],
      "line": 259
+    }
+   ]
+  },
+  "airag/notes/move.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_remap",
+     "args": [
+      "target",
+      "old",
+      "new",
+      "folder"
+     ],
+     "line": 23
+    },
+    {
+     "kind": "def",
+     "name": "rewrite_links",
+     "args": [
+      "text",
+      "old",
+      "new",
+      "folder"
+     ],
+     "line": 38
+    },
+    {
+     "kind": "def",
+     "name": "move",
+     "args": [
+      "settings",
+      "v",
+      "rel",
+      "dest_folder",
+      "folder"
+     ],
+     "line": 57
     }
    ]
   },
@@ -7372,6 +7425,10 @@
   ],
   [
    "POST",
+   "/api/notes/{vid}/move"
+  ],
+  [
+   "POST",
    "/api/notes/{vid}/new"
   ],
   [
@@ -8862,5 +8919,5 @@
   "notes",
   "misc"
  ],
- "i18n_keys": 1373
+ "i18n_keys": 1384
 }
