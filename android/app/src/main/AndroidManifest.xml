@@ -24,6 +24,11 @@
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>
+        <!-- Notes: "Open in Obsidian" checks that the Obsidian app is there -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="obsidian" />
+        </intent>
     </queries>
 
     <application

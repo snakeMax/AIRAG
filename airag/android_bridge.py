@@ -39,6 +39,11 @@ def open_path(path: str, reveal: bool = False) -> None:
     _bridge().openFile(str(path))
 
 
+def open_obsidian(path: str) -> bool:
+    """Open a vault folder or note in Obsidian (the Kotlin side builds the obsidian:// link). False if not installed."""
+    return bool(_bridge().openObsidian(str(path)))
+
+
 def render_page(url: str, timeout_s: int = 20) -> str:
     """Load a page in a hidden WebView and return its HTML after scripts ran ("" on failure)."""
     html = _bridge().renderPage(str(url), int(timeout_s * 1000))

@@ -95,24 +95,32 @@
     },
     {
      "kind": "def",
-     "name": "render_page",
+     "name": "open_obsidian",
      "args": [
-      "url",
-      "timeout_s"
+      "path"
      ],
      "line": 42
     },
     {
      "kind": "def",
+     "name": "render_page",
+     "args": [
+      "url",
+      "timeout_s"
+     ],
+     "line": 47
+    },
+    {
+     "kind": "def",
      "name": "device_info",
      "args": [],
-     "line": 48
+     "line": 53
     },
     {
      "kind": "def",
      "name": "clear_web_cache",
      "args": [],
-     "line": 53
+     "line": 58
     },
     {
      "kind": "def",
@@ -120,19 +128,19 @@
      "args": [
       "path"
      ],
-     "line": 57
+     "line": 62
     },
     {
      "kind": "def",
      "name": "_jobs_changed",
      "args": [],
-     "line": 66
+     "line": 71
     },
     {
      "kind": "def",
      "name": "cancel_all",
      "args": [],
-     "line": 105
+     "line": 110
     },
     {
      "kind": "def",
@@ -141,13 +149,13 @@
       "data_dir",
       "time_zone"
      ],
-     "line": 111
+     "line": 116
     },
     {
      "kind": "def",
      "name": "stop",
      "args": [],
-     "line": 139
+     "line": 144
     }
    ]
   },
@@ -321,19 +329,19 @@
      "args": [
       "fields"
      ],
-     "line": 244
+     "line": 245
     },
     {
      "kind": "def",
      "name": "defaults",
      "args": [],
-     "line": 248
+     "line": 249
     },
     {
      "kind": "def",
      "name": "_base_defaults",
      "args": [],
-     "line": 261
+     "line": 262
     },
     {
      "kind": "def",
@@ -342,13 +350,13 @@
       "base",
       "over"
      ],
-     "line": 288
+     "line": 289
     },
     {
      "kind": "def",
      "name": "_secret_fields",
      "args": [],
-     "line": 298
+     "line": 299
     },
     {
      "kind": "def",
@@ -357,7 +365,7 @@
       "d",
       "path"
      ],
-     "line": 311
+     "line": 312
     },
     {
      "kind": "def",
@@ -367,7 +375,7 @@
       "path",
       "v"
      ],
-     "line": 319
+     "line": 320
     },
     {
      "kind": "def",
@@ -375,31 +383,31 @@
      "args": [
       "s"
      ],
-     "line": 325
+     "line": 326
     },
     {
      "kind": "def",
      "name": "_backup_path",
      "args": [],
-     "line": 340
+     "line": 341
     },
     {
      "kind": "def",
      "name": "load_raw",
      "args": [],
-     "line": 344
+     "line": 345
     },
     {
      "kind": "def",
      "name": "guarded",
      "args": [],
-     "line": 398
+     "line": 399
     },
     {
      "kind": "def",
      "name": "begin_job",
      "args": [],
-     "line": 405
+     "line": 406
     },
     {
      "kind": "def",
@@ -407,13 +415,13 @@
      "args": [
       "token"
      ],
-     "line": 413
+     "line": 414
     },
     {
      "kind": "def",
      "name": "in_job",
      "args": [],
-     "line": 418
+     "line": 419
     },
     {
      "kind": "def",
@@ -421,7 +429,7 @@
      "args": [
       "current"
      ],
-     "line": 422
+     "line": 423
     },
     {
      "kind": "def",
@@ -430,7 +438,7 @@
       "before",
       "after"
      ],
-     "line": 444
+     "line": 445
     },
     {
      "kind": "def",
@@ -438,7 +446,7 @@
      "args": [
       "with_env"
      ],
-     "line": 463
+     "line": 464
     },
     {
      "kind": "def",
@@ -446,7 +454,7 @@
      "args": [
       "s"
      ],
-     "line": 491
+     "line": 492
     },
     {
      "kind": "def",
@@ -455,7 +463,7 @@
       "new",
       "current"
      ],
-     "line": 500
+     "line": 501
     },
     {
      "kind": "def",
@@ -463,7 +471,7 @@
      "args": [
       "incoming"
      ],
-     "line": 508
+     "line": 509
     },
     {
      "kind": "def",
@@ -473,7 +481,7 @@
       "llm_provider",
       "provider_cfg"
      ],
-     "line": 527
+     "line": 528
     }
    ]
   },
@@ -3542,10 +3550,62 @@
      "line": 69
     },
     {
+     "kind": "def",
+     "name": "_first_is_main",
+     "args": [
+      "v"
+     ],
+     "line": 75
+    },
+    {
+     "kind": "class",
+     "name": "MainReq",
+     "methods": [],
+     "line": 84
+    },
+    {
+     "kind": "def",
+     "name": "set_main",
+     "args": [
+      "req"
+     ],
+     "line": 89
+    },
+    {
+     "kind": "class",
+     "name": "AccessReq",
+     "methods": [],
+     "line": 100
+    },
+    {
+     "kind": "def",
+     "name": "set_access",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 105
+    },
+    {
+     "kind": "class",
+     "name": "ObsidianReq",
+     "methods": [],
+     "line": 113
+    },
+    {
+     "kind": "async def",
+     "name": "open_in_obsidian",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 118
+    },
+    {
      "kind": "class",
      "name": "NewVault",
      "methods": [],
-     "line": 75
+     "line": 137
     },
     {
      "kind": "def",
@@ -3553,13 +3613,13 @@
      "args": [
       "req"
      ],
-     "line": 82
+     "line": 144
     },
     {
      "kind": "class",
      "name": "LinkVault",
      "methods": [],
-     "line": 89
+     "line": 151
     },
     {
      "kind": "def",
@@ -3567,7 +3627,7 @@
      "args": [
       "req"
      ],
-     "line": 95
+     "line": 159
     },
     {
      "kind": "def",
@@ -3575,7 +3635,7 @@
      "args": [
       "vid"
      ],
-     "line": 103
+     "line": 170
     },
     {
      "kind": "def",
@@ -3583,7 +3643,7 @@
      "args": [
       "vid"
      ],
-     "line": 109
+     "line": 180
     },
     {
      "kind": "async def",
@@ -3591,7 +3651,7 @@
      "args": [
       "vid"
      ],
-     "line": 115
+     "line": 186
     },
     {
      "kind": "def",
@@ -3600,13 +3660,13 @@
       "vid",
       "path"
      ],
-     "line": 124
+     "line": 195
     },
     {
      "kind": "class",
      "name": "SaveNote",
      "methods": [],
-     "line": 139
+     "line": 210
     },
     {
      "kind": "async def",
@@ -3615,13 +3675,13 @@
       "vid",
       "req"
      ],
-     "line": 147
+     "line": 218
     },
     {
      "kind": "class",
      "name": "NewNote",
      "methods": [],
-     "line": 159
+     "line": 230
     },
     {
      "kind": "async def",
@@ -3630,7 +3690,7 @@
       "vid",
       "req"
      ],
-     "line": 167
+     "line": 238
     },
     {
      "kind": "async def",
@@ -3640,7 +3700,7 @@
       "q",
       "sort"
      ],
-     "line": 178
+     "line": 249
     },
     {
      "kind": "def",
@@ -3649,7 +3709,7 @@
       "vid",
       "path"
      ],
-     "line": 187
+     "line": 258
     },
     {
      "kind": "def",
@@ -3657,7 +3717,7 @@
      "args": [
       "vid"
      ],
-     "line": 197
+     "line": 268
     },
     {
      "kind": "def",
@@ -3665,13 +3725,13 @@
      "args": [
       "vid"
      ],
-     "line": 203
+     "line": 274
     },
     {
      "kind": "class",
      "name": "OrganizeReq",
      "methods": [],
-     "line": 208
+     "line": 279
     },
     {
      "kind": "async def",
@@ -3680,13 +3740,13 @@
       "vid",
       "req"
      ],
-     "line": 214
+     "line": 285
     },
     {
      "kind": "class",
      "name": "AskReq",
      "methods": [],
-     "line": 225
+     "line": 296
     },
     {
      "kind": "async def",
@@ -3695,13 +3755,13 @@
       "vid",
       "req"
      ],
-     "line": 231
+     "line": 302
     },
     {
      "kind": "class",
      "name": "CategorizeReq",
      "methods": [],
-     "line": 241
+     "line": 312
     },
     {
      "kind": "async def",
@@ -3710,7 +3770,7 @@
       "vid",
       "req"
      ],
-     "line": 248
+     "line": 319
     }
    ]
   },
@@ -3853,6 +3913,26 @@
       "v"
      ],
      "line": 259
+    }
+   ]
+  },
+  "airag/notes/obsidian.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "uri_for",
+     "args": [
+      "p"
+     ],
+     "line": 18
+    },
+    {
+     "kind": "def",
+     "name": "open_path",
+     "args": [
+      "p"
+     ],
+     "line": 22
     }
    ]
   },
@@ -4266,13 +4346,13 @@
      "kind": "class",
      "name": "NotesError",
      "methods": [],
-     "line": 49
+     "line": 52
     },
     {
      "kind": "def",
      "name": "default_root",
      "args": [],
-     "line": 53
+     "line": 56
     },
     {
      "kind": "def",
@@ -4280,7 +4360,7 @@
      "args": [
       "settings"
      ],
-     "line": 60
+     "line": 63
     },
     {
      "kind": "def",
@@ -4288,7 +4368,7 @@
      "args": [
       "settings"
      ],
-     "line": 67
+     "line": 70
     },
     {
      "kind": "def",
@@ -4296,7 +4376,7 @@
      "args": [
       "settings"
      ],
-     "line": 73
+     "line": 76
     },
     {
      "kind": "def",
@@ -4304,7 +4384,7 @@
      "args": [
       "settings"
      ],
-     "line": 77
+     "line": 80
     },
     {
      "kind": "def",
@@ -4313,7 +4393,23 @@
       "settings",
       "data"
      ],
-     "line": 88
+     "line": 91
+    },
+    {
+     "kind": "def",
+     "name": "main_id",
+     "args": [
+      "settings"
+     ],
+     "line": 96
+    },
+    {
+     "kind": "def",
+     "name": "read_only",
+     "args": [
+      "v"
+     ],
+     "line": 100
     },
     {
      "kind": "def",
@@ -4321,7 +4417,17 @@
      "args": [
       "settings"
      ],
-     "line": 93
+     "line": 104
+    },
+    {
+     "kind": "def",
+     "name": "set_access",
+     "args": [
+      "settings",
+      "vid",
+      "write"
+     ],
+     "line": 117
     },
     {
      "kind": "def",
@@ -4330,7 +4436,7 @@
       "settings",
       "v"
      ],
-     "line": 102
+     "line": 129
     },
     {
      "kind": "def",
@@ -4339,7 +4445,7 @@
       "settings",
       "vid"
      ],
-     "line": 106
+     "line": 133
     },
     {
      "kind": "def",
@@ -4350,7 +4456,7 @@
       "template",
       "purpose"
      ],
-     "line": 113
+     "line": 140
     },
     {
      "kind": "def",
@@ -4358,9 +4464,10 @@
      "args": [
       "settings",
       "folder",
-      "name"
+      "name",
+      "write"
      ],
-     "line": 134
+     "line": 161
     },
     {
      "kind": "def",
@@ -4369,7 +4476,7 @@
       "settings",
       "vid"
      ],
-     "line": 151
+     "line": 178
     },
     {
      "kind": "def",
@@ -4378,7 +4485,7 @@
       "settings",
       "v"
      ],
-     "line": 160
+     "line": 187
     },
     {
      "kind": "def",
@@ -4388,7 +4495,7 @@
       "v",
       "limit"
      ],
-     "line": 167
+     "line": 194
     },
     {
      "kind": "def",
@@ -4398,7 +4505,7 @@
       "v",
       "rel"
      ],
-     "line": 192
+     "line": 219
     },
     {
      "kind": "def",
@@ -4409,7 +4516,7 @@
       "rel",
       "old"
      ],
-     "line": 201
+     "line": 228
     },
     {
      "kind": "def",
@@ -4422,7 +4529,7 @@
       "expected_hash",
       "approved"
      ],
-     "line": 213
+     "line": 240
     },
     {
      "kind": "def",
@@ -4430,7 +4537,7 @@
      "args": [
       "title"
      ],
-     "line": 237
+     "line": 264
     },
     {
      "kind": "def",
@@ -4441,7 +4548,7 @@
       "folder",
       "title"
      ],
-     "line": 245
+     "line": 272
     },
     {
      "kind": "def",
@@ -4455,7 +4562,7 @@
       "props",
       "approved"
      ],
-     "line": 257
+     "line": 284
     },
     {
      "kind": "def",
@@ -4463,7 +4570,7 @@
      "args": [
       "v"
      ],
-     "line": 266
+     "line": 293
     }
    ]
   },
@@ -7175,6 +7282,10 @@
    "/api/notes/folder"
   ],
   [
+   "POST",
+   "/api/notes/main"
+  ],
+  [
    "GET",
    "/api/notes/vaults"
   ],
@@ -7189,6 +7300,10 @@
   [
    "DELETE",
    "/api/notes/vaults/{vid}"
+  ],
+  [
+   "POST",
+   "/api/notes/vaults/{vid}/access"
   ],
   [
    "POST",
@@ -7213,6 +7328,10 @@
   [
    "PUT",
    "/api/notes/{vid}/note"
+  ],
+  [
+   "POST",
+   "/api/notes/{vid}/obsidian"
   ],
   [
    "POST",
@@ -7800,6 +7919,7 @@
   "notes.js": {
    "exports": [
     "notesDirty",
+    "openInObsidian",
     "openNote",
     "saveNotes",
     "showNotes"
@@ -7832,11 +7952,13 @@
   "notesfolder.js": {
    "exports": [
     "notesFolderCard",
-    "refreshNotesFolder"
+    "refreshNotesFolder",
+    "refreshNotesVaults"
    ],
    "imports": {
     "util.js": [
      "$",
+     "$$",
      "h",
      "icon",
      "api",
@@ -8561,7 +8683,8 @@
    "subagents"
   ],
   "notes": [
-   "root"
+   "root",
+   "main"
   ],
   "agents": [
    "max_steps",
@@ -8678,5 +8801,5 @@
   "notes",
   "misc"
  ],
- "i18n_keys": 1339
+ "i18n_keys": 1359
 }

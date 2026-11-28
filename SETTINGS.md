@@ -101,7 +101,7 @@ Puts research into a notes vault: an article or quick answer (Export menu), a wh
 - **Auto-categorize**: the AI suggests a title, folder, type, tags and existing notes to link to. The text is kept exactly as it is; you check everything (and untick links you don't want) before **Save note**. Uses a few tokens (the AI reads up to 8,000 characters) with the **Notes** model; runs as a background job.
 - **Add as raw data**: saved exactly as it is, in the folder you pick (Sources is preselected when the vault has one). No AI.
 
-Either way the note gets the properties `source: research`, the question and (for one page) its address. *Open* in the message opens the new note. Linked Obsidian vaults are read-only for now, so they aren't offered.
+Either way the note gets the properties `source: research`, the question and (for one page) its address. *Open* in the message opens the new note. Vaults set to read only aren't offered; the main vault is selected first.
 
 ### Copy as Markdown
 Copies the article and its source list, ready to paste anywhere. Free.
@@ -558,7 +558,7 @@ On articles, *Listen*, *Pause*, *Resume* and *Stop* control the reading.
 Switches between searching the web (Research) and your notes (Notes). Both keep running in the background; unsaved typing in a note is saved when you switch.
 
 ### Vaults
-A vault is a folder of Markdown notes (Obsidian-compatible). **+** next to the vault picker: *Create a vault* (name, what it's for, and how it starts: Research, Writing, Worldbuilding (no folders, make your own), Personal or Empty), or *Link an Obsidian vault* you already have. AIRAG reads a linked vault where it is; changes there need your approval (that arrives in a later test), and its `.obsidian` settings are never touched. AIRAG's own index for a vault lives in a hidden `.airag` folder inside it (for linked vaults: in AIRAG's own data folder).
+A vault is a folder of Markdown notes (Obsidian-compatible). **+** next to the vault picker: *Create a vault* (name, what it's for, and how it starts: Research, Writing, Worldbuilding (no folders, make your own), Personal or Empty), or *Add an Obsidian vault* you already have (tick *Make it the main notes vault* to open it by default). AIRAG uses an added vault where it is and can add and edit notes there straight away, unless you set it to read only (Settings → Library & storage → Notes vaults). It never overwrites a note that Obsidian changed in the meantime (you get a message instead), and its `.obsidian` settings are never touched. The first time you open Notes with no vaults you get both choices; the first vault you make or add becomes the main one. **Open in Obsidian** (the ↗ button next to a note's Saved/Read only state) opens that note in the Obsidian app. AIRAG's own index for a vault lives in a hidden `.airag` folder inside it (for linked vaults: in AIRAG's own data folder).
 
 ### New note, Edit / Read, saving
 *New note* asks for a name and opens it ready to write. **Edit** shows the Markdown (properties between the `---` lines, `[[Note name]]` links, `#tags`); **Read** shows it formatted with a properties table, and links you can tap. A link to a note that doesn't exist offers to create it. Notes save by themselves a moment after you stop typing (Ctrl+S saves at once). If the note changed in another app since you opened it, AIRAG doesn't overwrite it and asks you to reload. The last 20 versions of each note are kept.
@@ -588,6 +588,16 @@ Speak (or type) a note, then pick one of two buttons:
 
 ### Notes folder (Settings → Library & storage, and the first-start setup)
 Where your notes vaults are kept. Default: **Documents\AIRAG Notes** on your system drive (C: on Windows; Documents/AIRAG Notes on Android). *Change…* picks another folder (for example on another drive); *Use the default* goes back. Changing it doesn't move vaults you already have, and switching back finds them again. The first-start setup shows the same choice.
+
+### Notes vaults (Settings → Library & storage; the main vault also in the first-start setup)
+Every vault AIRAG knows: the ones in the Notes folder and Obsidian vaults you added, each with its folder.
+- **Main** (the round button): the vault Notes opens with and *Add to notes* offers first. It can be an AIRAG vault or an Obsidian vault. The first vault you make or add becomes the main one; removing the main vault makes the next one main.
+- **Add an Obsidian vault…**: pick its folder; it's added where it is, becomes the main vault and can be used right away. The first-start setup has the same button.
+- **Read only** (added vaults only, off by default): AIRAG then doesn't change notes there.
+- **Obsidian**: opens the vault in the Obsidian app (`obsidian://open`). Obsidian opens folders it already knows as vaults; for an AIRAG vault it hasn't seen yet, choose *Open folder as vault* in Obsidian once (the message has *Copy folder path*). Works on Windows, macOS, Linux and Android when Obsidian is installed.
+- **✕**: removes the vault from AIRAG's list. Its folder and notes stay where they are.
+
+Notes AIRAG makes are plain Markdown files in the vault's own folders (Documents on the phone by default), so Obsidian, file managers and other apps can open them; AIRAG's own index sits in a hidden `.airag` folder (for added Obsidian vaults: in AIRAG's data folder, so nothing extra lands in your vault).
 
 ## Help
 

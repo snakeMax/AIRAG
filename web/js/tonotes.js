@@ -26,7 +26,7 @@ async function vaultInfo(vid) {
 export async function addToNotes(item) {
   let vs;
   try { vs = await api("/api/notes/vaults"); } catch (e) { return toast(e.message, 6000); }
-  const vaults = vs.vaults.filter(v => v.exists && !v.linked);
+  const vaults = vs.vaults.filter(v => v.exists && !v.read_only);
   const d = dlg();
   if (!vaults.length) {
     d.innerHTML = `<form method="dialog"><div class="dlg-head"><h2>${h(t("tn.title"))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
@@ -36,12 +36,12 @@ export async function addToNotes(item) {
     return d.showModal();
   }
   let last = ""; try { last = localStorage.getItem(VKEY) || ""; } catch { /* storage off */ }
-  const pick = vaults.find(v => v.id === last) || vaults[0];
+  const pick = vaults.find(v => v.main) || vaults.find(v => v.id === last) || vaults[0];
   d.innerHTML = `<form method="dialog">
     <div class="dlg-head"><h2>${h(t("tn.title"))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
     <div class="dlg-body plain nt-org">
       <p class="muted nt-org-why">${h(t("tn.what." + item.kind))}: <b>${h(item.title)}</b></p>
-      <label class="nt-org-f"><span>${h(t("nt.vault"))}</span><select id="tnVault" class="input">${vaults.map(v => `<option value="${h(v.id)}"${v.id === pick.id ? " selected" : ""}>${h(v.name)}</option>`).join("")}</select></label>
+      <label class="nt-org-f"><span>${h(t("nt.vault"))}</span><select id="tnVault" class="input">${vaults.map(v => `<option value="${h(v.id)}"${v.id === pick.id ? " selected" : ""}>${v.main ? "★ " : ""}${h(v.name)}${v.linked ? " · Obsidian" : ""}</option>`).join("")}</select></label>
       <div class="tn-ways" role="radiogroup" aria-label="${h(t("tn.how"))}">
         <label class="tn-way"><input type="radio" name="tnHow" value="auto" checked><span><b>${icon("bolt")}${h(t("tn.auto"))}</b><small>${h(t("tn.autoDesc"))}</small></span></label>
         <label class="tn-way"><input type="radio" name="tnHow" value="raw"><span><b>${icon("file")}${h(t("tn.raw"))}</b><small>${h(t("tn.rawDesc"))}</small></span></label>

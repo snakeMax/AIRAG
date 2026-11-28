@@ -82,6 +82,8 @@ function wire(root) {
       if (a === "new") newNote();
       else if (a === "voice") voiceNote();
       else if (a === "vaults") vaultDialog();
+      else if (a === "vaults-obsidian") vaultDialog(true);
+      else if (a === "obsidian") openInObsidian(N.vault, N.note?.path || "");
       else if (a === "words") wordsDialog();
       else if (a === "ask") askMode();
       else if (a === "askthis") askNotes(N.query);
@@ -111,11 +113,12 @@ async function loadVaults() {
   N.templates = r.templates;
   N.types = r.types || {};
   const sel = $("#ntVault");
-  sel.innerHTML = N.vaults.map(v => `<option value="${h(v.id)}">${h(v.name)}${v.linked ? " · " + h(t("nt.linked")) : ""}</option>`).join("");
+  sel.innerHTML = N.vaults.map(v => `<option value="${h(v.id)}">${v.main ? "★ " : ""}${h(v.name)}${v.linked ? " · Obsidian" : ""}${v.read_only ? " · " + h(t("nt.readOnly")) : ""}</option>`).join("");
   if (!N.vaults.length) { emptyState(r); return; }
-  let id = "";
-  try { id = localStorage.getItem(VKEY) || ""; } catch { /* storage off */ }
-  if (!N.vaults.some(v => v.id === id)) id = N.vaults[0].id;
+  // the vault you're in stays open; otherwise the main vault, then the last one used
+  let last = "";
+  try { last = localStorage.getItem(VKEY) || ""; } catch { /* storage off */ }
+  const id = [N.vault?.id, r.main, last, N.vaults[0].id].find(x => x && N.vaults.some(v => v.id === x));
   sel.value = id;
   await selectVault(id);
 }
@@ -128,7 +131,9 @@ function emptyState(r) {
   $("#ntMain").innerHTML = `<section class="nt-empty">
       <h2>${h(t("nt.emptyTitle"))}</h2><p>${h(t("nt.emptyIntro"))}</p>
       <p class="muted nt-path">${h(t("nt.folderIs", { p: r.root }))}</p>
-      <div class="row"><button type="button" class="btn primary" data-nt="vaults">${icon("plus")}${h(t("nt.createVault"))}</button></div>
+      <div class="row"><button type="button" class="btn primary" data-nt="vaults">${icon("plus")}${h(t("nt.createVault"))}</button>
+        <button type="button" class="btn" data-nt="vaults-obsidian">${icon("folder")}${h(t("nt.useObsidian"))}</button></div>
+      <p class="muted" style="font-size:13px">${h(t("nt.firstMain"))}</p>
     </section>`;
 }
 
@@ -238,7 +243,7 @@ function dialog(id, cls = "") {
   return d;
 }
 
-function vaultDialog() {
+function vaultDialog(obsidianFirst = false) {
   const d = dialog("ntVaultDlg", "nt-dlg");
   d.innerHTML = `<form method="dialog">
     <div class="dlg-head"><h2>${h(t("nt.vaults"))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
@@ -254,6 +259,7 @@ function vaultDialog() {
       <div class="row"><input id="nvLinkPath" class="input" placeholder="${h(t("nt.linkPh"))}" style="flex:1;min-width:0">
         <button type="button" class="btn sm" id="nvPick">${icon("folder")}${h(t("nt.pick"))}</button>
         <button type="button" class="btn sm" id="nvLink">${h(t("nt.link"))}</button></div>
+      <label class="nt-org-keep" style="margin-top:8px"><input type="checkbox" id="nvMain" ${N.vaults.length ? "" : "checked"}> ${h(t("nt.makeMain"))}</label>
     </div></form>`;
   const help = () => ($("#nvTplHelp").textContent = t("nt.tplHelp." + $("#nvTpl").value));
   $("#nvTpl").onchange = help; help();
@@ -274,13 +280,22 @@ function vaultDialog() {
     const folder = $("#nvLinkPath").value.trim();
     if (!folder) return $("#nvLinkPath").focus();
     try {
-      const v = await api("/api/notes/vaults/link", { method: "POST", body: { folder } });
+      const v = await api("/api/notes/vaults/link", { method: "POST", body: { folder, main: $("#nvMain").checked } });
       try { localStorage.setItem(VKEY, v.id); } catch { /* storage off */ }
       d.close(); toast(t("nt.vaultLinked", { n: v.name })); loadVaults();
     } catch (err) { toast(err.message, 5000); }
   };
   d.showModal();
-  setTimeout(() => $("#nvName").focus(), 30);
+  if (obsidianFirst) { $("#nvLinkPath").scrollIntoView({ block: "center" }); setTimeout(() => $("#nvLinkPath").focus(), 30); }
+  else setTimeout(() => $("#nvName").focus(), 30);
+}
+
+export async function openInObsidian(v, path = "") {
+  if (!v) return;
+  try {
+    const r = await api(`/api/notes/${v.id}/obsidian`, { method: "POST", body: { path } });
+    toast(t("nt.obsidianHint"), 9000, { label: t("nt.copyPath"), run: () => navigator.clipboard?.writeText(r.dir).then(() => toast(t("nt.pathCopied"))) });
+  } catch (e) { toast(e.message, 7000); }
 }
 
 // ---------------------------------------------------------------- note
@@ -332,11 +347,12 @@ function renderNote(text) {
 
 function drawNote() {
   const n = N.note;
-  const linked = n.linked_vault;
+  const linked = n.read_only;
   $("#ntMain").innerHTML = `<article class="nt-note">
     <div class="nt-crumbs"><button type="button" class="icon-btn sm nt-back" data-nt="back" aria-label="${h(t("nt.back"))}">${icon("chevLeft")}</button>
       <span class="muted">${h(folderOf(n.path) || N.vault.name)}</span><span class="grow"></span>
       <span class="nt-state" id="ntState">${h(t(linked ? "nt.readOnly" : "nt.saved"))}</span>
+      <button type="button" class="icon-btn sm" data-nt="obsidian" title="${h(t("nt.openObsidian"))}" aria-label="${h(t("nt.openObsidian"))}">${icon("ext")}</button>
       <div class="seg nt-modes" role="tablist">
         <button type="button" role="tab" data-mode="edit" aria-selected="${N.mode === "edit"}" class="${N.mode === "edit" ? "on" : ""}" ${linked ? "disabled" : ""}>${h(t("nt.edit"))}</button>
         <button type="button" role="tab" data-mode="read" aria-selected="${N.mode === "read" || linked}" class="${N.mode === "read" || linked ? "on" : ""}">${h(t("nt.read"))}</button></div></div>
@@ -423,7 +439,7 @@ async function linkMention(otherPath) {
 
 async function newNote(title = "", body = "", folder = null, props = {}) {
   if (!N.vault) return vaultDialog();
-  if (N.vault.linked) return toast(t("nt.linkedNoWrite"), 6000);
+  if (N.vault.read_only) return toast(t("nt.linkedNoWrite"), 6000);
   title = title || prompt(t("nt.newTitle"), "")?.trim();
   if (!title) return;
   const inbox = N.tree.some(x => x.kind === "folder" && x.path === "Inbox") ? "Inbox" : "";
@@ -444,7 +460,7 @@ const inboxOf = () => N.tree.some(x => x.kind === "folder" && x.path === "Inbox"
 
 function voiceNote(text = "") {
   if (!N.vault) return vaultDialog();
-  if (N.vault.linked) return toast(t("nt.linkedNoWrite"), 6000);
+  if (N.vault.read_only) return toast(t("nt.linkedNoWrite"), 6000);
   if (!text && N.pending?.vid === N.vault.id) { const p = N.pending; N.pending = null; return organizedPreview(p.prop, p.said); }
   const d = dialog("ntVoiceDlg", "nt-dlg");
   d.innerHTML = `<form method="dialog">

@@ -48,7 +48,9 @@ export async function openSetup(reason = "welcome") {
           </div>
           ${choice === "local" ? localPart(oll, settings) : cloudPart(cloud, provider, settings)}
           ${reason === "welcome" ? `<div class="field" style="margin-top:12px"><label>${h(t("nf.setupLabel"))}</label>
-            <div class="status-card" id="suNotesFolder"><div class="grow">${h(t("common.loading"))}</div></div></div>` : ""}
+            <div class="status-card" id="suNotesFolder"><div class="grow">${h(t("common.loading"))}</div></div>
+            <label style="margin-top:8px;display:block">${h(t("nv.setupLabel"))}</label>
+            <div class="status-card" id="suNotesVault"><div class="grow">${h(t("common.loading"))}</div></div></div>` : ""}
           <details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;font-size:13.5px">${h(t("setup.searchKeys"))}</summary>
             <p class="muted" style="font-size:12.5px">${h(t("setup.searchKeysDesc"))}</p>
             <div class="field"><label>Brave Search API key</label><input class="input" type="password" id="suBrave" autocomplete="off" placeholder="${h(settings.search.backends.brave?.api_key || "")}">

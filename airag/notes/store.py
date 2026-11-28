@@ -6,8 +6,11 @@ Layout
       Scripts/                  shared scripts (later)
       <Vault>/                  Obsidian-compatible: plain .md files and folders
         .airag/                 AIRAG's own data: index.db, versions/, scripts (never synced into notes)
-Linked vaults (an existing Obsidian vault elsewhere) are listed by path; AIRAG only changes them after the
-user approves each change (`approved=True` from the approval screen). `.obsidian/` is never written.
+Linked vaults (an existing Obsidian vault elsewhere) are listed by path. They're writable like AIRAG's own
+vaults (user, 28 Nov: an Obsidian vault can be the main notes vault and must be usable straight away), unless
+the user sets one to read only (`access: "read"`); then changes need `approved=True`. Every write still
+checks the note's hash, so a newer copy edited in Obsidian is never overwritten. `.obsidian/` is never written.
+The main vault (settings notes.main) is the one Notes opens with and Add to notes offers first.
 """
 from __future__ import annotations
 
@@ -90,13 +93,37 @@ def _save_index(settings: dict, data: dict) -> None:
     paths.atomic_write_text(_index_path(settings), json.dumps(data, indent=1, ensure_ascii=False))
 
 
+def main_id(settings: dict) -> str:
+    return str((settings.get("notes") or {}).get("main") or "")
+
+
+def read_only(v: dict) -> bool:
+    return bool(v.get("linked")) and v.get("access", "write") == "read"
+
+
 def vaults(settings: dict) -> List[dict]:
     out = []
+    mid = main_id(settings)
     for v in load_index(settings)["vaults"]:
         d = dict(v)
         d["exists"] = vault_dir(settings, v).is_dir()
+        d["dir"] = str(vault_dir(settings, v))
+        d["main"] = v.get("id") == mid
+        d["read_only"] = read_only(v)
         out.append(d)
     return out
+
+
+def set_access(settings: dict, vid: str, write: bool) -> dict:
+    with _lock:
+        data = load_index(settings)
+        for v in data["vaults"]:
+            if v.get("id") == vid:
+                if v.get("linked"):
+                    v["access"] = "write" if write else "read"
+                _save_index(settings, data)
+                return v
+    raise NotesError("That vault isn't in AIRAG's list")
 
 
 def vault_dir(settings: dict, v: dict) -> Path:
@@ -131,8 +158,8 @@ def create_vault(settings: dict, name: str, template: str = "research", purpose:
         return v
 
 
-def link_vault(settings: dict, folder: str, name: str = "") -> dict:
-    """Add an existing (e.g. Obsidian) vault by its folder. Changes there always need approval."""
+def link_vault(settings: dict, folder: str, name: str = "", write: bool = True) -> dict:
+    """Add an existing (e.g. Obsidian) vault by its folder. Writable unless `write=False` (read only)."""
     p = Path(folder).expanduser()
     if not p.is_dir():
         raise NotesError("That folder doesn't exist")
@@ -142,7 +169,7 @@ def link_vault(settings: dict, folder: str, name: str = "") -> dict:
         if any(v.get("linked") and os.path.realpath(v["path"]) == str(p) for v in data["vaults"]):
             raise NotesError("That vault is already linked")
         v = {"id": secrets.token_hex(6), "name": (name or p.name)[:80], "path": str(p), "template": "empty",
-             "purpose": "", "linked": True, "created": time.time()}
+             "purpose": "", "linked": True, "access": "write" if write else "read", "created": time.time()}
         data["vaults"].append(v)
         _save_index(settings, data)
         return v
@@ -214,8 +241,8 @@ def write_note(settings: dict, v: dict, rel: str, text: str, expected_hash: Opti
                approved: bool = False) -> dict:
     """Save a note (atomic). The previous text is kept as a version. `expected_hash` stops overwriting
     a newer copy (e.g. edited in Obsidian meanwhile). Linked vaults need `approved=True`."""
-    if v.get("linked") and not approved:
-        raise NotesError("Changes in a linked vault need your approval")
+    if read_only(v) and not approved:
+        raise NotesError("This vault is set to read only in AIRAG (Settings → Library & storage → Notes vaults)")
     if len(text.encode("utf-8")) > MAX_NOTE_BYTES:
         raise NotesError("That note is too large")
     rel = pathguard.clean_rel(rel)

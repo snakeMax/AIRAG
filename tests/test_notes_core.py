@@ -99,9 +99,9 @@ def test_writes_keep_versions_and_refuse_stale_and_linked(S, tmp_path):
     ext = tmp_path / "Obsidian"
     ext.mkdir()
     (ext / "x.md").write_text("hi", encoding="utf-8")
-    lv = store.link_vault(S, str(ext))
+    lv = store.link_vault(S, str(ext), write=False)
     with pytest.raises(store.NotesError):
-        store.write_note(S, lv, "x.md", "changed")                         # linked: needs approval
+        store.write_note(S, lv, "x.md", "changed")                         # read-only linked vault: needs approval
     assert (ext / "x.md").read_text(encoding="utf-8") == "hi"
     assert not (ext / ".airag").exists()                                # AIRAG's data stays outside linked vaults
 

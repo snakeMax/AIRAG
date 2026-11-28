@@ -64,16 +64,19 @@ or removing them.
 - `POST /api/mylibrary/unsave`
 - `GET /api/notes/folder`
 - `POST /api/notes/folder`
+- `POST /api/notes/main`
 - `GET /api/notes/vaults`
 - `POST /api/notes/vaults`
 - `POST /api/notes/vaults/link`
 - `DELETE /api/notes/vaults/{vid}`
+- `POST /api/notes/vaults/{vid}/access`
 - `POST /api/notes/{vid}/ask`
 - `POST /api/notes/{vid}/categorize`
 - `GET /api/notes/{vid}/links`
 - `POST /api/notes/{vid}/new`
 - `GET /api/notes/{vid}/note`
 - `PUT /api/notes/{vid}/note`
+- `POST /api/notes/{vid}/obsidian`
 - `POST /api/notes/{vid}/organize`
 - `POST /api/notes/{vid}/reindex`
 - `GET /api/notes/{vid}/search`
@@ -153,6 +156,7 @@ or removing them.
 - def `pick_folder()`
 - def `import_files(dest_dir, move)`
 - def `open_path(path, reveal)`
+- def `open_obsidian(path)`
 - def `render_page(url, timeout_s)`
 - def `device_info()`
 - def `clear_web_cache()`
@@ -546,6 +550,12 @@ or removing them.
 - class `FolderReq` ()
 - async def `set_notes_folder(req)`
 - def `list_vaults()`
+- class `MainReq` ()
+- def `set_main(req)`
+- class `AccessReq` ()
+- def `set_access(vid, req)`
+- class `ObsidianReq` ()
+- async def `open_in_obsidian(vid, req)`
 - class `NewVault` ()
 - def `new_vault(req)`
 - class `LinkVault` ()
@@ -581,6 +591,10 @@ or removing them.
 - def `outgoing(settings, v, rel)`
 - def `stats(settings, v)`
 - def `all_tags(settings, v)`
+
+### airag/notes/obsidian.py
+- def `uri_for(p)`
+- def `open_path(p)`
 
 ### airag/notes/organize.py
 - def `candidates(settings, v, text, limit)`
@@ -624,11 +638,14 @@ or removing them.
 - def `status(settings)`
 - def `root(settings)`
 - def `load_index(settings)`
+- def `main_id(settings)`
+- def `read_only(v)`
 - def `vaults(settings)`
+- def `set_access(settings, vid, write)`
 - def `vault_dir(settings, v)`
 - def `get_vault(settings, vid)`
 - def `create_vault(settings, name, template, purpose)`
-- def `link_vault(settings, folder, name)`
+- def `link_vault(settings, folder, name, write)`
 - def `forget_vault(settings, vid)`
 - def `private_dir(settings, v)`
 - def `tree(settings, v, limit)`
@@ -913,8 +930,8 @@ or removing them.
 - `interactive.js`: openInteractive
 - `main.js`: (no exports)
 - `markdown.js`: allowLinks, inline, render, slug
-- `notes.js`: notesDirty, openNote, saveNotes, showNotes
-- `notesfolder.js`: notesFolderCard, refreshNotesFolder
+- `notes.js`: notesDirty, openInObsidian, openNote, saveNotes, showNotes
+- `notesfolder.js`: notesFolderCard, refreshNotesFolder, refreshNotesVaults
 - `offline.js`: initOffline, isOffline, onOfflineChange, openOfflineDialog, refreshOffline
 - `openfile.js`: initOpenFile, pickFile
 - `pins.js`: PINS, isPinned, loadPins, openPinned, pinButton, pinnedCards, setPinHooks, togglePinSource
@@ -949,7 +966,7 @@ or removing them.
 - `speech`: voice, rate
 - `agent_tools`: picker, sets
 - `effort`: standard, autonomous, subagents
-- `notes`: root
+- `notes`: root, main
 - `agents`: max_steps, max_tool_calls, retries, tool_timeout, cost_cap, token_limit, subagents, subagent_token_share
 - `enterprise`: server_url, organization
 - `usage`: monthly_budget, tell_model, stop_at_budget
@@ -963,4 +980,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize, notes-ask  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
-i18n keys (en): 1339
+i18n keys (en): 1359

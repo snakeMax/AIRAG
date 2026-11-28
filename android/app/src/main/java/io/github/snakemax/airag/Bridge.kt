@@ -149,6 +149,17 @@ object Bridge {
         }
     }
 
+    /** Opens a vault folder or note in Obsidian: obsidian://open?path=<absolute path>. False when Obsidian isn't installed. */
+    @JvmStatic
+    fun openObsidian(path: String): Boolean {
+        val a = activity() ?: return false
+        val uri = Uri.Builder().scheme("obsidian").authority("open").appendQueryParameter("path", path).build()
+        val intent = Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (intent.resolveActivity(a.packageManager) == null) return false
+        a.runOnUiThread { try { a.startActivity(intent) } catch (_: Exception) { } }
+        return true
+    }
+
     /**
      * Loads a page in a hidden WebView and returns its HTML once loaded (or "" on timeout).
      * Used when a site blocks plain requests: the WebView looks like the phone's normal browser.

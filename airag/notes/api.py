@@ -69,7 +69,69 @@ async def set_notes_folder(req: FolderReq):
 def list_vaults():
     s = config.load()
     return {"root": str(store.root(s)), "vaults": store.vaults(s), "templates": list(store.TEMPLATES),
-            "types": store.NOTE_TYPES}
+            "types": store.NOTE_TYPES, "main": store.main_id(s)}
+
+
+def _first_is_main(v: dict) -> dict:
+    """The first vault you make or add becomes the main one (changeable in Settings)."""
+    s = config.load()
+    mid = store.main_id(s)
+    if not mid or not any(x.get("id") == mid for x in store.load_index(s)["vaults"] if x.get("id") != v["id"]):
+        config.save({"notes": {"main": v["id"]}})
+    return v
+
+
+class MainReq(BaseModel):
+    vid: str
+
+
+@router.post("/main")
+def set_main(req: MainReq):
+    """Make a vault (AIRAG's own or an added Obsidian vault) the main notes vault."""
+    s = config.load()
+    try:
+        store.get_vault(s, req.vid)
+    except store.NotesError as e:
+        raise HTTPException(404, str(e))
+    config.save({"notes": {"main": req.vid}})
+    return {"ok": True, "main": req.vid}
+
+
+class AccessReq(BaseModel):
+    write: bool
+
+
+@router.post("/vaults/{vid}/access")
+def set_access(vid: str, req: AccessReq):
+    """An added (Obsidian) vault: let AIRAG add and edit notes there (default), or keep it read only."""
+    try:
+        return store.set_access(config.load(), vid, req.write)
+    except store.NotesError as e:
+        raise HTTPException(404, str(e))
+
+
+class ObsidianReq(BaseModel):
+    path: str = ""          # a note inside the vault; "" = the vault itself
+
+
+@router.post("/{vid}/obsidian")
+async def open_in_obsidian(vid: str, req: ObsidianReq):
+    """Open the vault (or one note) in the Obsidian app. The obsidian:// link is built here from the vault's own
+    folder; nothing from the page goes into it except a note path that pathguard has checked."""
+    s, v = _vault(vid)
+    base = store.vault_dir(s, v)
+    target = base
+    if req.path:
+        try:
+            target = pathguard.resolve(base, req.path)
+        except pathguard.PathError as e:
+            raise _fail(e)
+    from . import obsidian
+    try:
+        await asyncio.to_thread(obsidian.open_path, target)
+    except RuntimeError as e:
+        raise _fail(e)
+    return {"ok": True, "dir": str(base)}
 
 
 class NewVault(BaseModel):
@@ -81,7 +143,7 @@ class NewVault(BaseModel):
 @router.post("/vaults")
 def new_vault(req: NewVault):
     try:
-        return store.create_vault(config.load(), req.name, req.template, req.purpose)
+        return _first_is_main(store.create_vault(config.load(), req.name, req.template, req.purpose))
     except (store.NotesError, pathguard.PathError, OSError) as e:
         raise _fail(e)
 
@@ -89,19 +151,28 @@ def new_vault(req: NewVault):
 class LinkVault(BaseModel):
     folder: str
     name: str = ""
+    write: bool = True
+    main: bool = False
 
 
 @router.post("/vaults/link")
 def link_vault(req: LinkVault):
     try:
-        return store.link_vault(config.load(), req.folder, req.name)
+        v = _first_is_main(store.link_vault(config.load(), req.folder, req.name, req.write))
+        if req.main:
+            config.save({"notes": {"main": v["id"]}})
+        return v
     except (store.NotesError, OSError) as e:
         raise _fail(e)
 
 
 @router.delete("/vaults/{vid}")
 def forget_vault(vid: str):
-    store.forget_vault(config.load(), vid)       # the files stay where they are
+    s = config.load()
+    store.forget_vault(s, vid)       # the files stay where they are
+    if store.main_id(s) == vid:
+        rest = store.load_index(s)["vaults"]
+        config.save({"notes": {"main": rest[0]["id"] if rest else ""}})
     return {"ok": True}
 
 
@@ -133,7 +204,7 @@ def get_note(vid: str, path: str):
     n = parse(text, path.rsplit("/", 1)[-1][:-3] if path.lower().endswith(".md") else path)
     return {"path": path, "text": text, "hash": n.hash, "title": n.title, "props": split_front_matter(text)[0],
             "tags": n.tags, "outline": [{"heading": x.heading, "level": x.level, "ord": x.ord} for x in n.sections if x.heading],
-            "linked_vault": bool(v.get("linked"))}
+            "linked_vault": bool(v.get("linked")), "read_only": store.read_only(v)}
 
 
 class SaveNote(BaseModel):

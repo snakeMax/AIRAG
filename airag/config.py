@@ -107,6 +107,7 @@ GENERAL_SCHEMA: dict = {
     # Notes Mode: where the Notes folder is (empty = Documents/AIRAG Notes, or D:\\AIRAG Notes on a PC with a D: drive)
     "notes": [
         {"key": "root", "label": "", "type": "hidden", "default": ""},
+        {"key": "main", "label": "", "type": "hidden", "default": ""},   # id of the main notes vault
     ],
     # groundwork for 0.5.0 agents (airag.agents.Limits reads these; not shown in Settings yet)
     "agents": [
