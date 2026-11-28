@@ -575,6 +575,12 @@ Lists **every** match, grouped by note, with every matching section and the word
 - Numbered buttons in the answer and the list under it open the note at the cited heading.
 - **Direct matches**, **Related** (other words for the same thing, and notes linked to or from the direct matches) and **Closest available** list the notes it found, so there's always somewhere to go.
 - When the notes don't cover something it says so; **Research this** starts a web search with My library included.
+- **It picks the right kind of search from how you ask** (no extra AI call: the same small planning step decides):
+  - a plain question → answered from your notes (above);
+  - *write an article / overview / summary from my notes* → a short article (about 250-600 words, 2-4 sections) built only from your notes, with the same numbered citations; it reads up to 14 sections. *Collect into a note* saves it with its own title;
+  - *look up … online* (a short factual web question) → a **Quick search**, with My library included;
+  - *research …* or something your notes can't have (latest news, current prices) → a full **Research** run, with My library included.
+  The web searches open in Research; the message has **Ask my notes instead** if it guessed wrong.
 - **Collect into a note** saves the question, the answer (citations become [[links]]) and the sources, in Outputs (or the Inbox).
 - Uses the **Notes** model (Settings → AI → Models per task) and runs as a background job. *Every match* (no AI) is still shown next to it (under it on phones; *Show all matches* jumps there).
 

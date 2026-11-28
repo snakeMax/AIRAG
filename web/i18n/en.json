@@ -1203,7 +1203,7 @@
  "task.notes": "Notes",
  "task.notes.hint": "Organizing voice notes, and later smart search and Ask your notes",
  "nt.ask": "Ask",
- "nt.askTip": "Ask your notes: the AI reads the best matching parts of this vault and answers with links to them",
+ "nt.askTip": "Ask your notes. Ask for an article to get a short write-up from your notes; ask to research or look something up online to start a quick search or a full research instead.",
  "nt.askPh": "Ask your notes a question\u2026",
  "nt.askThis": "Ask your notes",
  "nt.askTitle": "Answer from your notes",
@@ -1268,5 +1268,8 @@
  "nv.addObsidian": "Add an Obsidian vault\u2026",
  "nv.newInNotes": "New vault (in Notes)",
  "nv.mainDefault": "A new vault in the Notes folder (made when you first open Notes)",
- "nv.setupLabel": "Main notes vault"
+ "nv.setupLabel": "Main notes vault",
+ "nt.routeQuick": "That's a web question: starting a quick search for \"{q}\" (with My library).",
+ "nt.routeResearch": "Starting a full research on \"{q}\" (web + My library).",
+ "nt.askNotesInstead": "Ask my notes instead"
 }

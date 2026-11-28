@@ -1125,6 +1125,10 @@ body.notes-mode main { max-width: none; padding: 0; }
 .nt-ask h2 { margin: 0; font-size: 16px; }
 .nt-ask h3 { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
 .nt-answer { margin: 0; font-family: var(--serif, Georgia, serif); font-size: 16px; line-height: 1.65; }
+.nt-article { font-size: 15.5px; }
+.nt-article h1 { font-size: 20px; margin: 0 0 8px; }
+.nt-article h2 { font-size: 16px; margin: 14px 0 4px; color: var(--text); }
+.nt-article p { margin: 0 0 8px; }
 .nt-cite { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin: 0 2px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: 600 11px/1 var(--sans, system-ui); vertical-align: 2px; cursor: pointer; }
 .nt-cite:hover, .nt-cite:focus-visible { background: var(--text); color: var(--bg); }
 .nt-cites { margin: 0; padding-left: 22px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
@@ -1240,6 +1244,8 @@ body.notes-mode main { max-width: none; padding: 0; }
   .nt-bottom button.on { color: var(--text); font-weight: 600; }
   .nt-bottom button:disabled { opacity: .45; }
   .nt-bottom .nt-bottom-voice { justify-self: center; width: 56px; height: 56px; border-radius: 18px; background: var(--accent, var(--text)); color: var(--accent-text, var(--bg)); margin-top: -18px; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+  .nt-bottom .nt-bottom-voice { justify-content: center; padding: 0; gap: 0; }
+  .nt-bottom .nt-bottom-voice svg { width: 26px; height: 26px; display: block; }
 }
 
 .nt-tag { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 30px; padding: 2px 8px 2px calc(8px + var(--d, 0) * 14px); border: 0; border-radius: 8px;

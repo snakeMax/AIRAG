@@ -580,7 +580,7 @@ function askMode() {
   $("#ntSearch input").focus();
 }
 
-async function runSearch(q, ask = false) {
+async function runSearch(q, ask = false, route = null) {
   if (!N.vault) return;
   q = (q || "").trim();
   N.query = q;
@@ -602,10 +602,10 @@ async function runSearch(q, ask = false) {
       || `<p class="muted">${h(t("nt.noMatches"))}</p>`}
     <p class="muted nt-ops">${h(t("nt.operators"))} <a href="#" data-nt="words">${h(t("nt.wordsAll"))}</a></p></section></div>`;
   $$(".nt-hit-t", main).forEach(a => (a.onclick = e => { e.preventDefault(); openNote(a.dataset.path); }));
-  if (ask) askNotes(q);
+  if (ask) askNotes(q, route);
 }
 
-async function askNotes(q) {
+async function askNotes(q, route = null) {
   if (!q || !N.vault) return;
   const wrap = $(".nt-res-wrap");
   if (!wrap) return runSearch(q, true);
@@ -615,11 +615,19 @@ async function askNotes(q) {
   box.innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2></div><p class="status-line"><span class="spinner sm"></span>${h(t("nt.asking"))}</p>`;
   const vid = N.vault.id;
   let r;
-  const job = api(`/api/notes/${vid}/ask`, { method: "POST", body: { q, ui_lang: uiLang() } });
+  const job = api(`/api/notes/${vid}/ask`, { method: "POST", body: { q, ui_lang: uiLang(), route } });
   pokeJobs();
   try { r = await job; }
   catch (e) { if (N.query === q && $("#ntAsk")) $("#ntAsk").innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2></div><p class="status-line err">${h(e.message)}</p>`; return; }
   if (N.query !== q || N.vault?.id !== vid || !$("#ntAsk")) return;          // you moved on; the job is in History
+  if (r.route === "quick" || r.route === "research") {
+    // you asked for the web: a quick search or a full research (with My library) starts instead
+    box.innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2></div><p class="status-line">${h(t(r.route === "quick" ? "nt.routeQuick" : "nt.routeResearch", { q: r.query }))}</p>`;
+    toast(t(r.route === "quick" ? "nt.routeQuick" : "nt.routeResearch", { q: r.query }), 9000,
+      { label: t("nt.askNotesInstead"), run: () => { location.hash = "#/notes"; setTimeout(() => runSearch(q, true, "notes"), 400); } });
+    location.hash = r.route === "quick" ? `#/quick?q=${encodeURIComponent(r.query)}&lib=1` : `#/search?q=${encodeURIComponent(r.query)}&mode=auto&lib=1`;
+    return;
+  }
   N.answer = { q, ...r };
   drawAnswer(r, q);
 }
@@ -631,10 +639,12 @@ function drawAnswer(r, q) {
   const n = r.tiers.direct.length + r.tiers.related.length + r.tiers.closest.length;
   const cite = c => `<button type="button" class="nt-cite" data-path="${h(c.path)}" data-heading="${h(c.heading)}" title="${h(c.title + (c.heading ? " › " + c.heading : ""))}">${c.n}</button>`;
   const byN = Object.fromEntries(r.cites.map(c => [c.n, c]));
-  const ans = h(r.answer).replace(/\[(\d{1,2})\]/g, (m, k) => byN[k] ? cite(byN[k]) : "").replace(/\n/g, "<br>");
+  const ans = r.route === "article"
+    ? renderMd(r.answer.replace(/\[(\d{1,2})\]/g, "\u0003$1\u0003")).replace(/\u0003(\d{1,2})\u0003/g, (m, k) => byN[k] ? cite(byN[k]) : "")
+    : h(r.answer).replace(/\[(\d{1,2})\]/g, (m, k) => byN[k] ? cite(byN[k]) : "").replace(/\n/g, "<br>");
   box.innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2>
       ${r.read ? `<span class="muted">${h(t("nt.askRead", { n: r.read, tok: r.tokens.toLocaleString() }))}</span>` : ""}</div>
-    ${r.answer ? `<p class="nt-answer">${ans}</p>` : `<p class="muted">${h(t(n ? "nt.askNoAnswer" : "nt.askNothing"))}</p>`}
+    ${r.answer ? (r.route === "article" ? `<div class="prose nt-answer nt-article">${ans}</div>` : `<p class="nt-answer">${ans}</p>`) : `<p class="muted">${h(t(n ? "nt.askNoAnswer" : "nt.askNothing"))}</p>`}
     ${r.cites.length ? `<ol class="nt-cites">${r.cites.map(c => `<li><a href="#" class="nt-tier-a" data-path="${h(c.path)}" data-heading="${h(c.heading)}">${h(c.title)}${c.heading ? `<span class="muted"> › ${h(c.heading)}</span>` : ""}</a></li>`).join("")}</ol>` : ""}
     ${r.tiers.direct.length ? `<h3>${h(t("nt.tierDirect"))}</h3><div class="nt-tier">${tierList(r.tiers.direct)}</div>` : ""}
     ${r.tiers.related.length ? `<h3>${h(t("nt.tierRelated"))}</h3><div class="nt-tier">${tierList(r.tiers.related)}</div>` : ""}
@@ -666,14 +676,17 @@ async function collectAnswer() {
   if (!a?.answer) return;
   const byN = Object.fromEntries(a.cites.map(c => [String(c.n), c]));
   const link = c => `[[${c.title}${c.heading ? "#" + c.heading : ""}]]`;
-  const body = `> ${a.q}\n\n` + a.answer.replace(/\[(\d{1,2})\]/g, (m, k) => byN[k] ? ` (${link(byN[k])})` : "") +
+  const art = a.route === "article";
+  const head = art ? /^#\s+(.+)$/m.exec(a.answer) : null;
+  const text = head ? a.answer.replace(head[0], "").trim() : a.answer;
+  const body = `> ${a.q}\n\n` + text.replace(/\[(\d{1,2})\]/g, (m, k) => byN[k] ? ` (${link(byN[k])})` : "") +
     (a.cites.length ? `\n\n## ${t("nt.sources")}\n\n` + a.cites.map(c => "- " + link(c)).join("\n") : "") + "\n";
   const folders = N.tree.filter(x => x.kind === "folder").map(x => x.path);
   const folder = ["Outputs", "Inbox"].find(f => folders.includes(f)) || "";
   const types = (N.types || {})[N.vault.template || "empty"] || [];
   const props = { source: "ask" };
   if (types.includes("output")) props.type = "output";
-  const title = a.q.replace(/[\\/:*?"<>|#^\[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  const title = (head ? head[1] : a.q).replace(/[\\/:*?"<>|#^\[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
   await newNote(title, body, folder, props);
 }
 

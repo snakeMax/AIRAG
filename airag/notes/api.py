@@ -296,6 +296,7 @@ async def organize_note(vid: str, req: OrganizeReq):
 class AskReq(BaseModel):
     q: str
     ui_lang: Optional[str] = None
+    route: Optional[str] = None     # "notes" / "article" to skip the AI's choice
 
 
 @router.post("/{vid}/ask")
@@ -306,7 +307,7 @@ async def ask_notes(vid: str, req: AskReq):
     s, v = _vault(vid)
     if not req.q.strip():
         raise HTTPException(400, "Type or say a question first")
-    return await _job_result(lambda: smart.ask(s, v, req.q, req.ui_lang), "notes-ask", req.q.strip()[:80])
+    return await _job_result(lambda: smart.ask(s, v, req.q, req.ui_lang, req.route), "notes-ask", req.q.strip()[:80])
 
 
 class CategorizeReq(BaseModel):

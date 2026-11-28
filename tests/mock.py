@@ -95,7 +95,11 @@ class MockLLM(LLMProvider):
         if "interactive explainers" in system:
             return HTML
         if "plan a search in someone's personal notes" in system:
-            return '{"intent":"Do fences cut moose collisions","terms":["fences","collisions"],"alt":["fence","barrier"],"form":"fact"}'
+            route = "research" if "research" in user.lower() else "quick" if "look up online" in user.lower() else "article" if "article" in user.lower() else "notes"
+            return json.dumps({"route": route, "query": "moose fences", "intent": "Do fences cut moose collisions",
+                               "terms": ["fences", "collisions"], "alt": ["fence", "barrier"], "form": "fact"})
+        if "Write a short article from the person's own notes" in system:
+            return json.dumps({"answer": "# Fences and moose\n\n## What works\nFences with crossings roughly halved collisions [1].\n\n## Side effects\nCrashes move to the fence ends [2].", "missing": ""})
         if "using ONLY the numbered note sections" in system:
             return '{"answer":"Fences combined with crossings roughly halved moose collisions [1], but crashes move to where the fence ends [2].","missing":"Nothing on how crossings are maintained."}'
         if "file a piece of research" in system:

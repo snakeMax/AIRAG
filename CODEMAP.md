@@ -630,7 +630,7 @@ or removing them.
 ### airag/notes/smart.py
 - async def `plan(settings, v, q, lang)`
 - def `retrieve(settings, v, p)`
-- async def `ask(settings, v, q, ui_lang)`
+- async def `ask(settings, v, q, ui_lang, force)`
 
 ### airag/notes/store.py
 - class `NotesError` ()
@@ -980,4 +980,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize, notes-ask  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
-i18n keys (en): 1359
+i18n keys (en): 1362

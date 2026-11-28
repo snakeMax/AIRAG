@@ -70,3 +70,30 @@ def test_ask_empty_when_nothing_matches(SV, monkeypatch):
     monkeypatch.setattr(smart, "get_llm", lambda settings, task=None: None)
     r = asyncio.run(smart.ask(s, v, "zebra"))
     assert r["answer"] == "" and r["read"] == 0
+
+
+def test_ask_routes_web_questions_and_articles(SV, monkeypatch):
+    from airag.notes import smart
+    s, v = SV
+    smart._PLAN_CACHE.clear()
+    seen = []
+
+    async def fake(llm, system, user, max_tokens=0):
+        seen.append(system)
+        if "plan a search" in system:
+            if "latest" in user:
+                return {"route": "research", "query": "moose fence studies 2026", "terms": ["fences"]}
+            if "write" in user:
+                return {"route": "article", "terms": ["fences", "collisions"], "alt": []}
+            return {"route": "bogus", "terms": ["fences"]}
+        return {"answer": "# Fences\n\n## A\nThey work [1].", "missing": ""}
+    monkeypatch.setattr(smart, "complete_json", fake)
+    monkeypatch.setattr(smart, "get_llm", lambda settings, task=None: None)
+    r = asyncio.run(smart.ask(s, v, "research the latest fence studies"))
+    assert r["route"] == "research" and r["query"] == "moose fence studies 2026" and len(seen) == 1   # no notes read
+    r = asyncio.run(smart.ask(s, v, "write an article on fences and collisions"))
+    assert r["route"] == "article" and "Write a short article" in seen[-1] and r["cites"][0]["n"] == 1
+    r = asyncio.run(smart.ask(s, v, "fences?"))
+    assert r["route"] == "notes"                                           # unknown route -> notes
+    r = asyncio.run(smart.ask(s, v, "research the latest fence studies", force="notes"))
+    assert r["route"] == "notes"                                           # Ask my notes instead
