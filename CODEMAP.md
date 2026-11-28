@@ -68,6 +68,8 @@ or removing them.
 - `POST /api/notes/vaults`
 - `POST /api/notes/vaults/link`
 - `DELETE /api/notes/vaults/{vid}`
+- `POST /api/notes/{vid}/ask`
+- `POST /api/notes/{vid}/categorize`
 - `GET /api/notes/{vid}/links`
 - `POST /api/notes/{vid}/new`
 - `GET /api/notes/{vid}/note`
@@ -562,6 +564,10 @@ or removing them.
 - def `vault_stats(vid)`
 - class `OrganizeReq` ()
 - async def `organize_note(vid, req)`
+- class `AskReq` ()
+- async def `ask_notes(vid, req)`
+- class `CategorizeReq` ()
+- async def `categorize_research(vid, req)`
 
 ### airag/notes/index.py
 - def `connect(settings, v)`
@@ -580,6 +586,7 @@ or removing them.
 - def `candidates(settings, v, text, limit)`
 - def `context(settings, v, text)`
 - def `check(raw, ctx, text)`
+- async def `categorize(settings, v, text, title, ui_lang)`
 - async def `organize(settings, v, text, ui_lang)`
 
 ### airag/notes/parser.py
@@ -605,6 +612,11 @@ or removing them.
 - def `safe_regex(pattern, case)`
 - def `parse_query(q)`
 - def `run(settings, v, q, sort, limit)`
+
+### airag/notes/smart.py
+- async def `plan(settings, v, q, lang)`
+- def `retrieve(settings, v, p)`
+- async def `ask(settings, v, q, ui_lang)`
 
 ### airag/notes/store.py
 - class `NotesError` ()
@@ -922,6 +934,7 @@ or removing them.
 - `tagsui.js`: metaRow, openSaveDialog, openTagEditor
 - `taskmodels.js`: addLoadedModels, taskModelsPane, taskModelsValue, wireTaskModels
 - `theme.js`: ACCENTS, ARTICLE_FONTS, PALETTES, TEXT_SIZES, UI_FONTS, effectiveTheme, getAppearance, loadLocal, onAppearanceChange, setAppearance
+- `tonotes.js`: addToNotes, resultsMarkdown, sourceMarkdown
 - `toolbar.js`: ask, hideToolbar, initToolbar, showToolbar
 - `translate.js`: openTranslate, restoreTranslation
 - `tts.js`: genderOf, loadVoices, pause, paused, resume, setSpeech, speak, speaking, stop, ttsAvailable
@@ -931,7 +944,7 @@ or removing them.
 
 - `app`: ui_mode, language, answer_language, check_updates, guarded_execution, history_limit, port, setup_done, disclaimer_dismissed, include_library, resource_graphs, resource_style, appearance, theme_hint, pclink_enabled, pclink_port, pclink_code, pclink_allow_internet
 - `defaults`: mode, library, extras, dates, translate_to, save_rich, citation_style, pinned_view, speech_autosearch
-- `buttons`: summarize, interactive, results, more_sources, save, copy, translate, listen, pin, export, summary_file, regenerate, source_summarize, source_save, source_pin
+- `buttons`: summarize, interactive, results, more_sources, save, copy, translate, listen, pin, export, summary_file, regenerate, source_summarize, source_save, source_pin, to_notes, source_to_notes
 - `audio`: enabled, master, sounds
 - `speech`: voice, rate
 - `agent_tools`: picker, sets
@@ -948,6 +961,6 @@ or removing them.
 - `research`: explainer_local_examples, explainer_web_examples, use_pinned, max_rounds, results_per_query, sources_per_round, max_sources_total, llm_concurrency, passage_chars, direct_relevance, direct_coverage, min_findings, enough_findings, article_max_tokens, max_article_sources, images, interactive_check, max_images, skip_domains, favourite_sites
 
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
-Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize  
+Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize, notes-ask  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
-i18n keys (en): 1292
+i18n keys (en): 1339

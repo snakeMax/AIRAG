@@ -1,5 +1,5 @@
-"""HTTP routes for Notes (mounted under /api/notes by airag.main). The only AI route is /organize, which runs
-as a normal background job through the run manager and only returns a proposal (nothing is written)."""
+"""HTTP routes for Notes (mounted under /api/notes by airag.main). The AI routes (/organize, /ask) run as normal
+background jobs through the run manager and only return a proposal or an answer (nothing is written)."""
 from __future__ import annotations
 
 import asyncio
@@ -220,3 +220,37 @@ async def organize_note(vid: str, req: OrganizeReq):
         raise HTTPException(400, "Say or type something first")
     return await _job_result(lambda: organize.organize(s, v, req.text, req.ui_lang), "notes-organize",
                              req.text.strip()[:80])
+
+
+class AskReq(BaseModel):
+    q: str
+    ui_lang: Optional[str] = None
+
+
+@router.post("/{vid}/ask")
+async def ask_notes(vid: str, req: AskReq):
+    """Smart search / Ask your notes: a short cited answer from the vault, plus results in tiers."""
+    from ..main import _job_result
+    from . import smart
+    s, v = _vault(vid)
+    if not req.q.strip():
+        raise HTTPException(400, "Type or say a question first")
+    return await _job_result(lambda: smart.ask(s, v, req.q, req.ui_lang), "notes-ask", req.q.strip()[:80])
+
+
+class CategorizeReq(BaseModel):
+    text: str
+    title: str = ""
+    ui_lang: Optional[str] = None
+
+
+@router.post("/{vid}/categorize")
+async def categorize_research(vid: str, req: CategorizeReq):
+    """Research -> notes, Auto-categorize: proposes title, folder, type, tags and related notes; the text is kept."""
+    from ..main import _job_result
+    from . import organize
+    s, v = _vault(vid)
+    if not req.text.strip():
+        raise HTTPException(400, "Nothing to add")
+    return await _job_result(lambda: organize.categorize(s, v, req.text[:200_000], req.title[:300], req.ui_lang),
+                             "notes-organize", (req.title or req.text).strip()[:80])

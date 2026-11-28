@@ -77,7 +77,8 @@ GENERAL_SCHEMA: dict = {
             ("more_sources", "Locate more sources"), ("save", "Save"), ("copy", "Copy as Markdown"),
             ("translate", "Translate with AI"), ("listen", "Listen (read aloud)"), ("pin", "Pin article"),
             ("export", "Export web page"), ("summary_file", "Download summary"), ("regenerate", "Regenerate article"), ("source_summarize", "Summarize (on sources)"),
-            ("source_save", "Save page (on sources)"), ("source_pin", "Pin source (on sources)"))
+            ("source_save", "Save page (on sources)"), ("source_pin", "Pin source (on sources)"),
+            ("to_notes", "Add to notes"), ("source_to_notes", "Add to notes (on sources)"))
     ],
     # sound effects (Settings -> Appearance -> Customize audio); edited by its own panel
     "audio": [

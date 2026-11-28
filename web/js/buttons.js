@@ -15,10 +15,12 @@ const SELECTORS = {
   source_summarize: "[data-act=sum-source]",
   source_save: "[data-act=save-source]",
   source_pin: "[data-act=pin-source]",
+  to_notes: "[data-act=to-notes],[data-act=results-to-notes]",
+  source_to_notes: "[data-act=source-to-notes]",
 };
 
 // the article tool groups, and which buttons are in them: a group whose buttons are all hidden hides too
-const GROUPS = { export: ["export", "copy", "summary_file", "save"], rewrite: ["regenerate", "translate", "summarize"],
+const GROUPS = { export: ["export", "copy", "summary_file", "save", "to_notes"], rewrite: ["regenerate", "translate", "summarize"],
                  sources: ["more_sources", "results"] };
 
 export function applyButtons(buttons = {}) {

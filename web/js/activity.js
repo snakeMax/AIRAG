@@ -24,8 +24,8 @@ export function markSeen() { writeSeen(Date.now() / 1000); draw(); }
 export function pokeJobs() { clearTimeout(timer); timer = setTimeout(poll, 150); }
 
 export const jobFor = (kind, ref) => JOBS.items.find(j => j.kind === kind && j.ref === ref);
-const TOOL_KINDS = ["followup", "rewrite", "image", "translate", "summary", "calc", "tags", "notes-organize", "regenerate"];
-export const jobHref = j => j.kind === "notes-organize" ? "#/notes"
+const TOOL_KINDS = ["followup", "rewrite", "image", "translate", "summary", "calc", "tags", "notes-organize", "notes-ask", "regenerate"];
+export const jobHref = j => (j.kind === "notes-organize" || j.kind === "notes-ask") ? "#/notes"
   : j.kind === "explainer" ? `#/view/${encodeURIComponent(j.ref)}?explainer`
   : TOOL_KINDS.includes(j.kind) ? (j.ref ? `#/view/${encodeURIComponent(j.ref)}` : location.hash || "#/")
   : `#/run/${encodeURIComponent(j.id)}`;

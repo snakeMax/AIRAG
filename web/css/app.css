@@ -1112,7 +1112,30 @@ body.notes-mode main { max-width: none; padding: 0; }
 .nt-wl { text-decoration-style: dotted; }
 .nt-embed { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 8px; background: var(--surface-3); font-family: var(--ui); font-size: 13px; }
 .nt-embed svg { width: 13px; height: 13px; }
-.nt-results { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.nt-results { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.nt-res-wrap { display: flex; flex-direction: column; gap: 18px; }
+.nt-ask { display: none; }
+.nt-res-wrap.with-ask .nt-ask { display: flex; flex-direction: column; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+@media (min-width: 1100px) {
+  .nt-res-wrap.with-ask { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .nt-res-wrap.with-ask .nt-results { order: 1; max-width: none; margin: 0; }
+  .nt-res-wrap.with-ask .nt-ask { order: 2; position: sticky; top: 0; }
+  .nt-allm { display: none; }
+}
+.nt-ask h2 { margin: 0; font-size: 16px; }
+.nt-ask h3 { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.nt-answer { margin: 0; font-family: var(--serif, Georgia, serif); font-size: 16px; line-height: 1.65; }
+.nt-cite { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin: 0 2px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: 600 11px/1 var(--sans, system-ui); vertical-align: 2px; cursor: pointer; }
+.nt-cite:hover, .nt-cite:focus-visible { background: var(--text); color: var(--bg); }
+.nt-cites { margin: 0; padding-left: 22px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.nt-tier { display: flex; flex-wrap: wrap; gap: 6px; }
+.nt-tier-a { font-size: 13.5px; padding: 3px 9px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); text-decoration: none; color: var(--text); }
+.nt-cites .nt-tier-a { padding: 0; border: 0; background: none; text-decoration: underline; text-underline-offset: 2px; }
+.nt-missing { margin: 4px 0 0; font-size: 13.5px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.nt-ask-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.nt-res-head .grow { flex: 1; }
+.nt-top [data-nt=ask].on, .nt-bottom [data-nt=ask].on { background: var(--text); color: var(--bg); }
+@media (max-width: 760px) { .nt-ask-btn span { display: none; } }
 .nt-res-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .nt-res-head h2 { margin: 0; font-size: 17px; }
 .nt-hit { border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 13.5px; }
@@ -1121,11 +1144,62 @@ body.notes-mode main { max-width: none; padding: 0; }
 .nt-snip mark { background: color-mix(in srgb, #facc15 45%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .nt-ops { font-size: 12px; }
 .nt-voice { display: flex; gap: 8px; align-items: flex-start; }
-.nt-org-busy { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.nt-org-busy { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--text-2); }
 .nt-org { display: flex; flex-direction: column; gap: 10px; }
 .nt-org-why { margin: 0; font-size: 13px; }
 .nt-org-f { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
-.nt-org-f > span { font-size: 12.5px; color: var(--muted); }
+.nt-org-f > span { font-size: 12.5px; color: var(--text-2); }
+.nt-org-f textarea { min-height: 160px; padding: 10px 12px; height: auto; }
+.nt-org-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.nt-org-row > * { flex: 1 1 160px; }
+.nt-org-links { margin: 0; font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.tn-ways { display: grid; gap: 8px; }
+.tn-way { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
+.tn-way:has(input:checked) { border-color: var(--text); background: var(--surface-2); }
+.tn-way input { margin-top: 3px; }
+.tn-way b { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.tn-way small { display: block; color: var(--text-2); font-size: 12.5px; margin-top: 2px; line-height: 1.45; }
+.tn-rel { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.tn-rel legend { font-size: 12.5px; color: var(--text-2); padding: 0 4px; }
+.tn-peek summary { cursor: pointer; font-size: 13px; color: var(--text-2); }
+.tn-peek pre { white-space: pre-wrap; font-size: 12px; max-height: 180px; overflow: auto; background: var(--surface-2); padding: 8px 10px; border-radius: 8px; margin: 6px 0 0; }
+.nt-org-keep { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.nt-res-wrap { display: flex; flex-direction: column; gap: 18px; }
+.nt-ask { display: none; }
+.nt-res-wrap.with-ask .nt-ask { display: flex; flex-direction: column; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+@media (min-width: 1100px) {
+  .nt-res-wrap.with-ask { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .nt-res-wrap.with-ask .nt-results { order: 1; max-width: none; margin: 0; }
+  .nt-res-wrap.with-ask .nt-ask { order: 2; position: sticky; top: 0; }
+  .nt-allm { display: none; }
+}
+.nt-ask h2 { margin: 0; font-size: 16px; }
+.nt-ask h3 { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.nt-answer { margin: 0; font-family: var(--serif, Georgia, serif); font-size: 16px; line-height: 1.65; }
+.nt-cite { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin: 0 2px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: 600 11px/1 var(--sans, system-ui); vertical-align: 2px; cursor: pointer; }
+.nt-cite:hover, .nt-cite:focus-visible { background: var(--text); color: var(--bg); }
+.nt-cites { margin: 0; padding-left: 22px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.nt-tier { display: flex; flex-wrap: wrap; gap: 6px; }
+.nt-tier-a { font-size: 13.5px; padding: 3px 9px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); text-decoration: none; color: var(--text); }
+.nt-cites .nt-tier-a { padding: 0; border: 0; background: none; text-decoration: underline; text-underline-offset: 2px; }
+.nt-missing { margin: 4px 0 0; font-size: 13.5px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.nt-ask-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.nt-res-head .grow { flex: 1; }
+.nt-top [data-nt=ask].on, .nt-bottom [data-nt=ask].on { background: var(--text); color: var(--bg); }
+@media (max-width: 760px) { .nt-ask-btn span { display: none; } }
+.nt-res-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.nt-res-head h2 { margin: 0; font-size: 17px; }
+.nt-hit { border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 13.5px; }
+.nt-hit-t { font-weight: 600; font-size: 14.5px; }
+.nt-snip { margin: 6px 0 0; color: var(--text-2); line-height: 1.5; overflow-wrap: anywhere; }
+.nt-snip mark { background: color-mix(in srgb, #facc15 45%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+.nt-ops { font-size: 12px; }
+.nt-voice { display: flex; gap: 8px; align-items: flex-start; }
+.nt-org-busy { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--text-2); }
+.nt-org { display: flex; flex-direction: column; gap: 10px; }
+.nt-org-why { margin: 0; font-size: 13px; }
+.nt-org-f { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.nt-org-f > span { font-size: 12.5px; color: var(--text-2); }
 .nt-org-f textarea { min-height: 160px; padding: 10px 12px; height: auto; }
 .nt-org-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .nt-org-row > * { flex: 1 1 160px; }

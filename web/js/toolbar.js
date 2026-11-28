@@ -4,6 +4,7 @@
 //  - phone: a round menu button (three lines that turn upright when open) opening a sheet
 //  - selecting text shows a small popup with actions for that text
 //  - answers stream into a thread panel beside the article (a bottom sheet on phones)
+import { addToNotes } from "./tonotes.js";
 import { registerSnap } from "./snap.js";
 import { $, $$, h, icon, api, apiStream, toast, stripThink } from "./util.js";
 import { render, allowLinks } from "./markdown.js";
@@ -271,6 +272,7 @@ function loadThread() {
 async function drawThread(el, id) {
   const { items } = await api(`/api/followup/${encodeURIComponent(id)}`).catch(() => ({ items: [] }));
   if (el.dataset.for !== id) return;
+  S.answers = items.map(it => ({ q: it.q, a: it.a }));
   el.innerHTML = items.length ? items.map((it, i) => entryHtml(it, i)).join("") : `<p class="muted rt-empty">${h(t("rt.empty"))}</p>`;
   el.querySelectorAll(".rt-answer").forEach((a, i) => fill(a, items[i].a));
   countAnswers(items.length);
@@ -297,7 +299,8 @@ function entryHtml(it, i) {
 const footHtml = (it, i) => (S.R?.outcome === "article" && !it.added && it.a
   ? `<button type="button" class="link-btn" data-add="${i}">${icon("plus")}${h(t("rt.addToArticle"))}</button>` : "")
   + (it.a ? `<button type="button" class="link-btn" data-explain><em>${h(t("rt.elaborate"))}</em></button>` : "")
-  + (it.a ? `<button type="button" class="link-btn" data-speak>${icon("speak")}${h(t("tts.listen"))}</button>` : "");
+  + (it.a ? `<button type="button" class="link-btn" data-speak>${icon("speak")}${h(t("tts.listen"))}</button>` : "")
+  + (it.a ? `<button type="button" class="link-btn" data-tonotes="${i}" title="${h(t("tn.descAnswer"))}">${icon("file")}${h(t("tn.button"))}</button>` : "");
 
 function fill(el, md) {
   const urls = (S.R?.articleSources || []).map(s => s.url);
@@ -310,6 +313,10 @@ function wireEntries() {
     b.disabled = true;
     try { await api(`/api/followup/${encodeURIComponent(S.R.id)}/add`, { method: "POST", body: { index: +b.dataset.add } }); toast(t("rt.added")); b.remove(); hooks.reload(S.R.id); }
     catch (e) { toast(e.message, 4000); b.disabled = false; }
+  }));
+  $$("#rtThread [data-tonotes]").forEach(b => (b.onclick = () => {
+    const it = S.answers?.[+b.dataset.tonotes];
+    if (it?.a) addToNotes({ kind: "answer", title: it.q, text: `> ${it.q}\n\n${stripThink(it.a).trim()}\n`, query: S.R?.query || "" });
   }));
   $$("#rtThread [data-speak]").forEach(b => (b.onclick = () => speak(b.closest(".rt-entry").querySelector(".rt-answer").innerText, uiLang())));
   // elaborate on an answer that's open (or a rewrite that replaced article text)
@@ -342,8 +349,9 @@ export async function ask(mode, question, selection = "", extra = null) {
       else if (ev.type === "tool_result") tools.lastElementChild?.setAttribute("title", ev.text);
       else if (ev.type === "action") hooks.act(ev);
       else if (ev.type === "error") throw new Error(ev.message);
-      else if (ev.type === "done") { fill(out, ev.entry.a || md); }
+      else if (ev.type === "done") { fill(out, ev.entry.a || md); md = ev.entry.a || md; }
     }, ctrl.signal);
+    (S.answers ||= [])[i] = { q: question || MODE_LABEL(mode), a: md };
     $(".rt-entry-foot", entry).innerHTML = footHtml({ a: md }, i);
     countAnswers(el.querySelectorAll(".rt-entry").length);
     wireEntries();

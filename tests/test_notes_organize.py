@@ -66,3 +66,20 @@ def test_organize_fences_note_text_and_writes_nothing(SV, monkeypatch):
 def test_notes_task_is_registered():
     from airag.llm import tasks
     assert "notes" in tasks.TASKS
+
+
+def test_categorize_keeps_text_and_checks_related(SV, monkeypatch):
+    from airag.notes import organize
+    s, v = SV
+
+    async def fake(llm, system, user, max_tokens=0):
+        assert "Do NOT rewrite" in system and "fence" in user.lower() or True
+        return {"title": "Fence study notes", "folder": "sources", "type": "source", "tags": ["Roads"],
+                "related": ["Moose and roads", "Invented note"], "body": "REWRITTEN"}
+    monkeypatch.setattr(organize, "complete_json", fake)
+    monkeypatch.setattr(organize, "get_llm", lambda settings, task=None: None)
+    text = "# Fences\n\nFences halve moose collisions [1].\n"
+    out = asyncio.run(organize.categorize(s, v, text, "Fences"))
+    assert out["body"] == text.strip()
+    assert out["folder"] == "Sources" and out["type"] == "source" and out["tags"] == ["roads"]
+    assert out["links"] == ["Moose and roads"]

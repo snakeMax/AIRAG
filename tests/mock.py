@@ -94,6 +94,13 @@ class MockLLM(LLMProvider):
             return '{"suitable": true, "idea": "A slider that shows how body size changes wingbeat rate.", "reason": "quantitative"}'
         if "interactive explainers" in system:
             return HTML
+        if "plan a search in someone's personal notes" in system:
+            return '{"intent":"Do fences cut moose collisions","terms":["fences","collisions"],"alt":["fence","barrier"],"form":"fact"}'
+        if "using ONLY the numbered note sections" in system:
+            return '{"answer":"Fences combined with crossings roughly halved moose collisions [1], but crashes move to where the fence ends [2].","missing":"Nothing on how crossings are maintained."}'
+        if "file a piece of research" in system:
+            return json.dumps({"title": "Hummingbird wingbeats", "folder": "Sources", "type": "source", "tags": ["birds"],
+                               "related": ["Moose and roads", "Not a real note"], "why": "It's a summary of web pages."})
         if "note someone dictated" in system:
             return json.dumps({"title": "Moose by the river fence", "folder": "Notes", "type": "claim", "tags": ["moose", "roads"],
                                "body": "Saw a moose by the road fence near the river today.\n\nMaybe [[Moose and roads]] needs a second look.",

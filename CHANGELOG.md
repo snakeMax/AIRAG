@@ -7,6 +7,8 @@
 - **Linked from / Mentioned but not linked / Outline** beside each note, with one-tap *Link*
 - **Voice note**: speak a note, then Save to Inbox as it is, or **Organize**: the AI tidies it and suggests a title, folder, type, tags and links, shown as an editable preview before anything is saved
 - **Notes** in Models per task (Settings → AI)
+- **Ask your notes**: a short answer from your vault with numbered citations that open the right heading, results in tiers (direct, related, closest), Research this (web + My library) and Collect into a note
+- **Add to notes** in Research: articles, quick answers, results pages and single sources go into a vault as raw data or auto-categorized (title, folder, type, tags and related links suggested; the text is kept)
 - **Search words and tags**: a screen listing every search word with an example (tap to use it) and every tag in the vault with its count (tap to see its notes)
 - **Help (?)** in the top bar: a short guide to Research or Notes, depending on where you are
 - **Notes folder**: Documents\AIRAG Notes by default (system drive), changeable in Settings → Library & storage and in the first-start setup

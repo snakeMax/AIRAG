@@ -96,6 +96,13 @@ Opens the Save dialog: tags, translations to keep, pictures and the explainer. S
 - **Tags:** shown under the article's byline once it's finished. *Edit tags* (or *Add tags*) changes them; for a saved article the saved Markdown file is updated too. Tap a tag to see the saved articles that have it (Saved tab in History). Free; only *Suggest tags* uses tokens.
 - **Language switcher:** appears when the article has been translated. *Original* is always first; tap a language to read that translation. Follow-ups and the toolbar still use the original.
 
+### Add to notes (Add to notes (on sources))
+Puts research into a notes vault: an article or quick answer (Export menu), a whole results page (button at the top), one page (link under each source: its summary and findings), or a follow-up or toolbar answer (link under it in the Answers panel). Pick the vault, then:
+- **Auto-categorize**: the AI suggests a title, folder, type, tags and existing notes to link to. The text is kept exactly as it is; you check everything (and untick links you don't want) before **Save note**. Uses a few tokens (the AI reads up to 8,000 characters) with the **Notes** model; runs as a background job.
+- **Add as raw data**: saved exactly as it is, in the folder you pick (Sources is preselected when the vault has one). No AI.
+
+Either way the note gets the properties `source: research`, the question and (for one page) its address. *Open* in the message opens the new note. Linked Obsidian vaults are read-only for now, so they aren't offered.
+
 ### Copy as Markdown
 Copies the article and its source list, ready to paste anywhere. Free.
 
@@ -561,6 +568,15 @@ Notes that link to this one; notes that mention its name without a link (*Link* 
 
 ### Search notes (with microphone)
 Lists **every** match, grouped by note, with every matching section and the words highlighted. No AI. Search words: `"exact phrase"`, `-leave out`, `OR`, `tag:status/draft`, `type:claim`, `path:Notes/`, `prop:year>1800` (or `prop:status=done`), `linksto:"Note"`, `linkedfrom:"Note"`, `has:image`, `modified:>2026-11-01`, `created:<2026-01-01`, `regex:pattern`, `case:yes`. The microphone fills the box and searches when you stop speaking.
+
+### Ask (next to the search box; Ask in the phone's bottom bar)
+**Ask your notes**: type or say a question and the AI answers in a few sentences from this vault only, citing the parts it used. Press **Ask**, type, then Enter; or run a normal search and press **Ask your notes** above the results.
+- It first picks the key words and other words for them (a small AI call, remembered for repeated questions), then finds matching sections without AI, and sends only the best 8 sections (at most 1,600 characters each) to the AI. The panel shows how many it read and about how many tokens.
+- Numbered buttons in the answer and the list under it open the note at the cited heading.
+- **Direct matches**, **Related** (other words for the same thing, and notes linked to or from the direct matches) and **Closest available** list the notes it found, so there's always somewhere to go.
+- When the notes don't cover something it says so; **Research this** starts a web search with My library included.
+- **Collect into a note** saves the question, the answer (citations become [[links]]) and the sources, in Outputs (or the Inbox).
+- Uses the **Notes** model (Settings → AI → Models per task) and runs as a background job. *Every match* (no AI) is still shown next to it (under it on phones; *Show all matches* jumps there).
 
 ### Search words and tags (tag button next to the Notes search box)
 Two screens. **Search words** lists every search word with an example and what it does; tap one to put it in the search box, then change the example. **Your tags** lists every tag in the vault (nested tags indented) with how many notes use it; tap one to see those notes.

@@ -1,4 +1,5 @@
 // A research run: live progress, then results / article / suggestions. Also re-opens saved runs.
+import { addToNotes, resultsMarkdown, sourceMarkdown } from "./tonotes.js";
 import { openQuickDialog, quickBox } from "./quick.js";
 import { $, $$, h, safeUrl, favicon, shortUrl, stripThink, rafThrottle, icon, toast, api, apiStream, fmtDate } from "./util.js";
 import { render, allowLinks } from "./markdown.js";
@@ -337,7 +338,8 @@ function sourceActions(s) {
   const lib = s.local ? `<button class="link-btn" data-act="lib-open" data-fid="${s.file_id}">${icon("ext")}${h(t("lib.open"))}</button>
     <button class="link-btn" data-act="lib-reveal" data-fid="${s.file_id}">${icon("folder")}${h(t("lib.reveal"))}</button>` : "";
   const save = s.local ? "" : `<button class="link-btn" data-act="save-source" data-sid="${s.id}" title="${h(t("save.sourceTip"))}">${icon("download")}${h(t("save.source"))}</button>`;
-  return `<button class="link-btn" data-act="sum-source" data-sid="${s.id}">${icon("sparkle")}${h(t("sum.button"))}</button>${save}${pinButton(s)}${lib}`;
+  const notes = `<button class="link-btn" data-act="source-to-notes" data-sid="${s.id}" title="${h(t("tn.descSource"))}">${icon("file")}${h(t("tn.button"))}</button>`;
+  return `<button class="link-btn" data-act="sum-source" data-sid="${s.id}">${icon("sparkle")}${h(t("sum.button"))}</button>${save}${notes}${pinButton(s)}${lib}`;
 }
 
 // clicks inside the output area
@@ -352,6 +354,12 @@ $("#runMain").addEventListener("click", e => {
   else if (act === "retry" || act === "again") hooks.go(R.query, R.mode || "auto", R.library, null, R.dates, R.id, R.extras);
   else if (act === "search") hooks.go(b.dataset.q, "auto", R.library);
   else if (act === "settings") hooks.openSettings(b.dataset.tab);
+  else if (act === "to-notes" && R.finished) addToNotes({ kind: R.outcome === "article" ? "article" : "answer", title: $("#aTitle")?.textContent || R.query, text: articleMarkdown(R), query: R.query });
+  else if (act === "results-to-notes") addToNotes({ kind: "results", title: R.query, text: resultsMarkdown(R), query: R.query });
+  else if (act === "source-to-notes") {
+    const s = R.sources[b.dataset.sid] || R.articleSources.find(x => String(x.id) === b.dataset.sid);
+    if (s) addToNotes({ kind: "source", title: s.title || s.url, text: sourceMarkdown(s, R.query), query: R.query, url: s.local ? "" : s.url });
+  }
   else if (act === "copy") copyText(articleMarkdown(R)).then(ok => toast(t(ok ? "art.copied" : "art.copyFailed")));
   else if (act === "listen") {
     if (ttsPaused()) ttsResume();
@@ -467,6 +475,7 @@ function renderResults(R) {
         <div class="row">
           ${assessed.length ? `<button class="btn" data-act="sum-results">${icon("sparkle")}${h(t("sum.button"))}</button>` : ""}
           <button class="btn" data-act="article">${icon("doc")}${h(t("res.toArticle"))}</button>
+          <button class="btn ghost" data-act="results-to-notes" title="${h(t("tn.descResults"))}">${icon("file")}${h(t("tn.button"))}</button>
           ${R.id && R.finished && !R.savedFile ? `<button class="btn ghost" data-act="more-sources" title="${h(t("more.tipResults"))}">${icon("search")}${h(t("more.button"))}</button>` : ""}
           <button class="btn ghost" data-act="translate-results" id="trResBtn" title="${h(t("tr.tip"))}">${icon("globe")}${h(t("tr.button"))}</button>
         </div>
@@ -535,6 +544,7 @@ function articleActions(R) {
       <button class="btn sm ghost" data-act="listen-stop" id="ttsStop" hidden title="${h(t("tts.stop"))}">${icon("stop")}</button>` : ""}
     ${group("export", "download", t("grp.export"),
       item("export-html", "html", t("exp.button"), "", `title="${h(t("exp.tip"))}"`)
+      + item("to-notes", "file", t("tn.button"), t("tn.descArticle"))
       + item("copy", "copy", t("art.copy"))
       + item("sum-file", "download", t("sumfile.button"), t("sumfile.desc"), `title="${h(t("sumfile.tip"))}"`)
       + item("save", "download", t("save.button"), t("save.desc"), `id="saveBtn" disabled title="${h(t("save.tip"))}"`)

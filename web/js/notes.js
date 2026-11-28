@@ -24,6 +24,9 @@ export async function showNotes() {
   }
   fit();
   await loadVaults();
+  // #/notes?p=<path>: open a note (e.g. one just added from Research); the vault was picked there
+  const p = new URLSearchParams(location.hash.split("?")[1] || "").get("p");
+  if (p && N.vault) { history.replaceState(null, "", "#/notes"); openNote(p); }
 }
 
 // the Notes screen fills the window below whatever sits above it (top bar, notice banners)
@@ -41,6 +44,7 @@ function shell() {
         <input type="search" name="q" placeholder="${h(t("nt.searchPh"))}" aria-label="${h(t("nt.search"))}">
       </form>
       <button type="button" class="icon-btn nt-words-btn" data-nt="words" title="${h(t("nt.wordsTitle"))}" aria-label="${h(t("nt.wordsTitle"))}">${icon("tag")}</button>
+      <button type="button" class="btn sm nt-ask-btn" data-nt="ask" title="${h(t("nt.askTip"))}">${icon("chat")}<span>${h(t("nt.ask"))}</span></button>
       <button type="button" class="btn sm nt-voice-btn" data-nt="voice">${icon("mic")}<span>${h(t("nt.voice"))}</span></button>
       <button type="button" class="btn sm primary" data-nt="new">${icon("plus")}<span>${h(t("nt.new"))}</span></button>
     </div>
@@ -58,7 +62,7 @@ function shell() {
       <button type="button" data-screen-to="search">${icon("search")}<span>${h(t("nt.tabSearch"))}</span></button>
       <button type="button" class="nt-bottom-voice" data-nt="voice" aria-label="${h(t("nt.voice"))}">${icon("mic")}</button>
       <button type="button" disabled title="${h(t("nt.soon"))}">${icon("graph")}<span>${h(t("nt.tabGraph"))}</span></button>
-      <button type="button" disabled title="${h(t("nt.soon"))}">${icon("chat")}<span>${h(t("nt.tabAsk"))}</span></button>
+      <button type="button" data-nt="ask">${icon("chat")}<span>${h(t("nt.tabAsk"))}</span></button>
     </nav>
   </div>`;
 }
@@ -79,6 +83,11 @@ function wire(root) {
       else if (a === "voice") voiceNote();
       else if (a === "vaults") vaultDialog();
       else if (a === "words") wordsDialog();
+      else if (a === "ask") askMode();
+      else if (a === "askthis") askNotes(N.query);
+      else if (a === "research") location.hash = `#/search?q=${encodeURIComponent(b.dataset.q || N.query)}&mode=auto&lib=1`;
+      else if (a === "collect") collectAnswer();
+      else if (a === "allmatches") $(".nt-results")?.scrollIntoView({ behavior: "smooth" });
       else if (a === "back") setScreen("list");
       return;
     }
@@ -87,9 +96,10 @@ function wire(root) {
   });
   $("#ntVault").onchange = e => selectVault(e.target.value);
   const form = $("#ntSearch");
-  const mic = micButton(form.q, () => runSearch(form.q.value));
+  const mic = micButton(form.q, () => runSearch(form.q.value, N.askMode));
   if (mic) form.appendChild(mic);
-  form.onsubmit = e => { e.preventDefault(); runSearch(form.q.value); };
+  form.onsubmit = e => { e.preventDefault(); runSearch(form.q.value, N.askMode); };
+  form.q.addEventListener("input", () => { if (!form.q.value) setAskMode(false); });
   addEventListener("beforeunload", e => { if (N.dirty) { saveNow(); e.preventDefault(); } });
 }
 
@@ -537,10 +547,28 @@ function marked(text, marks) {
   return out + h(text.slice(at));
 }
 
-async function runSearch(q) {
+// Ask: the next search also asks the AI for a short cited answer from your notes (a background job).
+function setAskMode(on) {
+  N.askMode = on;
+  const input = $("#ntSearch input");
+  if (input) input.placeholder = t(on ? "nt.askPh" : "nt.searchPh");
+  $$("[data-nt=ask]").forEach(b => b.classList.toggle("on", on));
+}
+
+function askMode() {
+  if (!N.vault) return vaultDialog();
+  const q = $("#ntSearch input").value.trim();
+  if (q && !N.askMode) return runSearch(q, true);
+  setAskMode(!N.askMode || !q);
+  setScreen("search");
+  $("#ntSearch input").focus();
+}
+
+async function runSearch(q, ask = false) {
   if (!N.vault) return;
   q = (q || "").trim();
   N.query = q;
+  setAskMode(false);
   setScreen("search");
   const main = $("#ntMain");
   if (!q) { welcome(); return; }
@@ -548,15 +576,89 @@ async function runSearch(q) {
   let r;
   try { r = await api(`/api/notes/${N.vault.id}/search?q=${encodeURIComponent(q)}`); }
   catch (e) { main.innerHTML = `<p class="status-line err">${h(e.message)}</p>`; return; }
-  main.innerHTML = `<section class="nt-results">
+  main.innerHTML = `<div class="nt-res-wrap${ask ? " with-ask" : ""}"><section class="nt-ask" id="ntAsk" aria-live="polite"></section><section class="nt-results">
     <div class="nt-res-head"><button type="button" class="icon-btn sm nt-back" data-nt="back" aria-label="${h(t("nt.back"))}">${icon("chevLeft")}</button>
-      <h2>${h(t("nt.everyMatch"))}</h2><span class="muted">${h(t("nt.resultCount", { s: r.sections, n: r.notes }))}</span></div>
+      <h2>${h(t("nt.everyMatch"))}</h2><span class="muted">${h(t("nt.resultCount", { s: r.sections, n: r.notes }))}</span>
+      <span class="grow"></span>${ask ? "" : `<button type="button" class="btn sm" data-nt="askthis" title="${h(t("nt.askTip"))}">${icon("chat")}${h(t("nt.askThis"))}</button>`}</div>
     ${r.groups.map(g => `<article class="nt-hit"><a href="#" class="nt-hit-t" data-path="${h(g.path)}">${h(g.title)}</a>
         <span class="muted"> · ${h(folderOf(g.path) || N.vault.name)}${g.type ? " · " + h(g.type) : ""}</span>
         ${g.sections.map(s => `<p class="nt-snip">${s.heading ? `<b>${h(s.heading)}</b> ` : ""}${marked(s.text, s.marks)}</p>`).join("")}</article>`).join("")
       || `<p class="muted">${h(t("nt.noMatches"))}</p>`}
-    <p class="muted nt-ops">${h(t("nt.operators"))} <a href="#" data-nt="words">${h(t("nt.wordsAll"))}</a></p></section>`;
+    <p class="muted nt-ops">${h(t("nt.operators"))} <a href="#" data-nt="words">${h(t("nt.wordsAll"))}</a></p></section></div>`;
   $$(".nt-hit-t", main).forEach(a => (a.onclick = e => { e.preventDefault(); openNote(a.dataset.path); }));
+  if (ask) askNotes(q);
+}
+
+async function askNotes(q) {
+  if (!q || !N.vault) return;
+  const wrap = $(".nt-res-wrap");
+  if (!wrap) return runSearch(q, true);
+  wrap.classList.add("with-ask");
+  $("[data-nt=askthis]")?.remove();
+  const box = $("#ntAsk");
+  box.innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2></div><p class="status-line"><span class="spinner sm"></span>${h(t("nt.asking"))}</p>`;
+  const vid = N.vault.id;
+  let r;
+  const job = api(`/api/notes/${vid}/ask`, { method: "POST", body: { q, ui_lang: uiLang() } });
+  pokeJobs();
+  try { r = await job; }
+  catch (e) { if (N.query === q && $("#ntAsk")) $("#ntAsk").innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2></div><p class="status-line err">${h(e.message)}</p>`; return; }
+  if (N.query !== q || N.vault?.id !== vid || !$("#ntAsk")) return;          // you moved on; the job is in History
+  N.answer = { q, ...r };
+  drawAnswer(r, q);
+}
+
+const tierList = (items) => items.map(x => `<a href="#" class="nt-tier-a" data-path="${h(x.path)}" data-heading="${h(x.heading || "")}">${h(x.title)}</a>`).join("");
+
+function drawAnswer(r, q) {
+  const box = $("#ntAsk");
+  const n = r.tiers.direct.length + r.tiers.related.length + r.tiers.closest.length;
+  const cite = c => `<button type="button" class="nt-cite" data-path="${h(c.path)}" data-heading="${h(c.heading)}" title="${h(c.title + (c.heading ? " › " + c.heading : ""))}">${c.n}</button>`;
+  const byN = Object.fromEntries(r.cites.map(c => [c.n, c]));
+  const ans = h(r.answer).replace(/\[(\d{1,2})\]/g, (m, k) => byN[k] ? cite(byN[k]) : "").replace(/\n/g, "<br>");
+  box.innerHTML = `<div class="nt-res-head"><h2>${h(t("nt.askTitle"))}</h2>
+      ${r.read ? `<span class="muted">${h(t("nt.askRead", { n: r.read, tok: r.tokens.toLocaleString() }))}</span>` : ""}</div>
+    ${r.answer ? `<p class="nt-answer">${ans}</p>` : `<p class="muted">${h(t(n ? "nt.askNoAnswer" : "nt.askNothing"))}</p>`}
+    ${r.cites.length ? `<ol class="nt-cites">${r.cites.map(c => `<li><a href="#" class="nt-tier-a" data-path="${h(c.path)}" data-heading="${h(c.heading)}">${h(c.title)}${c.heading ? `<span class="muted"> › ${h(c.heading)}</span>` : ""}</a></li>`).join("")}</ol>` : ""}
+    ${r.tiers.direct.length ? `<h3>${h(t("nt.tierDirect"))}</h3><div class="nt-tier">${tierList(r.tiers.direct)}</div>` : ""}
+    ${r.tiers.related.length ? `<h3>${h(t("nt.tierRelated"))}</h3><div class="nt-tier">${tierList(r.tiers.related)}</div>` : ""}
+    ${r.tiers.closest.length && !r.tiers.direct.length ? `<h3>${h(t("nt.tierClosest"))}</h3><div class="nt-tier">${tierList(r.tiers.closest)}</div>` : ""}
+    ${r.missing || !r.answer ? `<p class="nt-missing">${h(r.missing || t("nt.askResearchHint"))} <button type="button" class="btn sm" data-nt="research">${icon("search")}${h(t("nt.researchThis"))}</button></p>` : ""}
+    <div class="nt-ask-foot">${r.answer ? `<button type="button" class="btn sm" data-nt="collect">${icon("file")}${h(t("nt.collect"))}</button>` : ""}
+      <button type="button" class="btn sm ghost nt-allm" data-nt="allmatches">${icon("arrowDown")}${h(t("nt.allMatches"))}</button></div>`;
+  $$(".nt-cite, .nt-tier-a", box).forEach(a => (a.onclick = e => { e.preventDefault(); openAt(a.dataset.path, a.dataset.heading); }));
+}
+
+// open a note and bring a heading into view (Read: scroll to it; Edit: put the cursor there)
+async function openAt(path, heading) {
+  await openNote(path);
+  if (!heading) return;
+  setTimeout(() => {
+    const hd = [...$$("#ntMain .nt-prose h1, #ntMain .nt-prose h2, #ntMain .nt-prose h3, #ntMain .nt-prose h4, #ntMain .nt-prose h5, #ntMain .nt-prose h6")]
+      .find(x => x.textContent.trim() === heading);
+    if (hd) return hd.scrollIntoView({ block: "start", behavior: "smooth" });
+    const ta = $("#ntEditor");
+    if (!ta) return;
+    const m = new RegExp("^#{1,6}\\s+" + heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*$", "m").exec(ta.value);
+    if (m) { ta.focus(); ta.setSelectionRange(m.index, m.index); const lh = parseFloat(getComputedStyle(ta).lineHeight) || 20; ta.scrollTop = ta.value.slice(0, m.index).split("\n").length * lh - 40; }
+  }, 120);
+}
+
+// "Collect into a note": the question, the answer with its citations as [[links]], and the sources
+async function collectAnswer() {
+  const a = N.answer;
+  if (!a?.answer) return;
+  const byN = Object.fromEntries(a.cites.map(c => [String(c.n), c]));
+  const link = c => `[[${c.title}${c.heading ? "#" + c.heading : ""}]]`;
+  const body = `> ${a.q}\n\n` + a.answer.replace(/\[(\d{1,2})\]/g, (m, k) => byN[k] ? ` (${link(byN[k])})` : "") +
+    (a.cites.length ? `\n\n## ${t("nt.sources")}\n\n` + a.cites.map(c => "- " + link(c)).join("\n") : "") + "\n";
+  const folders = N.tree.filter(x => x.kind === "folder").map(x => x.path);
+  const folder = ["Outputs", "Inbox"].find(f => folders.includes(f)) || "";
+  const types = (N.types || {})[N.vault.template || "empty"] || [];
+  const props = { source: "ask" };
+  if (types.includes("output")) props.type = "output";
+  const title = a.q.replace(/[\\/:*?"<>|#^\[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  await newNote(title, body, folder, props);
 }
 
 export function notesDirty() { return N.dirty; }

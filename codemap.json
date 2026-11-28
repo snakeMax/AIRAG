@@ -321,19 +321,19 @@
      "args": [
       "fields"
      ],
-     "line": 243
+     "line": 244
     },
     {
      "kind": "def",
      "name": "defaults",
      "args": [],
-     "line": 247
+     "line": 248
     },
     {
      "kind": "def",
      "name": "_base_defaults",
      "args": [],
-     "line": 260
+     "line": 261
     },
     {
      "kind": "def",
@@ -342,13 +342,13 @@
       "base",
       "over"
      ],
-     "line": 287
+     "line": 288
     },
     {
      "kind": "def",
      "name": "_secret_fields",
      "args": [],
-     "line": 297
+     "line": 298
     },
     {
      "kind": "def",
@@ -357,7 +357,7 @@
       "d",
       "path"
      ],
-     "line": 310
+     "line": 311
     },
     {
      "kind": "def",
@@ -367,7 +367,7 @@
       "path",
       "v"
      ],
-     "line": 318
+     "line": 319
     },
     {
      "kind": "def",
@@ -375,31 +375,31 @@
      "args": [
       "s"
      ],
-     "line": 324
+     "line": 325
     },
     {
      "kind": "def",
      "name": "_backup_path",
      "args": [],
-     "line": 339
+     "line": 340
     },
     {
      "kind": "def",
      "name": "load_raw",
      "args": [],
-     "line": 343
+     "line": 344
     },
     {
      "kind": "def",
      "name": "guarded",
      "args": [],
-     "line": 397
+     "line": 398
     },
     {
      "kind": "def",
      "name": "begin_job",
      "args": [],
-     "line": 404
+     "line": 405
     },
     {
      "kind": "def",
@@ -407,13 +407,13 @@
      "args": [
       "token"
      ],
-     "line": 412
+     "line": 413
     },
     {
      "kind": "def",
      "name": "in_job",
      "args": [],
-     "line": 417
+     "line": 418
     },
     {
      "kind": "def",
@@ -421,7 +421,7 @@
      "args": [
       "current"
      ],
-     "line": 421
+     "line": 422
     },
     {
      "kind": "def",
@@ -430,7 +430,7 @@
       "before",
       "after"
      ],
-     "line": 443
+     "line": 444
     },
     {
      "kind": "def",
@@ -438,7 +438,7 @@
      "args": [
       "with_env"
      ],
-     "line": 462
+     "line": 463
     },
     {
      "kind": "def",
@@ -446,7 +446,7 @@
      "args": [
       "s"
      ],
-     "line": 490
+     "line": 491
     },
     {
      "kind": "def",
@@ -455,7 +455,7 @@
       "new",
       "current"
      ],
-     "line": 499
+     "line": 500
     },
     {
      "kind": "def",
@@ -463,7 +463,7 @@
      "args": [
       "incoming"
      ],
-     "line": 507
+     "line": 508
     },
     {
      "kind": "def",
@@ -473,7 +473,7 @@
       "llm_provider",
       "provider_cfg"
      ],
-     "line": 526
+     "line": 527
     }
    ]
   },
@@ -3681,6 +3681,36 @@
       "req"
      ],
      "line": 214
+    },
+    {
+     "kind": "class",
+     "name": "AskReq",
+     "methods": [],
+     "line": 225
+    },
+    {
+     "kind": "async def",
+     "name": "ask_notes",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 231
+    },
+    {
+     "kind": "class",
+     "name": "CategorizeReq",
+     "methods": [],
+     "line": 241
+    },
+    {
+     "kind": "async def",
+     "name": "categorize_research",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 248
     }
    ]
   },
@@ -3877,6 +3907,18 @@
     },
     {
      "kind": "async def",
+     "name": "categorize",
+     "args": [
+      "settings",
+      "v",
+      "text",
+      "title",
+      "ui_lang"
+     ],
+     "line": 148
+    },
+    {
+     "kind": "async def",
      "name": "organize",
      "args": [
       "settings",
@@ -3884,7 +3926,7 @@
       "text",
       "ui_lang"
      ],
-     "line": 136
+     "line": 181
     }
    ]
   },
@@ -4134,6 +4176,87 @@
       "limit"
      ],
      "line": 222
+    }
+   ]
+  },
+  "airag/notes/smart.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "_clean_terms",
+     "args": [
+      "items",
+      "limit"
+     ],
+     "line": 50
+    },
+    {
+     "kind": "def",
+     "name": "_fts_phrase",
+     "args": [
+      "w"
+     ],
+     "line": 60
+    },
+    {
+     "kind": "async def",
+     "name": "plan",
+     "args": [
+      "settings",
+      "v",
+      "q",
+      "lang"
+     ],
+     "line": 64
+    },
+    {
+     "kind": "def",
+     "name": "_fts",
+     "args": [
+      "c",
+      "expr",
+      "limit"
+     ],
+     "line": 83
+    },
+    {
+     "kind": "def",
+     "name": "_like",
+     "args": [
+      "c",
+      "words",
+      "limit"
+     ],
+     "line": 91
+    },
+    {
+     "kind": "def",
+     "name": "retrieve",
+     "args": [
+      "settings",
+      "v",
+      "p"
+     ],
+     "line": 105
+    },
+    {
+     "kind": "def",
+     "name": "_tiers",
+     "args": [
+      "found"
+     ],
+     "line": 155
+    },
+    {
+     "kind": "async def",
+     "name": "ask",
+     "args": [
+      "settings",
+      "v",
+      "q",
+      "ui_lang"
+     ],
+     "line": 169
     }
    ]
   },
@@ -7068,6 +7191,14 @@
    "/api/notes/vaults/{vid}"
   ],
   [
+   "POST",
+   "/api/notes/{vid}/ask"
+  ],
+  [
+   "POST",
+   "/api/notes/{vid}/categorize"
+  ],
+  [
    "GET",
    "/api/notes/{vid}/links"
   ],
@@ -7866,6 +7997,11 @@
     "toolbarAction"
    ],
    "imports": {
+    "tonotes.js": [
+     "addToNotes",
+     "resultsMarkdown",
+     "sourceMarkdown"
+    ],
     "quick.js": [
      "openQuickDialog",
      "quickBox"
@@ -8225,6 +8361,29 @@
    ],
    "imports": {}
   },
+  "tonotes.js": {
+   "exports": [
+    "addToNotes",
+    "resultsMarkdown",
+    "sourceMarkdown"
+   ],
+   "imports": {
+    "util.js": [
+     "$",
+     "h",
+     "icon",
+     "api",
+     "toast"
+    ],
+    "i18n.js": [
+     "t",
+     "uiLang"
+    ],
+    "activity.js": [
+     "pokeJobs"
+    ]
+   }
+  },
   "toolbar.js": {
    "exports": [
     "ask",
@@ -8233,6 +8392,9 @@
     "showToolbar"
    ],
    "imports": {
+    "tonotes.js": [
+     "addToNotes"
+    ],
     "snap.js": [
      "registerSnap"
     ],
@@ -8376,7 +8538,9 @@
    "regenerate",
    "source_summarize",
    "source_save",
-   "source_pin"
+   "source_pin",
+   "to_notes",
+   "source_to_notes"
   ],
   "audio": [
    "enabled",
@@ -8498,7 +8662,8 @@
   "summary",
   "calc",
   "tags",
-  "notes-organize"
+  "notes-organize",
+  "notes-ask"
  ],
  "ai_tasks": [
   "research",
@@ -8513,5 +8678,5 @@
   "notes",
   "misc"
  ],
- "i18n_keys": 1292
+ "i18n_keys": 1339
 }
