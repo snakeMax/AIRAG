@@ -8,6 +8,7 @@
 - **Voice note**: speak a note, then Save to Inbox as it is, or **Organize**: the AI tidies it and suggests a title, folder, type, tags and links, shown as an editable preview before anything is saved
 - **Notes** in Models per task (Settings → AI)
 - **Ask your notes**: a short answer from your vault with numbered citations that open the right heading, results in tiers (direct, related, closest), Research this (web + My library) and Collect into a note. Ask also writes a short article from your notes when you ask for one, and starts a Quick search or a full Research (with My library) when you ask to look something up online or research it
+- **Delete notes and folders** (moved to the vault's .trash folder, the same as Obsidian's trash, with Undo)
 - Notes on phones: the microphone in the bottom bar is centred and larger
 - **Main notes vault** (Settings → Library & storage → Notes vaults, and the first-start setup): AIRAG's own vault or an Obsidian vault; added Obsidian vaults can be edited straight away (optional read only); **Open in Obsidian** for vaults and notes
 - **Add to notes** in Research: articles, quick answers, results pages and single sources go into a vault as raw data or auto-categorized (title, folder, type, tags and related links suggested; the text is kept)

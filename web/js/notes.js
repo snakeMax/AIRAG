@@ -83,6 +83,7 @@ function wire(root) {
       else if (a === "voice") voiceNote();
       else if (a === "vaults") vaultDialog();
       else if (a === "vaults-obsidian") vaultDialog(true);
+      else if (a === "delnote" && N.note) removeItem(N.note.path, false);
       else if (a === "obsidian") openInObsidian(N.vault, N.note?.path || "");
       else if (a === "words") wordsDialog();
       else if (a === "ask") askMode();
@@ -215,7 +216,8 @@ function drawTree() {
     return k.dirs.map(d => {
       const open = N.open.has(d);
       const name = d.split("/").pop();
-      return `<button type="button" class="nt-dir" data-dir="${h(d)}" style="--d:${depth}" aria-expanded="${open}">${icon(open ? "chevDown" : "chevRight")}<span>${h(name)}</span></button>
+      return `<div class="nt-dir-row"><button type="button" class="nt-dir" data-dir="${h(d)}" style="--d:${depth}" aria-expanded="${open}">${icon(open ? "chevDown" : "chevRight")}<span>${h(name)}</span></button>
+        ${N.vault?.read_only ? "" : `<button type="button" class="icon-btn sm nt-dir-del" data-deldir="${h(d)}" title="${h(t("nt.deleteFolder"))}" aria-label="${h(t("nt.deleteFolder"))}: ${h(name)}">${icon("trash")}</button>`}</div>
         ${open ? draw(d, depth + 1) : ""}`;
     }).join("") + k.files.sort((a, b) => a.path.localeCompare(b.path)).map(n =>
       `<a href="#" class="nt-file ${N.note?.path === n.path ? "on" : ""}" data-path="${h(n.path)}" style="--d:${depth}">${h(n.path.split("/").pop().replace(/\.md$/i, ""))}</a>`).join("");
@@ -226,6 +228,43 @@ function drawTree() {
     + `<div class="nt-label">${h(t("nt.folders"))}</div>` + (draw("", 0) || `<p class="muted">${h(t("nt.noNotes"))}</p>`);
   $$(".nt-dir", box).forEach(b => (b.onclick = () => { const d = b.dataset.dir; N.open.has(d) ? N.open.delete(d) : N.open.add(d); drawTree(); }));
   $$(".nt-file", box).forEach(a => (a.onclick = e => { e.preventDefault(); openNote(a.dataset.path); }));
+  $$("[data-deldir]", box).forEach(b => (b.onclick = () => removeItem(b.dataset.deldir, true)));
+  // long-press (phones) or right-click: delete
+  if (!N.vault?.read_only) {
+    $$(".nt-dir", box).forEach(b => b.addEventListener("contextmenu", e => { e.preventDefault(); removeItem(b.dataset.dir, true); }));
+    $$(".nt-file", box).forEach(a => a.addEventListener("contextmenu", e => { e.preventDefault(); removeItem(a.dataset.path, false); }));
+  }
+}
+
+// Delete = move into the vault's .trash folder (Obsidian's trash), after a confirmation; Undo puts it back.
+function removeItem(path, folder) {
+  const d = dialog("ntDelDlg", "nt-dlg");
+  const name = folder ? path.split("/").pop() : nameOf(path);
+  const inside = folder ? N.tree.filter(x => x.kind === "note" && x.path.startsWith(path + "/")).length : 0;
+  d.innerHTML = `<form method="dialog">
+    <div class="dlg-head"><h2>${h(t(folder ? "nt.deleteFolderQ" : "nt.deleteQ", { n: name }))}</h2><button class="icon-btn" value="close" aria-label="${h(t("common.close"))}">${icon("x")}</button></div>
+    <div class="dlg-body plain"><p>${h(folder ? t("nt.deleteFolderDesc", { n: inside }) : t("nt.deleteDesc"))}</p></div>
+    <div class="dlg-foot"><button class="btn ghost" value="close">${h(t("common.cancel"))}</button><span class="grow"></span>
+      <button type="submit" class="btn danger" value="del">${icon("trash")}${h(t("nt.delete"))}</button></div></form>`;
+  d.querySelector("form").onsubmit = async e => {
+    if (e.submitter?.value !== "del") return;
+    e.preventDefault();
+    d.close();
+    const affectsOpen = N.note && (folder ? N.note.path.startsWith(path + "/") : N.note.path === path);
+    if (affectsOpen) { clearTimeout(N.timer); N.dirty = false; }
+    const vid = N.vault.id;
+    let r;
+    try { r = await api(`/api/notes/${vid}/trash`, { method: "POST", body: { path, folder } }); }
+    catch (err) { return toast(err.message, 6000); }
+    if (affectsOpen) { N.note = null; welcome(); }
+    await loadTree();
+    toast(t(folder ? "nt.folderDeleted" : "nt.noteDeleted", { n: name }), 9000, { label: t("nt.undo"), run: async () => {
+      try { await api(`/api/notes/${vid}/restore`, { method: "POST", body: { trashed: r.trashed, path: r.path } }); }
+      catch (err) { return toast(err.message, 7000); }
+      if (N.vault?.id === vid) { await loadTree(); if (!folder) openNote(r.path); }
+    } });
+  };
+  d.showModal();
 }
 
 function welcome() {
@@ -353,6 +392,7 @@ function drawNote() {
       <span class="muted">${h(folderOf(n.path) || N.vault.name)}</span><span class="grow"></span>
       <span class="nt-state" id="ntState">${h(t(linked ? "nt.readOnly" : "nt.saved"))}</span>
       <button type="button" class="icon-btn sm" data-nt="obsidian" title="${h(t("nt.openObsidian"))}" aria-label="${h(t("nt.openObsidian"))}">${icon("ext")}</button>
+      ${linked ? "" : `<button type="button" class="icon-btn sm" data-nt="delnote" title="${h(t("nt.delete"))}" aria-label="${h(t("nt.delete"))}">${icon("trash")}</button>`}
       <div class="seg nt-modes" role="tablist">
         <button type="button" role="tab" data-mode="edit" aria-selected="${N.mode === "edit"}" class="${N.mode === "edit" ? "on" : ""}" ${linked ? "disabled" : ""}>${h(t("nt.edit"))}</button>
         <button type="button" role="tab" data-mode="read" aria-selected="${N.mode === "read" || linked}" class="${N.mode === "read" || linked ? "on" : ""}">${h(t("nt.read"))}</button></div></div>

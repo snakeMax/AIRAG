@@ -261,6 +261,62 @@ def write_note(settings: dict, v: dict, rel: str, text: str, expected_hash: Opti
     return {"path": rel, "hash": parse(text, p.stem).hash}
 
 
+TRASH = ".trash"          # Obsidian's own "move to trash" folder, so both apps see the same removed notes
+
+
+def trash(settings: dict, v: dict, rel: str, folder: bool = False) -> dict:
+    """Move a note (or a whole folder) into the vault's .trash folder. Nothing is deleted for good;
+    restore() puts it back. Returns {"path", "trashed"} (both vault-relative)."""
+    import shutil
+    if read_only(v):
+        raise NotesError("This vault is set to read only in AIRAG")
+    base = Path(os.path.realpath(vault_dir(settings, v)))
+    src = pathguard.resolve(base, rel)
+    if src == base:
+        raise NotesError("Pick a note or folder inside the vault")
+    if folder and not src.is_dir():
+        raise NotesError("That folder doesn't exist")
+    if not folder and not (src.is_file() and src.suffix.lower() == ".md"):
+        raise NotesError("That note doesn't exist")
+    rel = src.relative_to(base).as_posix()
+    with _lock:
+        dest = base / TRASH / rel
+        n = 2
+        while dest.exists():
+            stem = Path(rel).stem if not folder else Path(rel).name
+            dest = (base / TRASH / rel).with_name(f"{stem} ({n})" + ("" if folder else src.suffix))
+            n += 1
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(dest))
+    return {"path": rel, "trashed": dest.relative_to(base).as_posix()}
+
+
+def restore(settings: dict, v: dict, trashed: str, rel: str) -> dict:
+    """Undo trash(): move it back to where it was, if that place is still free."""
+    import shutil
+    if read_only(v):
+        raise NotesError("This vault is set to read only in AIRAG")
+    base = Path(os.path.realpath(vault_dir(settings, v)))
+    src = pathguard.resolve(base, trashed, allow_private=True)
+    if not str(pathguard.clean_rel(trashed, allow_private=True)).lower().startswith(TRASH + "/") or not src.exists():
+        raise NotesError("That isn't in the vault's trash any more")
+    dest = pathguard.resolve(base, rel)
+    if dest.exists():
+        raise NotesError("Something with that name is back in its place; restore it by hand from the .trash folder")
+    with _lock:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(dest))
+        trash_root = base / TRASH
+        parent = src.parent
+        while parent != trash_root and trash_root in parent.parents:   # tidy folders the restore left empty
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+    return {"path": dest.relative_to(base).as_posix()}
+
+
 def safe_title(title: str) -> str:
     name = re.sub(r'[<>:"/\\|?*\x00-\x1f#^\[\]]+', " ", title).strip().strip(".")
     name = re.sub(r"\s+", " ", name)[:120] or "Untitled"

@@ -326,3 +326,36 @@ async def categorize_research(vid: str, req: CategorizeReq):
         raise HTTPException(400, "Nothing to add")
     return await _job_result(lambda: organize.categorize(s, v, req.text[:200_000], req.title[:300], req.ui_lang),
                              "notes-organize", (req.title or req.text).strip()[:80])
+
+
+class TrashReq(BaseModel):
+    path: str
+    folder: bool = False
+
+
+@router.post("/{vid}/trash")
+async def trash_item(vid: str, req: TrashReq):
+    """Delete a note or folder: it moves to the vault's .trash folder (Obsidian's trash), so it can be restored."""
+    s, v = _vault(vid)
+    try:
+        r = store.trash(s, v, req.path, req.folder)
+    except (store.NotesError, pathguard.PathError, OSError) as e:
+        raise _fail(e)
+    await asyncio.to_thread(index.update, s, v)
+    return r
+
+
+class RestoreReq(BaseModel):
+    trashed: str
+    path: str
+
+
+@router.post("/{vid}/restore")
+async def restore_item(vid: str, req: RestoreReq):
+    s, v = _vault(vid)
+    try:
+        r = store.restore(s, v, req.trashed, req.path)
+    except (store.NotesError, pathguard.PathError, OSError) as e:
+        raise _fail(e)
+    await asyncio.to_thread(index.update, s, v)
+    return r

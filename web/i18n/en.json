@@ -1271,5 +1271,16 @@
  "nv.setupLabel": "Main notes vault",
  "nt.routeQuick": "That's a web question: starting a quick search for \"{q}\" (with My library).",
  "nt.routeResearch": "Starting a full research on \"{q}\" (web + My library).",
- "nt.askNotesInstead": "Ask my notes instead"
+ "nt.askNotesInstead": "Ask my notes instead",
+ "nt.delete": "Delete",
+ "nt.deleteFolder": "Delete folder",
+ "nt.deleteQ": "Delete \"{n}\"?",
+ "nt.deleteFolderQ": "Delete the folder \"{n}\"?",
+ "nt.deleteDesc": "It moves to the vault's .trash folder (the same trash Obsidian uses), so it can be brought back.",
+ "nt.deleteFolderDesc": "The folder and its {n} notes move to the vault's .trash folder (the same trash Obsidian uses), so they can be brought back.",
+ "nt.noteDeleted": "\"{n}\" moved to the trash",
+ "nt.folderDeleted": "Folder \"{n}\" moved to the trash",
+ "nt.undo": "Undo",
+ "help.n.delete.t": "The bin next to a note deletes it; for a folder, point at it in the list (or long-press it on a phone). Deleted notes go to the vault's .trash folder, which Obsidian uses too, and Undo brings them back.",
+ "help.n.delete": "Deleting"
 }

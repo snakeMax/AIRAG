@@ -71,3 +71,39 @@ def test_obsidian_link_is_built_from_the_vault_path():
     from airag.notes import obsidian
     u = obsidian.uri_for(Path("/home/me/My vault/a&b.md"))
     assert u == "obsidian://open?path=%2Fhome%2Fme%2FMy%20vault%2Fa%26b.md"
+
+
+def test_trash_and_restore_notes_and_folders(S):
+    from airag.notes import store, pathguard
+    v = store.create_vault(S, "T", "research")
+    a = store.create_note(S, v, "Topics", "Moose", "x\n")
+    store.create_note(S, v, "Topics/Sub", "Deer", "y\n")
+    base = store.vault_dir(S, v)
+    r = store.trash(S, v, a["path"])
+    assert not (base / a["path"]).exists() and (base / r["trashed"]).read_text(encoding="utf-8").endswith("x\n")
+    assert r["trashed"].startswith(".trash/")
+    store.create_note(S, v, "Topics", "Moose", "again\n")
+    r2 = store.trash(S, v, "Topics/Moose.md")
+    assert r2["trashed"] != r["trashed"]                                   # never overwrites the trash
+    store.restore(S, v, r2["trashed"], "Topics/Moose.md")
+    assert (base / ".trash" / "Topics").exists()                          # the first trashed Moose is still there
+    assert (base / "Topics/Moose.md").read_text(encoding="utf-8").endswith("again\n")
+    with pytest.raises(store.NotesError):
+        store.restore(S, v, r["trashed"], "Topics/Moose.md")               # place taken
+    f = store.trash(S, v, "Topics/Sub", folder=True)
+    assert (base / f["trashed"] / "Deer.md").exists() and not (base / "Topics/Sub").exists()
+    for bad in ["", ".", "../x.md", ".obsidian/app.json"]:
+        with pytest.raises((store.NotesError, pathguard.PathError)):
+            store.trash(S, v, bad, folder=True)
+    with pytest.raises((store.NotesError, pathguard.PathError)):
+        store.restore(S, v, "Topics/Moose.md", "Elsewhere.md")             # only from .trash
+
+
+def test_restore_tidies_empty_trash_folders(S):
+    from airag.notes import store
+    v = store.create_vault(S, "T2", "empty")
+    store.create_note(S, v, "A/B", "N", "x")
+    base = store.vault_dir(S, v)
+    r = store.trash(S, v, "A/B/N.md")
+    store.restore(S, v, r["trashed"], r["path"])
+    assert not (base / ".trash" / "A").exists()

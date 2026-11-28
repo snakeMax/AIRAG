@@ -3771,6 +3771,36 @@
       "req"
      ],
      "line": 320
+    },
+    {
+     "kind": "class",
+     "name": "TrashReq",
+     "methods": [],
+     "line": 331
+    },
+    {
+     "kind": "async def",
+     "name": "trash_item",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 337
+    },
+    {
+     "kind": "class",
+     "name": "RestoreReq",
+     "methods": [],
+     "line": 348
+    },
+    {
+     "kind": "async def",
+     "name": "restore_item",
+     "args": [
+      "vid",
+      "req"
+     ],
+     "line": 354
     }
    ]
   },
@@ -4534,11 +4564,33 @@
     },
     {
      "kind": "def",
+     "name": "trash",
+     "args": [
+      "settings",
+      "v",
+      "rel",
+      "folder"
+     ],
+     "line": 267
+    },
+    {
+     "kind": "def",
+     "name": "restore",
+     "args": [
+      "settings",
+      "v",
+      "trashed",
+      "rel"
+     ],
+     "line": 294
+    },
+    {
+     "kind": "def",
      "name": "safe_title",
      "args": [
       "title"
      ],
-     "line": 264
+     "line": 320
     },
     {
      "kind": "def",
@@ -4549,7 +4601,7 @@
       "folder",
       "title"
      ],
-     "line": 272
+     "line": 328
     },
     {
      "kind": "def",
@@ -4563,7 +4615,7 @@
       "props",
       "approved"
      ],
-     "line": 284
+     "line": 340
     },
     {
      "kind": "def",
@@ -4571,7 +4623,7 @@
      "args": [
       "v"
      ],
-     "line": 293
+     "line": 349
     }
    ]
   },
@@ -7343,6 +7395,10 @@
    "/api/notes/{vid}/reindex"
   ],
   [
+   "POST",
+   "/api/notes/{vid}/restore"
+  ],
+  [
    "GET",
    "/api/notes/{vid}/search"
   ],
@@ -7353,6 +7409,10 @@
   [
    "GET",
    "/api/notes/{vid}/tags"
+  ],
+  [
+   "POST",
+   "/api/notes/{vid}/trash"
   ],
   [
    "GET",
@@ -8802,5 +8862,5 @@
   "notes",
   "misc"
  ],
- "i18n_keys": 1362
+ "i18n_keys": 1373
 }

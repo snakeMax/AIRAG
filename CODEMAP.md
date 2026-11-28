@@ -79,9 +79,11 @@ or removing them.
 - `POST /api/notes/{vid}/obsidian`
 - `POST /api/notes/{vid}/organize`
 - `POST /api/notes/{vid}/reindex`
+- `POST /api/notes/{vid}/restore`
 - `GET /api/notes/{vid}/search`
 - `GET /api/notes/{vid}/stats`
 - `GET /api/notes/{vid}/tags`
+- `POST /api/notes/{vid}/trash`
 - `GET /api/notes/{vid}/tree`
 - `GET /api/offline`
 - `POST /api/offline`
@@ -578,6 +580,10 @@ or removing them.
 - async def `ask_notes(vid, req)`
 - class `CategorizeReq` ()
 - async def `categorize_research(vid, req)`
+- class `TrashReq` ()
+- async def `trash_item(vid, req)`
+- class `RestoreReq` ()
+- async def `restore_item(vid, req)`
 
 ### airag/notes/index.py
 - def `connect(settings, v)`
@@ -651,6 +657,8 @@ or removing them.
 - def `tree(settings, v, limit)`
 - def `read_note(settings, v, rel)`
 - def `write_note(settings, v, rel, text, expected_hash, approved)`
+- def `trash(settings, v, rel, folder)`
+- def `restore(settings, v, trashed, rel)`
 - def `safe_title(title)`
 - def `free_path(settings, v, folder, title)`
 - def `create_note(settings, v, folder, title, body, props, approved)`
@@ -980,4 +988,4 @@ or removing them.
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize, notes-ask  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
-i18n keys (en): 1362
+i18n keys (en): 1373

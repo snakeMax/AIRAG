@@ -4,7 +4,7 @@ import { $, h, icon } from "./util.js";
 import { t } from "./i18n.js";
 
 const RESEARCH = ["modes", "quick", "chips", "select", "toolbar", "sources", "panels", "save", "image", "share"];
-const NOTES = ["vaults", "links", "props", "tags", "search", "backlinks", "saving", "voice"];
+const NOTES = ["vaults", "links", "props", "tags", "search", "backlinks", "saving", "delete", "voice"];
 
 export function initHelp() {
   const b = $("#helpBtn");

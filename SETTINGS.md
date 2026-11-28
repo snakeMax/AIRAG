@@ -563,6 +563,9 @@ A vault is a folder of Markdown notes (Obsidian-compatible). **+** next to the v
 ### New note, Edit / Read, saving
 *New note* asks for a name and opens it ready to write. **Edit** shows the Markdown (properties between the `---` lines, `[[Note name]]` links, `#tags`); **Read** shows it formatted with a properties table, and links you can tap. A link to a note that doesn't exist offers to create it. Notes save by themselves a moment after you stop typing (Ctrl+S saves at once). If the note changed in another app since you opened it, AIRAG doesn't overwrite it and asks you to reload. The last 20 versions of each note are kept.
 
+### Delete (notes and folders)
+The bin next to a note's Saved state deletes the note. For a folder, point at it in the list and press its bin (on phones: long-press the folder; right-click works on computers too, and on notes in the list). You confirm first; the note or folder (with everything in it) then moves to the vault's **.trash** folder, the same trash Obsidian uses, so nothing is lost for good. **Undo** in the message puts it back; later you can restore it by hand from .trash (in Obsidian or a file manager). Not offered in vaults set to read only.
+
 ### Linked from, Mentioned but not linked, Outline (right side; below the note on phones)
 Notes that link to this one; notes that mention its name without a link (*Link* turns the first mention into a link); the note's headings; and links to notes that don't exist yet.
 
