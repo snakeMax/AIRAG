@@ -89,3 +89,110 @@ def select_passages(text: str, terms: Iterable[str], max_chars: int = 3500, wind
         parts.append(c)
         prev = i
     return "\n".join(parts)[: max_chars + 600]
+
+
+# ---------------------------------------------------------------- long pages, section by section
+# Pages read as Markdown (the web reader and the Wikipedia API keep headings) are split into sections. Reference
+# lists, link lists and the like are skipped; the rest is scored by the search's key words (headings count
+# extra) and the best sections fill the per-page budget. A very long section is itself trimmed to its best
+# passages. The AI only ever sees this excerpt, so a 300-page document costs the same as a short page.
+_HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$", re.M)
+SKIP_SECTIONS = {
+    # en
+    "references", "external links", "see also", "notes", "further reading", "bibliography", "sources", "citations",
+    "footnotes", "works cited", "notes and references", "references and notes", "literature", "gallery", "navigation menu",
+    # nb / da / sv
+    "referanser", "kilder", "eksterne lenker", "se også", "litteratur", "noter", "fotnoter", "henvisninger",
+    "eksterne henvisninger", "referenser", "källor", "externa länkar", "se även", "vidare läsning",
+    # de / fr / es
+    "einzelnachweise", "weblinks", "siehe auch", "quellen", "anmerkungen", "références", "liens externes", "voir aussi",
+    "bibliographie", "notes et références", "referencias", "enlaces externos", "véase también", "bibliografía", "notas",
+    # ja / zh
+    "脚注", "参考文献", "外部リンク", "関連項目", "出典", "注釈", "参考资料", "外部链接", "参见", "参考文献", "注释",
+}
+
+
+def split_sections(text: str) -> List[dict]:
+    """[{heading, level, body}] in page order; the part before the first heading is the lead (heading "")."""
+    out: List[dict] = []
+    marks = list(_HEADING.finditer(text or ""))
+    if not marks:
+        return [{"heading": "", "level": 0, "body": (text or "").strip()}]
+    lead = text[:marks[0].start()].strip()
+    if lead:
+        out.append({"heading": "", "level": 0, "body": lead})
+    for i, m in enumerate(marks):
+        end = marks[i + 1].start() if i + 1 < len(marks) else len(text)
+        out.append({"heading": m.group(2).strip().strip("*_ "), "level": len(m.group(1)), "body": text[m.end():end].strip()})
+    return out
+
+
+def _skip(heading: str) -> bool:
+    return heading.lower().strip(" :.") in SKIP_SECTIONS
+
+
+def section_score(sec: dict, terms: set) -> float:
+    head = set(tokenize(sec["heading"]))
+    toks = tokenize(sec["body"][:20000])
+    hits = [t for t in toks if t in terms]
+    distinct = len(set(hits))
+    s = len(head & terms) * 3 + distinct * 2 + min(len(hits), 20) * 0.25
+    if distinct and re.search(r"\d", sec["body"][:20000]):
+        s += 1.0
+    return s
+
+
+def select_sections(text: str, terms: Iterable[str], max_chars: int = 3500, pick: List[str] = None) -> tuple:
+    """(excerpt, info) for a page. info: chars, sections (counted, without skipped ones), read, skipped, best
+    (the best section's score: low means the key words barely appear). `pick`: headings chosen by the AI
+    for pages where the key words don't match; they go first."""
+    text = text or ""
+    term_set = {t for t in terms if t}
+    secs = split_sections(text)
+    info = {"chars": len(text), "sections": 0, "read": 0, "skipped": 0, "best": 0.0}
+    if len(secs) <= 1 or len(text) <= max_chars:
+        if len(secs) > 1:
+            info["sections"] = info["read"] = sum(1 for s in secs if not _skip(s["heading"]))
+        return select_passages(text, term_set, max_chars), info
+    keep = [s for s in secs if not _skip(s["heading"]) and s["body"]]
+    info["skipped"] = len(secs) - len(keep)
+    info["sections"] = len(keep)
+    for i, s in enumerate(keep):
+        s["i"] = i
+        s["score"] = section_score(s, term_set)
+    info["best"] = max((s["score"] for s in keep), default=0.0)
+    chosen: List[dict] = []
+    used = 0
+    lead = keep[0] if keep and keep[0]["heading"] == "" else None
+    if lead:                                                     # the lead usually sums the page up
+        lead = dict(lead, body=lead["body"][:700])
+        chosen.append(lead)
+        used += len(lead["body"])
+    wanted = {p.lower() for p in (pick or [])}
+    order = sorted((s for s in keep if s is not keep[0] or not lead),
+                   key=lambda s: (s["heading"].lower() not in wanted, -s["score"]))
+    for s in order:
+        if used >= max_chars or (s["score"] <= 0 and s["heading"].lower() not in wanted):
+            break
+        room = max_chars - used
+        body = s["body"] if len(s["body"]) <= room else select_passages(s["body"], term_set, max(500, room - 100))
+        chosen.append(dict(s, body=body))
+        used += len(body) + len(s["heading"]) + 4
+    chosen.sort(key=lambda s: s.get("i", -1))
+    info["read"] = len(chosen)
+    parts = []
+    for s in chosen:
+        parts.append((f"## {s['heading']}\n" if s["heading"] else "") + s["body"])
+    return "\n[…]\n".join(parts)[: max_chars + 800], info
+
+
+def outline(text: str, max_sections: int = 60) -> List[tuple]:
+    """[(heading, first words)] for an AI to choose from when the key words don't match."""
+    out = []
+    for s in split_sections(text):
+        if not s["heading"] or _skip(s["heading"]):
+            continue
+        out.append((s["heading"], re.sub(r"\s+", " ", s["body"][:110]).strip()))
+        if len(out) >= max_sections:
+            break
+    return out

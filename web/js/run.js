@@ -295,8 +295,11 @@ function stepLabel(ev) {
 
 const favHtml = s => (s.local ? `<span class="fav-lib">${icon("folder")}</span>` : `<img src="${favicon(s.domain)}" alt="" loading="lazy">`);
 const VIA_NOTE = { abstract: "via.abstract", europepmc: "via.europepmc", snippet: "via.snippet" };
+// long pages are read section by section: say how much of the page the AI saw
+const readNote = s => { const r = s.read_info; return r && r.sections > 1 && r.read < r.sections && r.chars > 8000
+  ? ` · ${t(r.ai_pick ? "via.partsAi" : "via.parts", { r: r.read, n: r.sections })}` : ""; };
 const srcDomain = s => (s.local ? `${t("src.library")} · ${s.site_name || ""}`
-  : s.domain + (VIA_NOTE[s.via] ? ` · ${t(VIA_NOTE[s.via])}` : s.blocked ? ` · ${t("via.blocked")}` : ""));
+  : s.domain + (VIA_NOTE[s.via] ? ` · ${t(VIA_NOTE[s.via])}` : s.blocked ? ` · ${t("via.blocked")}` : "") + readNote(s));
 
 const renderSourceSide = rafThrottle(R => {
   if (RUN.current !== R || (R.outcome === "article" && R.articleSources.length)) return;

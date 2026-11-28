@@ -390,8 +390,14 @@ Reading is the main token cost.
 ### Parallel AI calls (default 3)
 How many pages are judged at the same time. Use 1 for small local models.
 
-### Text per page sent to AI
-How much of each page the AI reads, only the most relevant passages. More text gives more detail and uses more tokens.
+### Text per page sent to AI (3,500 characters)
+How much of each page the AI reads. More text gives more detail and uses more tokens. However long a page is, the AI never gets more than this, so a 300-page document costs about the same as a short page.
+- **Long pages are read section by section** (pages keep their headings when read; up to 1 million characters per page are kept). Reference lists, external links, *See also*, notes and similar sections are skipped (in all the app's languages). The page's opening paragraph goes first (it usually sums the page up), then the sections that use your search's words most (a heading that matches counts extra); a very long section is trimmed to its best passages.
+- The source card says how much was read, e.g. *read 4 of 31 sections*.
+- Pages without headings are trimmed to their best passages as before.
+
+### Let the AI pick sections of long pages (on)
+For a long page (over 40,000 characters, 10+ sections) whose sections barely use your search's words, one small AI call (the *Small helpers* model, a few hundred tokens) reads just the headings and their first words and picks up to 4 sections to read; the source card then says *(picked by AI)*. Off: only the word matching is used.
 
 ### Direct-hit relevance / coverage thresholds
 In Auto mode, a page this relevant and complete makes AIRAG show results instead of writing an article.
@@ -418,6 +424,9 @@ How many pictures an article can show.
 
 ### Page timeout / Pages read in parallel
 How long to wait for each page, and how many are downloaded at once.
+
+### Read Wikipedia through its API (on)
+Wikipedia (and other Wikimedia sites: Wiktionary, Wikivoyage, Wikisource…) is read through its official API, with an honest app name and contact address as Wikimedia's rules ask, at most 2 pages at a time, waiting politely if Wikipedia says to slow down. The article comes back as clean text with its section headings, so it can be read section by section. Off: Wikipedia is read like any other web page, which Wikimedia often refuses for programs (the page then shows as unreadable). A refusal from Wikipedia no longer marks the whole site as blocked.
 
 ### Read YouTube videos (on) / YouTube retries (1)
 A YouTube video's title, channel, description and, when YouTube allows it, its captions are read so the video can be used as a source. Videos show a preview card in the source list. *Retries* sets how often to try again when YouTube doesn't answer. If YouTube changes its pages, AIRAG says so separately from ordinary errors.

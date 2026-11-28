@@ -1293,5 +1293,11 @@
  "nt.moved": "Moved \"{n}\" to {f}.",
  "nt.linksUpdated": "Links updated in {n} notes.",
  "nt.dragHint": "Drag notes and folders onto a folder (or onto Folders and notes for the top) to move them. \u22ef has Move to\u2026 and Delete.",
- "nt.dragHintTouch": "Hold a note or folder, then drag it onto a folder to move it. \u22ef has Move to\u2026 and Delete."
+ "nt.dragHintTouch": "Hold a note or folder, then drag it onto a folder to move it. \u22ef has Move to\u2026 and Delete.",
+ "via.parts": "read {r} of {n} sections",
+ "via.partsAi": "read {r} of {n} sections (picked by AI)",
+ "f.fetch.wikipedia_api": "Read Wikipedia through its API",
+ "f.research.long_page_pick": "Let the AI pick sections of long pages",
+ "h.fetch.wikipedia_api": "Reads Wikipedia (and other Wikimedia sites) through their official API with an honest app name, as Wikimedia asks. Off: read like any other web page, which Wikipedia often refuses.",
+ "h.research.long_page_pick": "Long pages are read section by section. When a long page's sections barely use your search's words, a small AI call picks which sections to read from the headings (a few hundred tokens)."
 }

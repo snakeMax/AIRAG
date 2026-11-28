@@ -16,7 +16,7 @@ from .config import DEFAULT_UA
 from .paths import ANDROID
 
 MAX_BYTES = 8_000_000
-MAX_TEXT = 200_000
+MAX_TEXT = 1_000_000          # long pages are read section by section (passages.select_passages), not sent whole
 _cache: "OrderedDict[str, Page]" = OrderedDict()
 _CACHE_CHARS = 25_000_000      # memory budget for cached page text (~50 MB)
 _cache_chars = 0
@@ -109,6 +109,13 @@ async def fetch_page(url: str, cfg: dict, title: str = "") -> Page:
                 _cache[url] = page
                 _cache_chars += len(page.text)
             return page
+    if cfg.get("wikipedia_api", True):
+        from . import wikipage
+        wp = await wikipage.read(url, float(cfg.get("timeout") or 15))
+        if wp is not None and wp.ok:          # Wikipedia & co: their API (the web page is often refused to programs)
+            _cache[url] = wp
+            _cache_chars += len(wp.text)
+            return wp
     if mode in ("auto", "http"):
         page = await _fetch_http(url, cfg)
         if page.ok and looks_blocked(page.text, page.title):     # try the browser / WebView next
@@ -127,8 +134,9 @@ async def fetch_page(url: str, cfg: dict, title: str = "") -> Page:
     assert page is not None
     if page.ok and looks_blocked(page.text, page.title):
         page = Page(url, final_url=page.final_url, error="The site showed a bot check instead of the page", blocked=True)
-    if not page.ok and (page.blocked or page.error.startswith("HTTP 4")):
-        note_blocked(url)
+    from .wikipage import article as _wiki_article
+    if not page.ok and (page.blocked or page.error.startswith("HTTP 4")) and not _wiki_article(url):
+        note_blocked(url)          # (Wikimedia refusals are about rate or the user agent, not the site being closed)
         from . import scholarly
         if scholarly.is_scholarly(url):        # research papers: the same paper from Europe PMC's open service
             alt = await scholarly.rescue(url, title, float(cfg.get("timeout") or 15))
@@ -149,8 +157,11 @@ def browser_available() -> bool:
 
 # HTTP
 async def _fetch_http(url: str, cfg: dict) -> Page:
+    from .wikipage import HOSTS as _WIKI_HOSTS, UA as _WIKI_UA
+    host = (url.split("/")[2] if "://" in url else "").lower()
+    honest = any(host == h or host.endswith("." + h) for h in _WIKI_HOSTS)   # Wikimedia asks programs to say who they are
     headers = {
-        "User-Agent": cfg.get("user_agent") or DEFAULT_UA,
+        "User-Agent": _WIKI_UA if honest else (cfg.get("user_agent") or DEFAULT_UA),
         "Accept": "text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8",
         "Accept-Language": cfg.get("accept_language") or "en-US,en;q=0.9",
     }
@@ -278,8 +289,12 @@ def parse_html(url: str, final: str, html: str, via: str = "http") -> Page:
     text = ""
     if trafilatura is not None:
         try:
-            text = trafilatura.extract(html, url=final, include_comments=False, include_tables=True,
-                                       favor_recall=True, deduplicate=True) or ""
+            try:              # Markdown keeps the headings, so long pages can be read section by section
+                text = trafilatura.extract(html, url=final, include_comments=False, include_tables=True,
+                                           favor_recall=True, deduplicate=True, output_format="markdown") or ""
+            except TypeError:
+                text = trafilatura.extract(html, url=final, include_comments=False, include_tables=True,
+                                           favor_recall=True, deduplicate=True) or ""
         except Exception:
             text = ""
     if len(text) < 300:

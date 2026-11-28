@@ -2,6 +2,11 @@
 
 ## [Unreleased] - Notes Mode ("Lookup Update")
 
+### Fixed
+- **Wikipedia pages showing as unreadable**: Wikipedia (and other Wikimedia sites) is now read through its official API with an honest app name, as Wikimedia requires since 2025; one refusal no longer marks all of Wikipedia as blocked
+
+### Added
+
 - **Notes Mode**: a Research | Notes switch in the top bar. Obsidian-compatible vaults (create from Research, Writing, Worldbuilding, Personal or Empty, or link an existing Obsidian vault read-only), a folder tree with recent notes, a Markdown editor with Edit / Read, properties, [[links]] (missing notes can be created from the link) and #tags, saving by itself with the last 20 versions kept and no overwriting of notes changed elsewhere
 - **Search notes**: every match, grouped by note with highlighted sections, with search words (tag:, type:, path:, prop:, linksto:, linkedfrom:, has:, modified:, created:, regex:, "exact", -word, OR) and a microphone; no AI
 - **Linked from / Mentioned but not linked / Outline** beside each note, with one-tap *Link*
@@ -10,6 +15,7 @@
 - **Ask your notes**: a short answer from your vault with numbered citations that open the right heading, results in tiers (direct, related, closest), Research this (web + My library) and Collect into a note. Ask also writes a short article from your notes when you ask for one, and starts a Quick search or a full Research (with My library) when you ask to look something up online or research it
 - **Move and delete notes and folders**: ⋯ on every row (Move to…, Delete), drag and drop onto folders (hold, then drag on phones); path links are updated; deleted items go to the vault's .trash folder (the same as Obsidian's trash) with Undo
 - Notes on phones: the microphone in the bottom bar is centred and larger
+- **Long pages read section by section**: reference and link lists skipped, the opening plus the best-matching sections read; the source card says how much (*read 4 of 31 sections*); for long pages that barely match, a small AI call picks the sections from the headings
 - **Main notes vault** (Settings → Library & storage → Notes vaults, and the first-start setup): AIRAG's own vault or an Obsidian vault; added Obsidian vaults can be edited straight away (optional read only); **Open in Obsidian** for vaults and notes
 - **Add to notes** in Research: articles, quick answers, results pages and single sources go into a vault as raw data or auto-categorized (title, folder, type, tags and related links suggested; the text is kept)
 - **Search words and tags**: a screen listing every search word with an example (tap to use it) and every tag in the vault with its count (tap to see its notes)

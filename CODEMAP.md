@@ -710,6 +710,10 @@ or removing them.
 - def `stem(w)`
 - def `tokenize(text)`
 - def `select_passages(text, terms, max_chars, window)`
+- def `split_sections(text)`
+- def `section_score(sec, terms)`
+- def `select_sections(text, terms, max_chars, pick)`
+- def `outline(text, max_sections)`
 
 ### airag/paths.py
 - def `is_portable()`
@@ -920,6 +924,10 @@ or removing them.
 - def `forget(rid)`
 - def `forget_all()`
 
+### airag/wikipage.py
+- def `article(url)`
+- async def `read(url, timeout)`
+
 ### airag/wikis.py
 - def `api_url(api, lang)`
 - async def `search(wiki, query, n, lang, timeout)`
@@ -989,10 +997,10 @@ or removing them.
 - `prompts`: style, length, explainer_level, custom_instructions, planner_instructions, article_prompt
 - `llm`: temperature, task_models
 - `search`: use_wikis, wiki_results, wikis, region, safesearch
-- `fetch`: allow_local_network, fetcher, timeout, max_concurrency, youtube, youtube_retries, user_agent
-- `research`: explainer_local_examples, explainer_web_examples, use_pinned, max_rounds, results_per_query, sources_per_round, max_sources_total, llm_concurrency, passage_chars, direct_relevance, direct_coverage, min_findings, enough_findings, article_max_tokens, max_article_sources, images, interactive_check, max_images, skip_domains, favourite_sites
+- `fetch`: allow_local_network, fetcher, timeout, max_concurrency, youtube, wikipedia_api, youtube_retries, user_agent
+- `research`: explainer_local_examples, explainer_web_examples, use_pinned, max_rounds, results_per_query, sources_per_round, max_sources_total, llm_concurrency, passage_chars, long_page_pick, direct_relevance, direct_coverage, min_findings, enough_findings, article_max_tokens, max_article_sources, images, interactive_check, max_images, skip_domains, favourite_sites
 
 Job limits: {'search': 1, 'quick': 1, 'explainer': 1, 'tool': 2}  
 Tool job kinds: followup, rewrite, image, translate, summary, calc, tags, notes-organize, notes-ask  
 AI tasks: research, quick, followup, rewrite, summary, translate, tags, explainer, vision, notes, misc  
-i18n keys (en): 1384
+i18n keys (en): 1390

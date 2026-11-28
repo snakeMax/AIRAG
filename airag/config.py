@@ -198,6 +198,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "max_concurrency", "label": "Pages read in parallel", "type": "number", "default": 6, "min": 1, "max": 20, "step": 1},
         {"key": "youtube", "label": "Read YouTube videos", "type": "bool", "default": True,
          "help": "Reads a video's title, description and captions (spoken text) so it can be used as a source."},
+        {"key": "wikipedia_api", "label": "Read Wikipedia through its API", "type": "bool", "default": True,
+         "help": "Reads Wikipedia (and other Wikimedia sites) through their official API with an honest app name, as Wikimedia asks. Off: read like any other web page (often refused)."},
         {"key": "youtube_retries", "label": "YouTube retries", "type": "number", "default": 1, "min": 0, "max": 5, "step": 1,
          "help": "How many times to try again when YouTube doesn't answer."},
         {"key": "user_agent", "label": "User agent", "type": "text", "default": DEFAULT_UA},
@@ -218,6 +220,8 @@ GENERAL_SCHEMA: dict = {
         {"key": "llm_concurrency", "label": "Parallel AI calls", "type": "number", "default": 3, "min": 1, "max": 10, "step": 1,
          "help": "Use 1 for small local models."},
         {"key": "passage_chars", "label": "Text per page sent to AI (chars)", "type": "number", "default": 3500, "min": 800, "max": 20000, "step": 100},
+        {"key": "long_page_pick", "label": "Let the AI pick sections of long pages", "type": "bool", "default": True,
+         "help": "Long pages are read section by section. When a long page's sections barely use the search's key words, a small AI call picks the sections to read from its headings (a few hundred tokens)."},
         {"key": "direct_relevance", "label": "Direct-hit relevance threshold", "type": "number", "default": 8, "min": 1, "max": 10, "step": 1,
          "help": "A page this relevant AND comprehensive makes AIRAG show ranked results instead of writing an article."},
         {"key": "direct_coverage", "label": "Direct-hit coverage threshold", "type": "number", "default": 7, "min": 1, "max": 10, "step": 1},
@@ -388,7 +392,7 @@ LIVE_KEYS = (
     ("research", "results_per_query"), ("research", "sources_per_round"), ("research", "max_sources_total"),
     ("research", "max_rounds"), ("research", "max_images"), ("research", "images"), ("research", "max_article_sources"),
     ("research", "skip_domains"), ("research", "favourite_sites"), ("research", "enough_findings"),
-    ("fetch", "timeout"), ("fetch", "youtube"), ("library", "max_results"), ("library", "min_relevance"),
+    ("fetch", "timeout"), ("fetch", "youtube"), ("fetch", "wikipedia_api"), ("library", "max_results"), ("library", "min_relevance"),
 )
 # settings that only change what you see or hear, never how a running task works
 UI_ONLY = {"audio", "speech", "buttons", "defaults"}

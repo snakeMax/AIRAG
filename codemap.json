@@ -329,19 +329,19 @@
      "args": [
       "fields"
      ],
-     "line": 245
+     "line": 249
     },
     {
      "kind": "def",
      "name": "defaults",
      "args": [],
-     "line": 249
+     "line": 253
     },
     {
      "kind": "def",
      "name": "_base_defaults",
      "args": [],
-     "line": 262
+     "line": 266
     },
     {
      "kind": "def",
@@ -350,13 +350,13 @@
       "base",
       "over"
      ],
-     "line": 289
+     "line": 293
     },
     {
      "kind": "def",
      "name": "_secret_fields",
      "args": [],
-     "line": 299
+     "line": 303
     },
     {
      "kind": "def",
@@ -365,7 +365,7 @@
       "d",
       "path"
      ],
-     "line": 312
+     "line": 316
     },
     {
      "kind": "def",
@@ -375,7 +375,7 @@
       "path",
       "v"
      ],
-     "line": 320
+     "line": 324
     },
     {
      "kind": "def",
@@ -383,31 +383,31 @@
      "args": [
       "s"
      ],
-     "line": 326
+     "line": 330
     },
     {
      "kind": "def",
      "name": "_backup_path",
      "args": [],
-     "line": 341
+     "line": 345
     },
     {
      "kind": "def",
      "name": "load_raw",
      "args": [],
-     "line": 345
+     "line": 349
     },
     {
      "kind": "def",
      "name": "guarded",
      "args": [],
-     "line": 399
+     "line": 403
     },
     {
      "kind": "def",
      "name": "begin_job",
      "args": [],
-     "line": 406
+     "line": 410
     },
     {
      "kind": "def",
@@ -415,13 +415,13 @@
      "args": [
       "token"
      ],
-     "line": 414
+     "line": 418
     },
     {
      "kind": "def",
      "name": "in_job",
      "args": [],
-     "line": 419
+     "line": 423
     },
     {
      "kind": "def",
@@ -429,7 +429,7 @@
      "args": [
       "current"
      ],
-     "line": 423
+     "line": 427
     },
     {
      "kind": "def",
@@ -438,7 +438,7 @@
       "before",
       "after"
      ],
-     "line": 445
+     "line": 449
     },
     {
      "kind": "def",
@@ -446,7 +446,7 @@
      "args": [
       "with_env"
      ],
-     "line": 464
+     "line": 468
     },
     {
      "kind": "def",
@@ -454,7 +454,7 @@
      "args": [
       "s"
      ],
-     "line": 492
+     "line": 496
     },
     {
      "kind": "def",
@@ -463,7 +463,7 @@
       "new",
       "current"
      ],
-     "line": 501
+     "line": 505
     },
     {
      "kind": "def",
@@ -471,7 +471,7 @@
      "args": [
       "incoming"
      ],
-     "line": 509
+     "line": 513
     },
     {
      "kind": "def",
@@ -481,7 +481,7 @@
       "llm_provider",
       "provider_cfg"
      ],
-     "line": 528
+     "line": 532
     }
    ]
   },
@@ -802,7 +802,7 @@
      "kind": "def",
      "name": "browser_available",
      "args": [],
-     "line": 145
+     "line": 153
     },
     {
      "kind": "async def",
@@ -811,7 +811,7 @@
       "url",
       "cfg"
      ],
-     "line": 151
+     "line": 159
     },
     {
      "kind": "def",
@@ -821,7 +821,7 @@
       "final",
       "data"
      ],
-     "line": 198
+     "line": 209
     },
     {
      "kind": "def",
@@ -829,7 +829,7 @@
      "args": [
       "v"
      ],
-     "line": 216
+     "line": 227
     },
     {
      "kind": "def",
@@ -840,13 +840,13 @@
       "html",
       "via"
      ],
-     "line": 223
+     "line": 234
     },
     {
      "kind": "async def",
      "name": "_get_browser",
      "args": [],
-     "line": 305
+     "line": 320
     },
     {
      "kind": "async def",
@@ -855,7 +855,7 @@
       "url",
       "cfg"
      ],
-     "line": 318
+     "line": 333
     },
     {
      "kind": "async def",
@@ -864,13 +864,13 @@
       "url",
       "cfg"
      ],
-     "line": 331
+     "line": 346
     },
     {
      "kind": "async def",
      "name": "shutdown",
      "args": [],
-     "line": 365
+     "line": 380
     }
    ]
   },
@@ -5030,6 +5030,51 @@
       "window"
      ],
      "line": 60
+    },
+    {
+     "kind": "def",
+     "name": "split_sections",
+     "args": [
+      "text"
+     ],
+     "line": 115
+    },
+    {
+     "kind": "def",
+     "name": "_skip",
+     "args": [
+      "heading"
+     ],
+     "line": 130
+    },
+    {
+     "kind": "def",
+     "name": "section_score",
+     "args": [
+      "sec",
+      "terms"
+     ],
+     "line": 134
+    },
+    {
+     "kind": "def",
+     "name": "select_sections",
+     "args": [
+      "text",
+      "terms",
+      "max_chars",
+      "pick"
+     ],
+     "line": 145
+    },
+    {
+     "kind": "def",
+     "name": "outline",
+     "args": [
+      "text",
+      "max_sections"
+     ],
+     "line": 189
     }
    ]
   },
@@ -5346,6 +5391,8 @@
       "_shingles",
       "search_terms",
       "skip_without_ai",
+      "page_excerpt",
+      "pick_sections",
       "excerpt_budget",
       "search_images",
       "collect_images",
@@ -7038,6 +7085,35 @@
      "name": "forget_all",
      "args": [],
      "line": 119
+    }
+   ]
+  },
+  "airag/wikipage.py": {
+   "items": [
+    {
+     "kind": "def",
+     "name": "article",
+     "args": [
+      "url"
+     ],
+     "line": 31
+    },
+    {
+     "kind": "def",
+     "name": "_markdown_headings",
+     "args": [
+      "text"
+     ],
+     "line": 60
+    },
+    {
+     "kind": "async def",
+     "name": "read",
+     "args": [
+      "url",
+      "timeout"
+     ],
+     "line": 65
     }
    ]
   },
@@ -8863,6 +8939,7 @@
    "timeout",
    "max_concurrency",
    "youtube",
+   "wikipedia_api",
    "youtube_retries",
    "user_agent"
   ],
@@ -8876,6 +8953,7 @@
    "max_sources_total",
    "llm_concurrency",
    "passage_chars",
+   "long_page_pick",
    "direct_relevance",
    "direct_coverage",
    "min_findings",
@@ -8919,5 +8997,5 @@
   "notes",
   "misc"
  ],
- "i18n_keys": 1384
+ "i18n_keys": 1390
 }
